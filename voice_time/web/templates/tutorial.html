@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Tutorial - Voice Time{% endblock %}
+
+{% block styles %}
+<style>
+    .tutorial-hero {
+        background: linear-gradient(135deg, var(--purple-dim), var(--primary-dim));
+        border: 1px solid var(--purple-border);
+        padding: 32px;
+        border-radius: var(--radius-lg);
+        text-align: center;
+        margin-bottom: 32px;
+    }
+    
+    .tutorial-hero h1 {
+        font-family: var(--font-serif);
+        font-size: 2.5em;
+        background: linear-gradient(135deg, var(--purple), var(--primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 16px;
+    }
+    
+    .tutorial-hero p {
+        color: var(--text-muted);
+        font-size: 1.1em;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .scenario-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-bottom: 24px;
+        transition: all 0.2s;
+    }
+    
+    .scenario-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--primary-glow);
+    }
+    
+    .scenario-number {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+        text-align: center;
+        background: linear-gradient(135deg, var(--purple), var(--primary));
+        color: white;
+        border-radius: 50%;
+        font-weight: 700;
+        font-family: var(--font-serif);
+        margin-right: 12px;
+        font-size: 1.2em;
+    }
+    
+    .scenario-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    
+    .scenario-title {
+        font-family: var(--font-serif);
+        font-size: 1.3em;
+        color: var(--text-main);
+        font-weight: 600;
+    }
+    
+    .scenario-desc {
+        color: var(--text-muted);
+        margin-bottom: 20px;
+        font-size: 0.95em;
+    }
+    
+    .example-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .example-item {
+        background: var(--bg-hover);
+        padding: 12px 16px;
+        border-left: 3px solid var(--primary);
+        margin-bottom: 8px;
+        border-radius: var(--radius-sm);
+        font-family: var(--font-sans);
+        color: var(--text-muted);
+        font-style: italic;
+    }
+    
+    .example-item:hover {
+        background: var(--bg-sidebar);
+        border-left-color: var(--purple);
+    }
+    
+    .try-it-btn {
+        display: inline-block;
+        margin-top: 16px;
+        padding: 10px 20px;
+        background: var(--primary);
+        color: var(--bg-app);
+        text-decoration: none;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    
+    .try-it-btn:hover {
+        background: #d97706;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--primary-glow);
+    }
+    
+    .matters-reference {
+        background: var(--bg-sidebar);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-top: 32px;
+    }
+    
+    .matter-item {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .matter-item:last-child {
+        border-bottom: none;
+    }
+    
+    .matter-ref {
+        color: var(--text-muted);
+        font-size: 0.85em;
+        font-family: monospace;
+    }
+    
+    .matter-name {
+        color: var(--text-main);
+        font-weight: 600;
+        margin: 4px 0;
+    }
+    
+    .matter-aliases {
+        color: var(--text-muted);
+        font-size: 0.9em;
+    }
+    
+    .matter-aliases span {
+        color: var(--primary);
+    }
+    
+    .hotkey-reminder {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(245, 158, 11, 0.15));
+        border: 1px solid var(--purple-border);
+        padding: 20px;
+        border-radius: var(--radius-md);
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    
+    .hotkey {
+        display: inline-block;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: var(--radius-sm);
+        font-family: monospace;
+        color: var(--primary);
+        font-weight: 700;
+        margin: 0 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="tutorial-hero">
+    <h1>🎓 Tutorial & Testing Guide</h1>
+    <p>Learn how to use Voice Time with realistic examples. Try these scenarios to familiarize yourself with the system.</p>
+</div>
+
+<div class="hotkey-reminder">
+    <p style="color: var(--text-main); font-size: 1.1em; margin-bottom: 12px;">
+        <strong>Voice Mode:</strong> Press and hold <span class="hotkey">Ctrl+Space</span> to talk
+    </p>
+    <p style="color: var(--text-muted); font-size: 0.95em;">
+        Or type your commands in the <a href="/" style="color: var(--primary);">Dashboard</a>
+    </p>
+</div>
+
+<!-- Scenario 1: Morning Planning -->
+<div class="scenario-card">
+    <div class="scenario-header">
+        <span class="scenario-number">1</span>
+        <h3 class="scenario-title">Morning Planning</h3>
+    </div>
+    <p class="scenario-desc">Start your day by telling the system what you plan to work on. It will structure your tasks automatically.</p>
+    <ul class="example-list">
+        <li class="example-item">Today I need to review the Thompson witness statements, draft the Greenfield skeleton, and I've got a conference at 3</li>
+        <li class="example-item">Working on Thompson and Williams today, plus various emails</li>
+        <li class="example-item">Need to finish the acquisition documents for TechGrowth and research planning law for Greenfield</li>
+    </ul>
+    <a href="/" class="try-it-btn">Try It Now →</a>
+</div>
+
+<!-- Scenario 2: Starting Work -->
+<div class="scenario-card">
+    <div class="scenario-header">
+        <span class="scenario-number">2</span>
+        <h3 class="scenario-title">Starting Work</h3>
+    </div>
+    <p class="scenario-desc">Tell the system when you begin working on something. It starts tracking time automatically.</p>
+    <ul class="example-list">
+        <li class="example-item">Working on Thompson witness statements</li>
+        <li class="example-item">Starting the Greenfield research on planning law</li>
+        <li class="example-item">Beginning the Williams correspondence</li>
+        <li class="example-item">Moving to the TechGrowth acquisition documents</li>
+    </ul>
+    <a href="/" class="try-it-btn">Try It Now →</a>
+</div>
+
+<!-- Scenario 3: Completing Tasks -->
+<div class="scenario-card">
+    <div class="scenario-header">
+        <span class="scenario-number">3</span>
+        <h3 class="scenario-title">Completing Tasks</h3>
+    </div>
+    <p class="scenario-desc">When finished, the system infers duration and creates a professional billing narrative.</p>
+    <ul class="example-list">
+        <li class="example-item">Done with the Thompson witnesses</li>
+        <li class="example-item">Finished the research - took about 90 minutes</li>
+        <li class="example-item">Completed the drafting, all morning on it</li>
+        <li class="example-item">Done with that</li>
+    </ul>
+    <a href="/" class="try-it-btn">Try It Now →</a>
+</div>
+
+<!-- Scenario 4: Interruptions -->
+<div class="scenario-card">
+    <div class="scenario-header">
+        <span class="scenario-number">4</span>
+        <h3 class="scenario-title">Handling Interruptions</h3>
+    </div>
+    <p class="scenario-desc">Seamlessly switch between tasks. The system remembers what you were doing and can return to it.</p>
+    <ul class="example-list">
+        <li class="example-item">Quick call about Williams employment matter</li>
+        <li class="example-item">Back to what I was doing</li>
+        <li class="example-item">Brief email to Thompson client then back to drafting</li>
+        <li class="example-item">Urgent - need to review Chen PI medical report</li>
+    </ul>
+    <a href="/" class="try-it-btn">Try It Now →</a>
+</div>
+
+<!-- Scenario 5: Natural Duration -->
+<div class="scenario-card">
+    <div class="scenario-header">
+        <span class="scenario-number">5</span>
+        <h3 class="scenario-title">Natural Duration Language</h3>
+    </div>
+    <p class="scenario-desc">Use everyday language to describe time. The system understands natural phrases.</p>
+    <ul class="example-list">
+        <li class="example-item">Quick 10 minute call with Greenfield client</li>
+        <li class="example-item">Spent a couple of hours on the Thompson drafting</li>
+        <li class="example-item">All morning reviewing the disclosure bundle</li>
+        <li class="example-item">Since lunch I've been on the acquisition documents</li>
+        <li class="example-item">About an hour and a half researching case law</li>
+    </ul>
+    <a href="/" class="try-it-btn">Try It Now →</a>
+</div>
+
+<!-- Scenario 6: Historical Logging -->
+<div class="scenario-card">
+    <div class="scenario-header">
+        <span class="scenario-number">6</span>
+        <h3 class="scenario-title">Historical Logging</h3>
+    </div>
+    <p class="scenario-desc">Log work you already completed but forgot to record at the time.</p>
+    <ul class="example-list">
+        <li class="example-item">Spent 30 minutes on Williams emails this morning</li>
+        <li class="example-item">Was on the Thompson call for about an hour earlier</li>
+        <li class="example-item">Did a couple of hours research for Greenfield yesterday</li>
+        <li class="example-item">Forgot to log - spent all afternoon on the Chen medical report</li>
+    </ul>
+    <a href="/" class="try-it-btn">Try It Now →</a>
+</div>
+
+<!-- Sample Matters Reference -->
+<div class="matters-reference">
+    <h2 style="margin-bottom: 24px; font-family: var(--font-serif); color: var(--text-main);">
+        📁 Sample Matters for Testing
+    </h2>
+    
+    <div class="matter-item">
+        <div class="matter-ref">2024/CL/087</div>
+        <div class="matter-name">Thompson Industries Ltd v Apex Manufacturing</div>
+        <div class="matter-aliases">Try: <span>"Thompson"</span>, <span>"Apex dispute"</span>, <span>"TI matter"</span></div>
+    </div>
+    
+    <div class="matter-item">
+        <div class="matter-ref">2024/CL/142</div>
+        <div class="matter-name">R (Greenfield) v Planning Authority (Judicial Review)</div>
+        <div class="matter-aliases">Try: <span>"Greenfield"</span>, <span>"planning JR"</span>, <span>"planning case"</span></div>
+    </div>
+    
+    <div class="matter-item">
+        <div class="matter-ref">2025/EMP/023</div>
+        <div class="matter-name">Williams v DataTech Solutions (Unfair Dismissal)</div>
+        <div class="matter-aliases">Try: <span>"Williams"</span>, <span>"employment"</span>, <span>"unfair dismissal"</span></div>
+    </div>
+    
+    <div class="matter-item">
+        <div class="matter-ref">2024/PI/156</div>
+        <div class="matter-name">Chen v London Transport Authority (Personal Injury)</div>
+        <div class="matter-aliases">Try: <span>"Chen"</span>, <span>"PI matter"</span>, <span>"transport injury"</span></div>
+    </div>
+    
+    <div class="matter-item">
+        <div class="matter-ref">2025/CORP/034</div>
+        <div class="matter-name">TechGrowth PLC - Acquisition of Digital Innovations</div>
+        <div class="matter-aliases">Try: <span>"TechGrowth"</span>, <span>"acquisition"</span>, <span>"M&A deal"</span></div>
+    </div>
+    
+    <div class="matter-item">
+        <div class="matter-ref">2024/FAM/091</div>
+        <div class="matter-name">Patel v Patel (Divorce & Financial Remedy)</div>
+        <div class="matter-aliases">Try: <span>"Patel"</span>, <span>"divorce"</span>, <span>"family matter"</span></div>
+    </div>
+    
+    <div class="matter-item">
+        <div class="matter-ref">2024/PROP/134</div>
+        <div class="matter-name">Harbour Properties - Commercial Lease Dispute</div>
+        <div class="matter-aliases">Try: <span>"Harbour"</span>, <span>"lease dispute"</span>, <span>"property"</span></div>
+    </div>
+    
+    <div class="matter-item">
+        <div class="matter-ref">2025/CRIM/017</div>
+        <div class="matter-name">R v Johnson (Fraud)</div>
+        <div class="matter-aliases">Try: <span>"Johnson"</span>, <span>"fraud case"</span>, <span>"R v Johnson"</span></div>
+    </div>
+</div>
+
+<div class="card" style="text-align: center;">
+    <h2>Ready to Practice?</h2>
+    <p style="color: var(--text-muted); margin-bottom: 20px;">
+        Go to the Dashboard and try any of the examples above!
+    </p>
+    <a href="/" class="btn" style="text-decoration: none; display: inline-block;">
+        Go to Dashboard →
+    </a>
+</div>
+
+{% endblock %}

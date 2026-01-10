@@ -31,9 +31,10 @@ def init_database(config: Config):
     
     print(f"✓ Database created at: {db_path}")
     
-    # Create sample matters
-    print("\nCreating sample matters...")
-    matters = create_sample_matters(session)
+    # Create realistic sample matters
+    print("\nCreating realistic sample matters...")
+    from voice_time.database.sample_data import create_realistic_matters
+    matters = create_realistic_matters(session)
     
     if matters:
         print(f"✓ Created {len(matters)} sample matters:")

@@ -7,6 +7,12 @@ from ..database.models import Matter, PlannedTask, WorkLog, DayPlan
 def register_routes(app):
     """Register all routes with the Flask app."""
     
+    @app.route('/tutorial')
+    def tutorial():
+        """Tutorial and testing page."""
+        from ..database.sample_data import TUTORIAL_SCENARIOS
+        return render_template('tutorial.html', scenarios=TUTORIAL_SCENARIOS)
+    
     @app.route('/')
     def index():
         """Main dashboard."""
