@@ -228,10 +228,10 @@ def register_routes(app):
         # Process through state machine
         result = app.day_state.process(utterance)
         
+        # Don't include data in JSON response (may contain non-serializable objects)
         return jsonify({
             'success': result.success,
             'message': result.message,
-            'data': result.data,
             'needs_clarification': result.needs_clarification
         })
     
@@ -278,11 +278,11 @@ def register_routes(app):
             # Process through state machine
             result = app.day_state.process(transcript)
             
+            # Don't include data in JSON response (may contain non-serializable objects)
             return jsonify({
                 'success': result.success,
                 'message': result.message,
                 'transcript': transcript,
-                'data': result.data,
                 'needs_clarification': result.needs_clarification
             })
             
