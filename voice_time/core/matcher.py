@@ -129,10 +129,13 @@ class MatterMatcher:
         - Exact substring match (highest weight)
         - Token sort ratio (handles word order)
         - Partial ratio (handles abbreviations)
+        
+        MINIMUM SCORE of 60 required to avoid false positives.
         """
-        # Exact substring match
-        if query in target or target in query:
-            return 100.0
+        # Exact substring match (only for meaningful substrings)
+        if len(query) >= 3 and len(target) >= 3:
+            if query in target or target in query:
+                return 100.0
         
         # Token sort ratio (good for reordered words)
         token_score = fuzz.token_sort_ratio(query, target)
@@ -143,15 +146,22 @@ class MatterMatcher:
         # Weighted combination
         score = token_score * 0.6 + partial_score * 0.4
         
+        # Require minimum score to avoid false positives like "at me" -> "matter"
+        if score < 60:
+            return 0.0
+        
         return score
     
     def _calculate_recency_weight(self, last_used_at: Optional[datetime]) -> float:
         """
         Calculate recency weight multiplier.
         
-        - Used today: 2.0x
-        - Used this week: 1.5x
-        - Used this month: 1.2x
+        Reduced from original values to prevent recency from
+        overriding better linguistic matches.
+        
+        - Used today: 1.3x
+        - Used this week: 1.2x  
+        - Used this month: 1.1x
         - Older: 1.0x
         """
         if not last_used_at:
@@ -161,11 +171,11 @@ class MatterMatcher:
         delta = now - last_used_at
         
         if delta < timedelta(days=1):
-            return 2.0  # Today
+            return 1.3  # Today (was 2.0)
         elif delta < timedelta(days=7):
-            return 1.5  # This week
+            return 1.2  # This week (was 1.5)
         elif delta < timedelta(days=30):
-            return 1.2  # This month
+            return 1.1  # This month (was 1.2)
         else:
             return 1.0  # Older
 
