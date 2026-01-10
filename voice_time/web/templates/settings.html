@@ -326,8 +326,14 @@
 </div>
 
 <script>
-    // Auto-check microphone on page load
-    window.addEventListener('DOMContentLoaded', checkMicrophonePermission);
+    // Auto-check everything on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        checkMicrophonePermission();
+        checkWhisperStatus();
+        loadModels();
+        loadLLMModels();
+        loadVocabulary();
+    });
     
     async function checkMicrophonePermission() {
         const statusEl = document.getElementById('perm-status');
@@ -929,12 +935,6 @@
         }
     }
     
-    // Load models and vocabulary on page load
-    window.addEventListener('DOMContentLoaded', () => {
-        loadModels();      // Whisper models
-        loadLLMModels();   // Ollama models
-        loadVocabulary();  // Matter vocabulary
-    });
 </script>
 
 {% endblock %}
