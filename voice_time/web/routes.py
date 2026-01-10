@@ -55,7 +55,7 @@ def register_routes(app):
     
     @app.route('/process', methods=['POST'])
     def process():
-        """Process voice/text input."""
+        """Process text input."""
         data = request.json
         utterance = data.get('utterance', '')
         
@@ -74,6 +74,67 @@ def register_routes(app):
             'data': result.data,
             'needs_clarification': result.needs_clarification
         })
+    
+    @app.route('/process-voice', methods=['POST'])
+    def process_voice():
+        """Process voice input from browser."""
+        if 'audio' not in request.files:
+            return jsonify({
+                'success': False,
+                'message': 'No audio file provided'
+            })
+        
+        audio_file = request.files['audio']
+        
+        try:
+            # Save temporarily
+            import tempfile
+            import os
+            from ..voice.transcribe import Transcriber
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as tmp:
+                audio_file.save(tmp.name)
+                tmp_path = tmp.name
+            
+            # Transcribe
+            transcriber = Transcriber(
+                model_size=app.config_obj.whisper.model,
+                device=app.config_obj.whisper.device
+            )
+            transcript = transcriber.transcribe_file(tmp_path)
+            
+            # Clean up temp file
+            os.unlink(tmp_path)
+            
+            if not transcript or not transcript.strip():
+                return jsonify({
+                    'success': False,
+                    'message': 'No speech detected',
+                    'transcript': ''
+                })
+            
+            # Process through state machine
+            result = app.day_state.process(transcript)
+            
+            return jsonify({
+                'success': result.success,
+                'message': result.message,
+                'transcript': transcript,
+                'data': result.data,
+                'needs_clarification': result.needs_clarification
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Error processing voice: {str(e)}',
+                'transcript': ''
+            })
+    
+    @app.route('/mic-test')
+    def mic_test():
+        """Test microphone access."""
+        return jsonify({'status': 'ready'})
     
     @app.route('/matters')
     def matters():

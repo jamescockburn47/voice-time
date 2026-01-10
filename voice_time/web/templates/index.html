@@ -165,16 +165,35 @@
 {% block content %}
 <div class="card input-area">
     <h2>🎙️ What are you working on?</h2>
-    <input 
-        type="text" 
-        id="utterance-input" 
-        placeholder="e.g., 'Done with Smith disclosure' or 'Working on Brown skeleton'"
-        autofocus
-    >
-    <div class="btn-group">
-        <button class="btn btn-success" onclick="processInput()">Submit</button>
-        <button class="btn" onclick="clearInput()">Clear</button>
+    
+    <!-- Voice Input (Primary) -->
+    <div style="margin-bottom: 20px;">
+        <button id="voice-btn" class="btn btn-success" style="width: 100%; padding: 20px; font-size: 1.2em; display: flex; align-items: center; justify-content: center; gap: 12px;" onclick="toggleVoiceRecording()">
+            <span id="voice-icon">🎤</span>
+            <span id="voice-text">Press to Talk (or use Ctrl+Space)</span>
+        </button>
+        <div id="mic-status" style="margin-top: 12px; text-align: center; color: var(--text-muted); font-size: 0.9em;">
+            <span id="mic-indicator">🔴</span> <span id="mic-message">Click button or press Ctrl+Space to start</span>
+        </div>
     </div>
+    
+    <!-- Text Input (Backup) -->
+    <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 12px; text-align: center;">
+            Or type your command:
+        </p>
+        <input 
+            type="text" 
+            id="utterance-input" 
+            placeholder="e.g., 'Done with Smith disclosure' or 'Working on Brown skeleton'"
+            style="margin-bottom: 12px;"
+        >
+        <div class="btn-group">
+            <button class="btn" onclick="processInput()">Submit Text</button>
+            <button class="btn" onclick="clearInput()" style="background: var(--bg-hover); color: var(--text-muted);">Clear</button>
+        </div>
+    </div>
+    
     <div id="response-message"></div>
 </div>
 
@@ -250,6 +269,148 @@
 </div>
 
 <script>
+    let isRecording = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    
+    // Check microphone access on page load
+    window.addEventListener('DOMContentLoaded', checkMicrophoneAccess);
+    
+    async function checkMicrophoneAccess() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop());
+            updateMicStatus('ready', '🟢 Microphone ready');
+        } catch (err) {
+            updateMicStatus('error', '🔴 Microphone access denied - Click to grant');
+            document.getElementById('mic-status').onclick = requestMicrophoneAccess;
+        }
+    }
+    
+    async function requestMicrophoneAccess() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop());
+            updateMicStatus('ready', '🟢 Microphone ready');
+            document.getElementById('mic-status').onclick = null;
+        } catch (err) {
+            alert('Please allow microphone access in your browser settings');
+        }
+    }
+    
+    function updateMicStatus(status, message) {
+        const indicator = document.getElementById('mic-indicator');
+        const msg = document.getElementById('mic-message');
+        
+        if (status === 'ready') {
+            indicator.textContent = '🟢';
+            msg.textContent = message || 'Microphone ready';
+        } else if (status === 'recording') {
+            indicator.textContent = '🔴';
+            msg.textContent = message || 'Recording...';
+        } else if (status === 'processing') {
+            indicator.textContent = '⚙️';
+            msg.textContent = message || 'Processing speech...';
+        } else if (status === 'error') {
+            indicator.textContent = '🔴';
+            msg.textContent = message || 'Microphone error';
+        }
+    }
+    
+    async function toggleVoiceRecording() {
+        if (!isRecording) {
+            await startRecording();
+        } else {
+            await stopRecording();
+        }
+    }
+    
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    channelCount: 1,
+                    sampleRate: 16000
+                }
+            });
+            
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+            
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                await processVoiceInput(audioBlob);
+                stream.getTracks().forEach(track => track.stop());
+            };
+            
+            mediaRecorder.start();
+            isRecording = true;
+            
+            // Update UI
+            document.getElementById('voice-btn').style.background = '#ef4444';
+            document.getElementById('voice-icon').textContent = '⏹️';
+            document.getElementById('voice-text').textContent = 'Recording... Click to Stop';
+            updateMicStatus('recording', 'Recording... Click to stop or release Ctrl+Space');
+            
+        } catch (err) {
+            alert('Could not access microphone. Please check permissions.');
+            console.error(err);
+        }
+    }
+    
+    async function stopRecording() {
+        if (mediaRecorder && isRecording) {
+            mediaRecorder.stop();
+            isRecording = false;
+            
+            // Update UI
+            document.getElementById('voice-btn').style.background = 'var(--success)';
+            document.getElementById('voice-icon').textContent = '🎤';
+            document.getElementById('voice-text').textContent = 'Press to Talk (or use Ctrl+Space)';
+            updateMicStatus('processing', 'Processing speech...');
+        }
+    }
+    
+    async function processVoiceInput(audioBlob) {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+        
+        try {
+            const response = await fetch('/process-voice', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Show what was said
+                document.getElementById('utterance-input').value = data.transcript || '';
+                
+                // Show result
+                const responseDiv = document.getElementById('response-message');
+                responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
+                
+                updateMicStatus('ready', '🟢 Microphone ready');
+                
+                // Reload to show updates
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                document.getElementById('response-message').innerHTML = 
+                    `<div class="message message-error">${data.message || 'Could not process voice input'}</div>`;
+                updateMicStatus('ready', '🟢 Try again');
+            }
+        } catch (err) {
+            document.getElementById('response-message').innerHTML = 
+                `<div class="message message-error">Error processing voice: ${err.message}</div>`;
+            updateMicStatus('error', '🔴 Error - try again');
+        }
+    }
+    
     function processInput() {
         const input = document.getElementById('utterance-input');
         const utterance = input.value.trim();
@@ -274,10 +435,7 @@
         .then(data => {
             if (data.success) {
                 responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
-                // Reload page after 1 second to show updates
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                setTimeout(() => window.location.reload(), 1000);
             } else {
                 responseDiv.innerHTML = `<div class="message message-error">${data.message}</div>`;
             }
@@ -297,6 +455,21 @@
     document.getElementById('utterance-input').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             processInput();
+        }
+    });
+    
+    // Global hotkey support (Ctrl+Space)
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.code === 'Space' && !isRecording) {
+            e.preventDefault();
+            startRecording();
+        }
+    });
+    
+    document.addEventListener('keyup', function(e) {
+        if (e.code === 'Space' && isRecording) {
+            e.preventDefault();
+            stopRecording();
         }
     });
 </script>
