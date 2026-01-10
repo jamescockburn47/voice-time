@@ -82,21 +82,29 @@ class MatterMatcher:
         # Sort by weighted score
         candidates.sort(key=lambda x: x[1], reverse=True)
         
-        best = candidates[0]
+        # Deduplicate by matter - keep best score per matter
+        seen_matters = {}
+        unique_candidates = []
+        for matter, score, matched_text in candidates:
+            if matter.id not in seen_matters:
+                seen_matters[matter.id] = True
+                unique_candidates.append((matter, score, matched_text))
+        
+        best = unique_candidates[0]
         best_matter, best_score, matched_text = best
         
         # Normalize confidence to 0-1
         confidence = min(best_score / 100, 1.0)
         
-        # Check for ambiguity (top 2 within 90%)
-        if len(candidates) > 1:
-            second_score = candidates[1][1]
+        # Check for ambiguity (top 2 DIFFERENT matters within 90%)
+        if len(unique_candidates) > 1:
+            second_score = unique_candidates[1][1]
             if second_score > best_score * 0.9:
                 return MatchResult(
                     match=None,
                     confidence=0.0,
                     ambiguous=True,
-                    candidates=candidates[:3]
+                    candidates=unique_candidates[:3]
                 )
         
         # Check if confidence meets threshold
