@@ -225,7 +225,7 @@
                 
                 <div class="matter-actions">
                     <button class="edit-btn" onclick="editMatter('{{ matter.id }}')">Edit</button>
-                    <button class="archive-btn" onclick="archiveMatter('{{ matter.id }}')">
+                    <button class="archive-btn" onclick="archiveMatter('{{ matter.id }}', {{ 'true' if matter.is_active else 'false' }})">
                         {{ 'Reactivate' if not matter.is_active else 'Archive' }}
                     </button>
                 </div>
@@ -321,8 +321,14 @@
         }
     }
     
-    async function archiveMatter(matterId) {
-        if (!confirm('Archive this matter? (It will be hidden but can be reactivated later)')) {
+    async function archiveMatter(matterId, isCurrentlyActive) {
+        // BUG FIX: Show correct confirmation message based on current state
+        const action = isCurrentlyActive ? 'archive' : 'reactivate';
+        const confirmMessage = isCurrentlyActive 
+            ? 'Archive this matter? (It will be hidden but can be reactivated later)'
+            : 'Reactivate this matter? (It will appear in active matters and voice commands)';
+        
+        if (!confirm(confirmMessage)) {
             return;
         }
         
