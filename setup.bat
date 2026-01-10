@@ -39,45 +39,29 @@ call venv\Scripts\activate.bat
 pip install --upgrade pip
 pip install -r requirements.txt
 
-REM Check Ollama
+REM Check/Install Ollama and model
 echo.
-echo [4/4] Checking Ollama...
-ollama --version >nul 2>&1
+echo [4/4] Setting up Ollama and AI model...
+call start_ollama.bat
 if %errorlevel% neq 0 (
     echo.
-    echo WARNING: Ollama is not installed!
-    echo.
-    echo Please install Ollama from: https://ollama.ai
-    echo.
-    echo After installing Ollama:
-    echo   1. Open a terminal
-    echo   2. Run: ollama serve
-    echo   3. Run: ollama pull qwen2.5:7b-instruct
-    echo.
-) else (
-    ollama --version
-    echo.
-    echo Checking if model is installed...
-    ollama list | findstr "qwen2.5:1.5b-instruct" >nul 2>&1
-    if %errorlevel% neq 0 (
-        echo.
-        echo Model not found. Downloading qwen2.5:1.5b-instruct...
-        echo This may take 2-3 minutes (~1GB download - SMALL MODEL)...
-        ollama pull qwen2.5:1.5b-instruct
-    ) else (
-        echo Model already installed!
-    )
+    echo ERROR: Ollama setup failed
+    pause
+    exit /b 1
 )
+echo Ollama is ready!
 
 echo.
 echo ==========================================
 echo   Setup Complete!
 echo ==========================================
 echo.
-echo Next steps:
-echo   1. Make sure Ollama is running: ollama serve
-echo   2. Double-click: init_database.bat
-echo   3. Double-click: start.bat
+echo Everything is ready!
+echo.
+echo Next step:
+echo   Double-click: ⭐ START HERE.bat
+echo.
+echo No other manual steps needed!
 echo.
 
 pause
