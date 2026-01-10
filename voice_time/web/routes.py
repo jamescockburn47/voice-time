@@ -137,6 +137,23 @@ def register_routes(app):
                 model_size=app.config_obj.whisper.model,
                 device=app.config_obj.whisper.device
             )
+            
+            # Load vocabulary from database to improve recognition
+            session = app.session
+            matters = session.query(Matter).filter(Matter.is_active == True).all()
+            matter_vocab = []
+            for m in matters:
+                matter_vocab.append(m.display_name)
+                matter_vocab.append(m.client)
+                if m.aliases:
+                    matter_vocab.extend(m.aliases)
+            
+            activities = session.query(ActivityType).all()
+            activity_vocab = [a.name for a in activities]
+            
+            transcriber.set_vocabulary(matter_vocab, activity_vocab)
+            result['vocabulary_loaded'] = len(matter_vocab)
+            
             result['stage'] = 'transcriber_created'
             
             # Stage 3: Transcribe (model loads HERE on first use)
@@ -186,6 +203,95 @@ def register_routes(app):
                     os.unlink(tmp_path)
                 except:
                     pass
+    
+    @app.route('/api/whisper-models')
+    def get_whisper_models():
+        """Get available Whisper models."""
+        models = [
+            {
+                'id': 'tiny.en',
+                'name': 'Tiny (English)',
+                'size': '39 MB',
+                'speed': 'Fastest',
+                'accuracy': 'Basic',
+                'description': 'Very fast but less accurate. Good for simple commands.'
+            },
+            {
+                'id': 'base.en',
+                'name': 'Base (English)',
+                'size': '74 MB', 
+                'speed': 'Fast',
+                'accuracy': 'Good',
+                'description': 'Good balance of speed and accuracy. Recommended for most users.'
+            },
+            {
+                'id': 'small.en',
+                'name': 'Small (English)',
+                'size': '244 MB',
+                'speed': 'Medium',
+                'accuracy': 'Better',
+                'description': 'Better accuracy for complex phrases and names.'
+            },
+            {
+                'id': 'medium.en',
+                'name': 'Medium (English)',
+                'size': '769 MB',
+                'speed': 'Slower',
+                'accuracy': 'High',
+                'description': 'High accuracy. Good if you have issues with names.'
+            },
+            {
+                'id': 'large-v2',
+                'name': 'Large v2 (Multilingual)',
+                'size': '1.5 GB',
+                'speed': 'Slowest',
+                'accuracy': 'Best',
+                'description': 'Best accuracy. Requires more RAM and download time.'
+            }
+        ]
+        
+        return jsonify({
+            'models': models,
+            'current': app.config_obj.whisper.model
+        })
+    
+    @app.route('/api/whisper-model', methods=['POST'])
+    def set_whisper_model():
+        """Switch Whisper model (requires app restart to take full effect)."""
+        import yaml
+        
+        data = request.json
+        new_model = data.get('model')
+        
+        valid_models = ['tiny.en', 'base.en', 'small.en', 'medium.en', 'large-v2']
+        if new_model not in valid_models:
+            return jsonify({'success': False, 'message': f'Invalid model: {new_model}'})
+        
+        # Update config in memory
+        app.config_obj.whisper.model = new_model
+        
+        # Update config.yaml file
+        config_path = Path('config.yaml')
+        if config_path.exists():
+            with open(config_path) as f:
+                config_data = yaml.safe_load(f) or {}
+            
+            if 'whisper' not in config_data:
+                config_data['whisper'] = {}
+            config_data['whisper']['model'] = new_model
+            
+            with open(config_path, 'w') as f:
+                yaml.dump(config_data, f, default_flow_style=False)
+        
+        # Clear cached transcriber so it reloads with new model
+        if hasattr(app, 'transcriber'):
+            app.transcriber = None
+        
+        return jsonify({
+            'success': True,
+            'message': f'Model changed to {new_model}. The new model will be downloaded on first use.',
+            'model': new_model
+        })
     
     @app.route('/whisper-status')
     def whisper_status():
@@ -345,11 +451,27 @@ def register_routes(app):
             # Save audio to the closed temp file
             audio_file.save(tmp_path)
             
-            # Transcribe
+            # Transcribe with vocabulary hints for better matter recognition
             transcriber = Transcriber(
                 model_size=app.config_obj.whisper.model,
                 device=app.config_obj.whisper.device
             )
+            
+            # Load vocabulary from database to improve recognition
+            session = app.session
+            matters = session.query(Matter).filter(Matter.is_active == True).all()
+            matter_vocab = []
+            for m in matters:
+                matter_vocab.append(m.display_name)
+                matter_vocab.append(m.client)
+                if m.aliases:
+                    matter_vocab.extend(m.aliases)
+            
+            activities = session.query(ActivityType).all()
+            activity_vocab = [a.name for a in activities]
+            
+            transcriber.set_vocabulary(matter_vocab, activity_vocab)
+            
             transcript = transcriber.transcribe_file(tmp_path)
             
             if not transcript or not transcript.strip():

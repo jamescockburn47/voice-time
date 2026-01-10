@@ -209,6 +209,51 @@
     </div>
 </div>
 
+<!-- Speech Recognition Model -->
+<div class="card">
+    <h2>Speech Recognition Model</h2>
+    <p style="color: var(--text-muted); margin-bottom: 16px;">
+        Choose a larger model for better accuracy with names and technical terms.
+        Models will be downloaded on first use.
+    </p>
+    
+    <div id="model-selector" class="test-card">
+        <div style="display: grid; gap: 12px;" id="model-list">
+            <!-- Models will be loaded here -->
+            <div style="color: var(--text-muted);">Loading models...</div>
+        </div>
+        <div id="model-change-status" style="margin-top: 16px; display: none;" class="test-result"></div>
+    </div>
+</div>
+
+<!-- Vocabulary Status -->
+<div class="card">
+    <h2>Vocabulary Hints</h2>
+    <p style="color: var(--text-muted); margin-bottom: 16px;">
+        Your matter names and aliases are loaded into the speech model to improve recognition.
+    </p>
+    
+    <div id="vocab-status" class="test-card">
+        <div id="vocab-loading" style="color: var(--text-muted);">Loading vocabulary...</div>
+        <div id="vocab-list" style="display: none;">
+            <table style="width: 100%; color: var(--text-muted);">
+                <tr>
+                    <td style="padding: 8px 0; font-weight: 600;">Matters loaded:</td>
+                    <td style="padding: 8px 0;" id="matter-count">-</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: 600;">Aliases loaded:</td>
+                    <td style="padding: 8px 0;" id="alias-count">-</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: 600;">Sample terms:</td>
+                    <td style="padding: 8px 0;" id="sample-terms" style="font-size: 0.9em;">-</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- System Info -->
 <div class="card">
     <h2>System Information</h2>
@@ -216,16 +261,12 @@
     <div class="test-card">
         <table style="width: 100%; color: var(--text-muted);">
             <tr>
-                <td style="padding: 8px 0; font-weight: 600;">Whisper Model:</td>
-                <td style="padding: 8px 0;">base.en</td>
+                <td style="padding: 8px 0; font-weight: 600;">Current Model:</td>
+                <td style="padding: 8px 0;" id="current-model">Loading...</td>
             </tr>
             <tr>
                 <td style="padding: 8px 0; font-weight: 600;">Ollama Model:</td>
                 <td style="padding: 8px 0;">qwen2.5:1.5b-instruct</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 0; font-weight: 600;">Sample Rate:</td>
-                <td style="padding: 8px 0;">16000 Hz</td>
             </tr>
             <tr>
                 <td style="padding: 8px 0; font-weight: 600;">Hotkey:</td>
@@ -652,6 +693,117 @@
             hwEl.style.display = 'none';
         }
     }
+    
+    // Load available models
+    async function loadModels() {
+        try {
+            const response = await fetch('/api/whisper-models');
+            const data = await response.json();
+            
+            const modelList = document.getElementById('model-list');
+            const currentModelEl = document.getElementById('current-model');
+            
+            currentModelEl.textContent = data.current;
+            
+            let html = '';
+            data.models.forEach(model => {
+                const isActive = model.id === data.current;
+                html += `
+                    <div class="model-option ${isActive ? 'active' : ''}" 
+                         style="display: flex; justify-content: space-between; align-items: center; padding: 16px; 
+                                background: ${isActive ? 'var(--primary-dim)' : 'var(--bg-hover)'}; 
+                                border: 1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; 
+                                border-radius: var(--radius-md); cursor: pointer;
+                                transition: all 0.2s;"
+                         onclick="selectModel('${model.id}')"
+                         onmouseover="this.style.borderColor='var(--primary)'"
+                         onmouseout="this.style.borderColor='${isActive ? 'var(--primary)' : 'var(--border)}'">
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-main);">${model.name}</div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 4px;">
+                                ${model.size} · ${model.speed} · ${model.accuracy} accuracy
+                            </div>
+                            <div style="font-size: 0.8em; color: var(--text-muted); margin-top: 4px;">
+                                ${model.description}
+                            </div>
+                        </div>
+                        ${isActive ? '<span style="color: var(--primary); font-weight: 600;">Active</span>' : 
+                          '<button class="test-btn" style="padding: 8px 16px; font-size: 0.85em;" onclick="event.stopPropagation(); selectModel(\'' + model.id + '\')">Select</button>'}
+                    </div>
+                `;
+            });
+            
+            modelList.innerHTML = html;
+        } catch (err) {
+            document.getElementById('model-list').innerHTML = `
+                <div style="color: var(--error);">Could not load models: ${err.message}</div>
+            `;
+        }
+    }
+    
+    async function selectModel(modelId) {
+        const statusEl = document.getElementById('model-change-status');
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = `<span style="color: var(--warning);">Switching to ${modelId}...</span>`;
+        
+        try {
+            const response = await fetch('/api/whisper-model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: modelId })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                statusEl.innerHTML = `<span style="color: var(--success);">${data.message}</span>`;
+                // Reload the model list to show new selection
+                loadModels();
+            } else {
+                statusEl.innerHTML = `<span style="color: var(--error);">${data.message}</span>`;
+            }
+        } catch (err) {
+            statusEl.innerHTML = `<span style="color: var(--error);">Error: ${err.message}</span>`;
+        }
+    }
+    
+    // Load vocabulary status
+    async function loadVocabulary() {
+        try {
+            const response = await fetch('/api/matters');
+            const data = await response.json();
+            
+            document.getElementById('vocab-loading').style.display = 'none';
+            document.getElementById('vocab-list').style.display = 'block';
+            
+            const matters = data.matters || [];
+            let aliasCount = 0;
+            let sampleTerms = [];
+            
+            matters.forEach(m => {
+                if (m.aliases) aliasCount += m.aliases.length;
+                sampleTerms.push(m.display_name.split(' ')[0]); // First word of each
+                if (m.aliases && m.aliases.length > 0) {
+                    sampleTerms.push(m.aliases[0]);
+                }
+            });
+            
+            document.getElementById('matter-count').textContent = matters.length;
+            document.getElementById('alias-count').textContent = aliasCount;
+            document.getElementById('sample-terms').textContent = sampleTerms.slice(0, 8).join(', ') + '...';
+            
+        } catch (err) {
+            document.getElementById('vocab-loading').innerHTML = `
+                <span style="color: var(--error);">Could not load vocabulary: ${err.message}</span>
+            `;
+        }
+    }
+    
+    // Load models and vocabulary on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        loadModels();
+        loadVocabulary();
+    });
 </script>
 
 {% endblock %}

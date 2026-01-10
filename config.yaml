@@ -9,8 +9,10 @@ ollama:
   timeout: 30
   
 whisper:
-  model: "base.en"  # Options: tiny.en, base.en, small.en
-  device: "cpu"  # or "cuda" if available
+  # Options: tiny.en (39MB), base.en (74MB), small.en (244MB), medium.en (769MB), large-v2 (1.5GB)
+  # Larger models = better accuracy for names/legal terms, but slower
+  model: "base.en"
+  device: "cpu"  # or "cuda" for NVIDIA GPU
   
 audio:
   sample_rate: 16000
