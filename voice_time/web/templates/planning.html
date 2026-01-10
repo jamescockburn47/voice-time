@@ -555,47 +555,37 @@
 {% block scripts %}
 <script>
     let isRecording = false;
-    let mediaRecorder = null;
-    let audioChunks = [];
     
+    // Use global TimeBrief recording system
     async function toggleRecording() {
-        if (!isRecording) {
-            await startRecording();
-        } else {
-            await stopRecording();
-        }
-    }
-    
-    async function startRecording() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, sampleRate: 16000 } });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            
-            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                await processVoice(audioBlob);
-                stream.getTracks().forEach(track => track.stop());
-            };
-            
-            mediaRecorder.start();
-            isRecording = true;
-            document.getElementById('voice-btn').classList.add('recording');
-            document.getElementById('voice-text').textContent = 'Stop';
-        } catch (err) {
-            alert('Could not access microphone');
-        }
-    }
-    
-    async function stopRecording() {
-        if (mediaRecorder && isRecording) {
-            mediaRecorder.stop();
+        const btn = document.getElementById('voice-btn');
+        const textEl = document.getElementById('voice-text');
+        
+        if (TimeBrief.isRecording) {
+            // Stop recording
+            TimeBrief.stopRecording();
             isRecording = false;
-            document.getElementById('voice-btn').classList.remove('recording');
-            document.getElementById('voice-text').textContent = 'Voice';
+            btn.classList.remove('recording');
+            textEl.textContent = 'Voice';
+        } else {
+            // Start recording
+            const started = await TimeBrief.startRecording(async (audioBlob) => {
+                btn.classList.remove('recording');
+                textEl.textContent = 'Voice';
+                isRecording = false;
+                await processVoice(audioBlob);
+            });
+            
+            if (started) {
+                isRecording = true;
+                btn.classList.add('recording');
+                textEl.textContent = 'Click to Stop';
+            }
         }
     }
+    
+    // Listen for global keyboard shortcut
+    document.addEventListener('timeBriefToggleRecord', toggleRecording);
     
     async function processVoice(audioBlob) {
         const formData = new FormData();
@@ -739,28 +729,7 @@
             `<div class="message ${colors[type] || 'message-info'}">${text}</div>`;
     }
     
-    // Keyboard shortcuts
-    let recordingStartedByKeyboard = false;
-    
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.code === 'Space' && !isRecording) {
-            e.preventDefault();
-            recordingStartedByKeyboard = true;
-            startRecording();
-        }
-    });
-    
-    document.addEventListener('keyup', function(e) {
-        if (e.code === 'Space' && isRecording && recordingStartedByKeyboard && e.ctrlKey) {
-            e.preventDefault();
-            recordingStartedByKeyboard = false;
-            stopRecording();
-        }
-        if (e.key === 'Control' && recordingStartedByKeyboard) {
-            recordingStartedByKeyboard = false;
-            if (isRecording) stopRecording();
-        }
-    });
+    // Keyboard shortcuts handled by global TimeBrief system (Ctrl+Space toggles)
     
     // Enter to submit
     document.getElementById('task-description').addEventListener('keypress', function(e) {

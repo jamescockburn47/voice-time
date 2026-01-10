@@ -1860,8 +1860,8 @@ def register_routes(app):
     
     @app.route('/api/match-matter', methods=['POST'])
     def match_matter():
-        """Match spoken text to a matter."""
-        from ..core.matcher import Matcher
+        """Match spoken text to a matter - used by Voice Memos."""
+        from ..core.matcher import MatterMatcher
         session = app.session
         
         data = request.get_json()
@@ -1870,14 +1870,18 @@ def register_routes(app):
         if not text:
             return jsonify({'matter_id': None, 'matter_name': None})
         
-        matcher = Matcher(session)
-        match = matcher.find_matter(text)
+        matcher = MatterMatcher(session, confidence_threshold=0.4)
+        result = matcher.find_matter(text)
         
-        if match.confidence > 0.5:
+        if result.match:
             return jsonify({
-                'matter_id': match.matter.id,
-                'matter_name': match.matter.display_name,
-                'confidence': match.confidence
+                'matter_id': result.match.id,
+                'matter_name': result.match.display_name,
+                'confidence': result.confidence
             })
-        
-        return jsonify({'matter_id': None, 'matter_name': None})
+        else:
+            return jsonify({
+                'matter_id': None,
+                'matter_name': None,
+                'suggestions': [c[0].display_name for c in (result.candidates or [])[:3]]
+            })
