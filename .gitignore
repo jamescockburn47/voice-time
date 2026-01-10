@@ -69,6 +69,7 @@ config.local.yaml
 # Tauri
 src-tauri/target/
 src-tauri/gen/schemas/
+src-tauri/binaries/*.exe
 
 # PyInstaller
 *.spec

@@ -589,12 +589,30 @@ def register_routes(app):
         """Switch Ollama LLM model - pulls if needed."""
         import yaml
         import subprocess
+        import os
         
         data = request.json
         new_model = data.get('model')
         
         if not new_model:
             return jsonify({'success': False, 'message': 'No model specified'})
+        
+        # Find Ollama executable
+        def find_ollama():
+            # Check common install locations
+            paths = [
+                os.path.expandvars(r'%LOCALAPPDATA%\Programs\Ollama\ollama.exe'),
+                r'C:\Program Files\Ollama\ollama.exe',
+                r'C:\Program Files (x86)\Ollama\ollama.exe',
+                'ollama'  # Fall back to PATH
+            ]
+            for p in paths:
+                expanded = os.path.expandvars(p)
+                if os.path.exists(expanded):
+                    return expanded
+            return 'ollama'  # Hope it's in PATH
+        
+        ollama_exe = find_ollama()
         
         # Update config in memory
         old_model = app.config_obj.ollama.model
@@ -613,13 +631,35 @@ def register_routes(app):
             with open(config_path, 'w') as f:
                 yaml.dump(config_data, f, default_flow_style=False)
         
+        # Also update user's home config if it exists
+        home_config = Path.home() / '.voice_time' / 'config.yaml'
+        if home_config.exists():
+            try:
+                with open(home_config) as f:
+                    hc = yaml.safe_load(f) or {}
+                if 'ollama' not in hc:
+                    hc['ollama'] = {}
+                hc['ollama']['model'] = new_model
+                with open(home_config, 'w') as f:
+                    yaml.dump(hc, f, default_flow_style=False)
+            except:
+                pass
+        
         # Pull the model synchronously so user knows when it's ready
         try:
+            # Use CREATE_NO_WINDOW flag on Windows to hide console
+            startupinfo = None
+            if os.name == 'nt':
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = 0  # SW_HIDE
+            
             result = subprocess.run(
-                ['ollama', 'pull', new_model],
+                [ollama_exe, 'pull', new_model],
                 capture_output=True,
                 text=True,
-                timeout=300  # 5 min timeout
+                timeout=600,  # 10 min timeout for larger models
+                startupinfo=startupinfo
             )
             if result.returncode == 0:
                 return jsonify({
@@ -629,9 +669,10 @@ def register_routes(app):
                     'downloaded': True
                 })
             else:
+                error_msg = result.stderr[:200] if result.stderr else 'Unknown error'
                 return jsonify({
                     'success': True,
-                    'message': f'Config saved but download failed: {result.stderr[:100]}',
+                    'message': f'Config saved but download failed: {error_msg}',
                     'model': new_model,
                     'downloaded': False
                 })
@@ -642,10 +683,17 @@ def register_routes(app):
                 'model': new_model,
                 'downloaded': False
             })
+        except FileNotFoundError:
+            return jsonify({
+                'success': False,
+                'message': 'Ollama not found. Please install from ollama.com',
+                'model': new_model,
+                'downloaded': False
+            })
         except Exception as e:
             return jsonify({
                 'success': True,
-                'message': f'Config saved. Run "ollama pull {new_model}" manually.',
+                'message': f'Config saved. Error pulling model: {str(e)[:100]}',
                 'model': new_model,
                 'downloaded': False,
                 'error': str(e)
@@ -1514,7 +1562,7 @@ def register_routes(app):
     
     @app.route('/api/transcribe', methods=['POST'])
     def transcribe_audio():
-        """Transcribe audio only (no processing) - used by Planning page."""
+        """Transcribe audio only (no processing) - used by Planning and Voice Memos pages."""
         import tempfile
         import os
         
@@ -1522,23 +1570,33 @@ def register_routes(app):
             return jsonify({'success': False, 'transcript': '', 'message': 'No audio file'})
         
         audio_file = request.files['audio']
+        tmp_path = None
         
         try:
-            # Save to temp file
+            # Save to temp file (close it first for Windows compatibility)
             with tempfile.NamedTemporaryFile(suffix='.webm', delete=False) as tmp:
                 tmp_path = tmp.name
             
             audio_file.save(tmp_path)
             
-            # Get or create transcriber
-            transcriber = app.transcriber
-            if transcriber is None:
+            # Check file size
+            file_size = os.path.getsize(tmp_path)
+            if file_size < 1000:
+                return jsonify({
+                    'success': False,
+                    'transcript': '',
+                    'message': f'Audio file too small ({file_size} bytes) - speak for longer'
+                })
+            
+            # Get or create transcriber (lazy loaded)
+            if app.transcriber is None:
                 from ..voice.transcribe import Transcriber
-                transcriber = Transcriber(
+                app.transcriber = Transcriber(
                     model_size=app.config_obj.whisper.model,
                     device=app.config_obj.whisper.device
                 )
-                app.transcriber = transcriber
+            
+            transcriber = app.transcriber
             
             # Load vocabulary from database for better recognition
             session = app.session
@@ -1571,22 +1629,27 @@ def register_routes(app):
             # Transcribe
             transcript = transcriber.transcribe_file(tmp_path)
             
-            # Cleanup
-            try:
-                os.unlink(tmp_path)
-            except:
-                pass
-            
             return jsonify({
                 'success': True,
                 'transcript': transcript or ''
             })
+            
         except Exception as e:
+            import traceback
+            print(f"Transcription error: {e}")
+            traceback.print_exc()
             return jsonify({
                 'success': False,
                 'transcript': '',
-                'message': str(e)
+                'message': f'Transcription error: {str(e)}'
             })
+        finally:
+            # Always cleanup temp file
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
     
     @app.route('/api/plan/add-task', methods=['POST'])
     def add_plan_task():
@@ -1616,17 +1679,19 @@ def register_routes(app):
         
         if not matter_id:
             # Try fuzzy matching
-            from ..core.matcher import Matcher
-            matcher = Matcher(session)
+            from ..core.matcher import MatterMatcher, ActivityMatcher
+            matter_matcher = MatterMatcher(session)
             
-            match = matcher.find_matter(description)
+            match = matter_matcher.find_matter(description)
             if match.confidence > 0.6:
-                detected_matter = match.matter
+                detected_matter = match.match
                 matter_id = detected_matter.id
             
-            activity_match = matcher.find_activity_type(description)
-            if activity_match:
-                detected_activity = activity_match
+            # Also try to detect activity type
+            activity_matcher = ActivityMatcher(session)
+            activity_result = activity_matcher.find_activity_type(description)
+            if activity_result.match and activity_result.confidence > 0.5:
+                detected_activity = activity_result.match
                 activity_id = detected_activity.id
         
         # Get next sort order

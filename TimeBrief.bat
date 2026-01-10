@@ -19,44 +19,106 @@ cd /d "%~dp0"
 :: Initialize PID variable
 set FLASK_PID=
 
-:: Activate venv
+:: Check Python first - this is the only real prerequisite
+where python >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo   ERROR: Python not found!
+    echo.
+    echo   Please install Python 3.10+ from:
+    echo   https://www.python.org/downloads/
+    echo.
+    echo   IMPORTANT: Check "Add Python to PATH" during install!
+    echo.
+    pause
+    exit /b 1
+)
+
+:: Create/activate venv and install dependencies
 if not exist "venv\Scripts\activate.bat" (
-    echo [1/4] Creating Python environment...
+    echo [1/5] Creating Python environment...
     python -m venv venv
     if errorlevel 1 (
-        echo ERROR: Python not found. Please install Python 3.10+
+        echo ERROR: Failed to create virtual environment
         pause
         exit /b 1
     )
     call venv\Scripts\activate.bat
-    echo Installing dependencies...
+    echo Installing dependencies (this may take a few minutes)...
     pip install -r requirements.txt -q
+    if errorlevel 1 (
+        echo ERROR: Failed to install dependencies
+        pause
+        exit /b 1
+    )
 ) else (
     call venv\Scripts\activate.bat
 )
 
-:: Check Ollama
-echo [2/4] Checking AI engine...
+:: Check and auto-install Ollama
+echo [2/5] Checking AI engine...
 where ollama >nul 2>&1
 if errorlevel 1 (
-    echo [WARNING] Ollama not found - install from https://ollama.ai
-) else (
-    tasklist /FI "IMAGENAME eq ollama.exe" 2>nul | find /I "ollama.exe" >nul
-    if errorlevel 1 (
-        start "" /B ollama serve
-        timeout /t 2 /nobreak >nul
+    echo Ollama not found - attempting automatic install...
+    
+    :: Try winget first (built into Windows 10/11)
+    where winget >nul 2>&1
+    if not errorlevel 1 (
+        echo Installing Ollama via winget...
+        winget install Ollama.Ollama --accept-source-agreements --accept-package-agreements -h
+        if not errorlevel 1 (
+            echo Ollama installed successfully!
+            :: Refresh PATH to find ollama
+            set "PATH=%LOCALAPPDATA%\Programs\Ollama;%PATH%"
+        ) else (
+            echo.
+            echo   Automatic install failed. Please install manually:
+            echo   https://ollama.com/download
+            echo.
+            pause
+            exit /b 1
+        )
+    ) else (
+        echo.
+        echo   Please install Ollama manually from:
+        echo   https://ollama.com/download
+        echo.
+        echo   Then run this script again.
+        echo.
+        pause
+        exit /b 1
     )
-    echo Ollama OK
 )
+
+:: Ensure Ollama is running
+echo [3/5] Starting Ollama service...
+tasklist /FI "IMAGENAME eq ollama.exe" 2>nul | find /I "ollama.exe" >nul
+if errorlevel 1 (
+    start "" /B ollama serve
+    timeout /t 3 /nobreak >nul
+)
+
+:: Pull the default model if not present
+echo [4/5] Checking AI model...
+ollama list 2>nul | find "qwen2.5:1.5b" >nul
+if errorlevel 1 (
+    echo Downloading AI model (first run only, ~1GB)...
+    echo This may take a few minutes depending on your internet speed.
+    ollama pull qwen2.5:1.5b-instruct
+)
+echo AI ready
 
 :: Initialize database
 if not exist "%USERPROFILE%\.voice_time\voice_time.db" (
-    echo [3/4] Initializing database...
+    echo [5/5] Initializing database...
     python run.py --init
+) else (
+    echo [5/5] Database OK
 )
 
 :: Start Flask in background and capture PID
-echo [4/4] Starting backend...
+echo.
+echo Starting backend...
 
 :: Use PowerShell to start process and get PID
 for /f "tokens=*" %%i in ('powershell -NoProfile -Command "Start-Process -FilePath 'python' -ArgumentList 'run.py' -WindowStyle Hidden -PassThru | Select-Object -ExpandProperty Id"') do set FLASK_PID=%%i
@@ -80,7 +142,7 @@ echo.
 :: Check if cargo/tauri is available
 where cargo >nul 2>&1
 if errorlevel 1 (
-    echo Rust not found - opening in browser instead...
+    echo Opening in browser...
     start http://localhost:5000
     echo.
     echo Press any key to stop the server...
@@ -98,7 +160,6 @@ echo Shutting down...
 if defined FLASK_PID (
     :: Kill only the specific Flask process we started
     taskkill /F /PID %FLASK_PID% >nul 2>&1
-    :: FIX: Use "not errorlevel 1" instead of "errorlevel 0" (which is always true)
     if not errorlevel 1 (
         echo Backend stopped [PID: %FLASK_PID%]
     ) else (

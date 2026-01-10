@@ -50,29 +50,51 @@ class Config:
     
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
-        """Load config from YAML file, with defaults."""
+        """Load config from YAML file, with defaults.
+        
+        Config is loaded in order of priority:
+        1. Explicitly provided path
+        2. Auto-generated config in ~/.voice_time/config.yaml (from hardware detection)
+        3. Local config.yaml in current directory
+        4. Default values
+        """
         config = cls()
         
-        if path is None:
-            path = Path("config.yaml")
+        # Find config file in priority order
+        config_paths = []
+        if path is not None:
+            config_paths.append(path)
         
-        if path.exists():
-            with open(path) as f:
-                data = yaml.safe_load(f)
-                # Merge with defaults
-                if data:
-                    if "ollama" in data:
-                        config.ollama = OllamaConfig(**data["ollama"])
-                    if "whisper" in data:
-                        config.whisper = WhisperConfig(**data["whisper"])
-                    if "audio" in data:
-                        config.audio = AudioConfig(**data["audio"])
-                    if "matching" in data:
-                        config.matching = MatchingConfig(**data["matching"])
-                    if "temporal" in data:
-                        config.temporal = TemporalConfig(**data["temporal"])
-                    if "app" in data and "data_dir" in data["app"]:
-                        config.data_dir = Path(data["app"]["data_dir"]).expanduser()
+        # Check for auto-generated config from Tauri installer
+        auto_config = Path.home() / ".voice_time" / "config.yaml"
+        config_paths.append(auto_config)
+        
+        # Check local config
+        config_paths.append(Path("config.yaml"))
+        
+        # Load from first existing config
+        for config_path in config_paths:
+            if config_path.exists():
+                try:
+                    with open(config_path) as f:
+                        data = yaml.safe_load(f)
+                        # Merge with defaults
+                        if data:
+                            if "ollama" in data:
+                                config.ollama = OllamaConfig(**data["ollama"])
+                            if "whisper" in data:
+                                config.whisper = WhisperConfig(**data["whisper"])
+                            if "audio" in data:
+                                config.audio = AudioConfig(**data["audio"])
+                            if "matching" in data:
+                                config.matching = MatchingConfig(**data["matching"])
+                            if "temporal" in data:
+                                config.temporal = TemporalConfig(**data["temporal"])
+                            if "app" in data and "data_dir" in data["app"]:
+                                config.data_dir = Path(data["app"]["data_dir"]).expanduser()
+                        break  # Use first valid config found
+                except Exception:
+                    continue  # Try next config file
         
         # Ensure data directory exists
         config.data_dir.mkdir(parents=True, exist_ok=True)

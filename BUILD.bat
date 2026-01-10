@@ -3,9 +3,12 @@ title TimeBrief - Production Build
 color 0E
 
 echo.
-echo ╔════════════════════════════════════════════════════════════╗
-echo ║           TimeBrief - Production Build                     ║
-echo ╚════════════════════════════════════════════════════════════╝
+echo   ============================================================
+echo            TimeBrief - Production Build
+echo   ============================================================
+echo.
+echo   This creates a STANDALONE INSTALLER that includes everything.
+echo   Users just download and run - no Python, no setup required!
 echo.
 
 :: Check prerequisites
@@ -80,10 +83,19 @@ cd ..
 echo.
 echo [6/6] Build complete!
 echo.
-echo ════════════════════════════════════════════════════════════
-echo   Installer location:
+echo   ============================================================
+echo   SUCCESS! Standalone installer created:
+echo   ============================================================
+echo.
 echo   src-tauri\target\release\bundle\nsis\TimeBrief_0.1.0_x64-setup.exe
-echo ════════════════════════════════════════════════════════════
+echo.
+echo   This installer is FULLY SELF-CONTAINED:
+echo   - Bundles the Python server (no Python install needed)
+echo   - Auto-installs Ollama on first run
+echo   - Auto-downloads AI models on first run
+echo.
+echo   Just share the .exe file - users double-click and go!
+echo   ============================================================
 echo.
 
 pause

@@ -30,6 +30,7 @@ def create_app(config: Config = None) -> Flask:
     app.session = session
     app.day_state = day_state
     app.config_obj = config
+    app.transcriber = None  # Lazy-loaded on first use
     
     # Register routes
     from . import routes

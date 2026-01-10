@@ -1,129 +1,117 @@
 # TimeBrief
 
-Voice-first time recording for lawyers. Built with local AI - your data never leaves your machine.
+**Voice-powered time tracking for lawyers.** Built with 100% local AI - your data never leaves your machine.
 
-## For New Users - Quick Setup
-
-### Prerequisites
-- **Windows 10/11**
-- **Python 3.11+** - [Download from python.org](https://www.python.org/downloads/)
-- **Rust** (for Tauri) - [Download from rustup.rs](https://rustup.rs/)
-- **8GB+ RAM** recommended
-
-### Step 1: Clone the Repository
-```bash
-git clone https://github.com/YOUR_USERNAME/voice_time.git
-cd voice_time
-```
-
-### Step 2: Run TimeBrief
-```bash
-TimeBrief.bat
-```
-
-That's it! The batch file will automatically:
-1. Create a Python virtual environment
-2. Install all dependencies
-3. Check/install Ollama and AI models
-4. Launch the desktop app
-
-### First Run Notes
-- **First launch takes ~5 minutes** as it downloads AI models (~2GB)
-- Allow microphone access when prompted
-- The app will open in a native window
+> ⚡ Vibe-coded in 24 hours as a proof of concept
 
 ---
 
-## How It Works
+## Download & Install
 
-1. **Plan your day** - Tell TimeBrief what you're working on today
-2. **Start a timer** - Say "working on Smith matter" and a timer begins
-3. **Switch tasks** - Just say what you're doing next  
-4. **Review and export** - Clean, billable entries ready for your system
+### For End Users (Easiest)
 
-## Features
+1. Go to [Releases](https://github.com/jamescockburn47/voice-time/releases)
+2. Download `TimeBrief_x.x.x_x64-setup.exe`
+3. Run the installer
+4. Launch TimeBrief from your desktop
 
-- **Voice Control** - Click or Ctrl+Space to record, click again to stop
-- **Local AI** - Ollama + Whisper run entirely on your machine
-- **Smart Matching** - Recognizes matters, activities, and planned tasks
-- **Voice Memos** - Dictate thoughts and action items per case
-- **6-Minute Billing** - Automatic calculation of billable units
-- **AI Chat** - Ask questions about your time data
-- **Zero Cloud** - 100% private, offline-capable
+**First launch:** The app automatically installs AI models (~400MB). This takes 2-5 minutes - just wait for the main window to appear.
+
+**Requirements:** Windows 10/11, 4GB+ RAM. Works on any machine - **no GPU required**.
+
+---
+
+## What It Does
+
+1. **Plan your day** → Tell TimeBrief what you're working on
+2. **Start a timer** → Say "working on Smith matter, research"
+3. **Switch tasks** → Just say what you're doing next
+4. **Voice memos** → Dictate case notes and action items
+5. **Review & export** → Clean billable entries ready for your system
+
+---
+
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 🎤 **Voice Control** | Click or Ctrl+Space to record |
+| 🔒 **100% Local** | AI runs on your machine, zero cloud |
+| 🧠 **Smart Matching** | Recognizes matters, activities, and tasks |
+| 📝 **Voice Memos** | Dictate thoughts and actions per case |
+| ⏱️ **6-Minute Billing** | Automatic billable unit calculation |
+| 💬 **AI Chat** | Ask questions about your time data |
+
+---
 
 ## Technology
 
-- Python + Flask (backend)
-- Tauri (native desktop wrapper)
-- Ollama with Qwen2.5 (local LLM)
-- faster-whisper (speech-to-text)
-- SQLite (local database)
+- **Ollama** - Local LLM (qwen2.5) for understanding intent
+- **faster-whisper** - Local speech-to-text
+- **Tauri** - Native Windows app
+- **SQLite** - Local database
 
-## Configuration
+Everything runs on CPU. If you have an NVIDIA GPU, it's used automatically for faster performance.
 
-Edit `config.yaml` to change:
-- AI models (Whisper size, Ollama model)
-- Working hours
-- Matching thresholds
+---
 
-Models can also be changed in Settings within the app.
+## For Developers
 
-## Data Storage
+### Running from Source
 
-All data stored locally at:
-- **Windows**: `C:\Users\YOUR_NAME\.voice_time\voice_time.db`
-- **Mac/Linux**: `~/.voice_time/voice_time.db`
+```bash
+git clone https://github.com/jamescockburn47/voice-time.git
+cd voice-time
+TimeBrief.bat
+```
 
-## Building a Standalone Installer
+The batch file handles:
+- Python virtual environment
+- Dependencies installation
+- Ollama setup
+- Launching the app
 
-To create a distributable `.exe` installer:
+### Building the Installer
 
 ```bash
 BUILD.bat
 ```
 
-This creates `TimeBrief_x.x.x_x64-setup.exe` in `src-tauri/target/release/bundle/nsis/`
+Creates `TimeBrief_x.x.x_x64-setup.exe` in `src-tauri/target/release/bundle/nsis/`
 
-The installer includes everything - users don't need Python or Rust installed.
+Requires: Python 3.11+, Rust/Cargo
 
-## Running Without Tauri (Browser Mode)
+---
 
-If you just want the web interface without the native wrapper:
+## Data Storage
 
-```bash
-# Create virtual environment
-python -m venv venv
-venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run
-python run.py
+All data stored locally:
+```
+C:\Users\YOU\.voice_time\
+├── timebrief.db      # Your time entries
+└── config.yaml       # Auto-generated settings
 ```
 
-Then open http://localhost:5000 in your browser.
+---
 
 ## Troubleshooting
 
-### "Ollama not found"
-The app will try to install Ollama automatically. If it fails:
-1. Download from [ollama.com](https://ollama.com/download)
-2. Install and run once
-3. Restart TimeBrief
+**App shows blank screen?**  
+Wait 30 seconds - the backend is still starting.
 
-### "Model not downloaded"
-Go to Settings page and click "Download" next to the model you want.
+**Voice not working?**  
+Allow microphone permission when prompted.
 
-### Microphone not working
-- Check browser/app has microphone permission
-- Try Settings → Test Microphone
-- Ensure no other app is using the microphone
+**Ollama errors?**  
+Download manually from [ollama.com](https://ollama.com/download), then restart TimeBrief.
 
-## License
+---
 
-MIT
+## Links
 
-## Author
+- **Author:** [jamescockburn.io](https://www.jamescockburn.io)
+- **Other Projects:** [Humane Calendar](https://www.humanecalendar.com)
 
-James Cockburn - [jamescockburn.io](https://jamescockburn.io)
+---
+
+MIT License
