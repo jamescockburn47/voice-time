@@ -586,11 +586,34 @@
                 
                 // Reload to show updates
                 setTimeout(() => window.location.reload(), 1500);
+            } else if (data.needs_clarification) {
+                processingDiv.style.display = 'none';
+                
+                // Show clarification UI with suggestions
+                let html = `<div class="message message-info" style="border-left-color: var(--warning);">
+                    <strong>${data.message}</strong>`;
+                
+                // Add suggestion buttons if available
+                if (data.suggestions && data.suggestions.length > 0) {
+                    html += `<div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">`;
+                    for (const suggestion of data.suggestions) {
+                        html += `<button onclick="quickSelect('${suggestion}')" style="padding: 8px 16px; background: var(--primary); color: var(--bg-app); border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">${suggestion}</button>`;
+                    }
+                    html += `</div>`;
+                }
+                
+                html += `<p style="margin-top: 12px; font-size: 0.9em; color: var(--text-muted);">
+                    Click a button above or speak/type the matter name
+                </p></div>`;
+                
+                responseDiv.innerHTML = html;
+                updateMicStatus('ready', 'Clarification needed');
+                addDebugLog(`Clarification needed: ${data.clarification_question}`);
             } else {
                 processingDiv.style.display = 'none';
                 responseDiv.innerHTML = 
-                    `<div class="message message-error"><strong>Processing failed:</strong><br>${data.message || 'Could not process voice input'}</div>`;
-                updateMicStatus('ready', '🟢 Try again');
+                    `<div class="message message-error"><strong>Not understood:</strong><br>${data.message || 'Could not process voice input'}</div>`;
+                updateMicStatus('ready', 'Try again');
                 addDebugLog(`Failed: ${data.message}`);
             }
         } catch (err) {
@@ -648,8 +671,28 @@
                 responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
                 addDebugLog(`Success: ${data.message}`);
                 setTimeout(() => window.location.reload(), 1500);
+            } else if (data.needs_clarification) {
+                // Show clarification UI with suggestions
+                let html = `<div class="message message-info" style="border-left-color: var(--warning);">
+                    <strong>${data.message}</strong>`;
+                
+                // Add suggestion buttons if available
+                if (data.suggestions && data.suggestions.length > 0) {
+                    html += `<div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">`;
+                    for (const suggestion of data.suggestions) {
+                        html += `<button onclick="quickSelect('${suggestion}')" style="padding: 8px 16px; background: var(--primary); color: var(--bg-app); border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">${suggestion}</button>`;
+                    }
+                    html += `</div>`;
+                }
+                
+                html += `<p style="margin-top: 12px; font-size: 0.9em; color: var(--text-muted);">
+                    Click a button above or type/speak a matter name
+                </p></div>`;
+                
+                responseDiv.innerHTML = html;
+                addDebugLog(`Clarification needed: ${data.clarification_question}`);
             } else {
-                responseDiv.innerHTML = `<div class="message message-error"><strong>Processing failed:</strong><br>${data.message}</div>`;
+                responseDiv.innerHTML = `<div class="message message-error"><strong>Not understood:</strong><br>${data.message}</div>`;
                 addDebugLog(`Failed: ${data.message}`);
             }
             input.value = '';
@@ -666,6 +709,13 @@
         document.getElementById('response-message').innerHTML = '';
         document.getElementById('recognized-text').style.display = 'none';
         document.getElementById('processing-status').style.display = 'none';
+    }
+    
+    // Quick select a matter from suggestions
+    function quickSelect(matterName) {
+        const input = document.getElementById('utterance-input');
+        input.value = matterName;
+        processInput();
     }
     
     // Submit on Enter

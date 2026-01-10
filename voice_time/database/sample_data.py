@@ -16,6 +16,12 @@ def create_realistic_matters(session: Session) -> list:
             "aliases": ["Thompson", "Thompson v Apex", "Apex dispute", "TI matter", "manufacturing case"]
         },
         {
+            "matter_ref": "2024/CL/203",
+            "display_name": "Smith & Partners v Regional Bank Ltd",
+            "client": "Smith & Partners LLP",
+            "aliases": ["Smith", "Smith matter", "Smith Partners", "bank dispute", "Smith v Regional"]
+        },
+        {
             "matter_ref": "2024/CL/142",
             "display_name": "R (on application of Greenfield) v Planning Authority",
             "client": "Greenfield Developments",

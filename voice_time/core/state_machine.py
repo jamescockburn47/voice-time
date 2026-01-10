@@ -39,6 +39,7 @@ class DayState:
     - Work log creation
     - Task stack management
     - Voice-controlled editing
+    - Conversational clarifications
     """
     
     def __init__(
@@ -70,6 +71,9 @@ class DayState:
         self.last_interaction_time: datetime = datetime.now()
         self.today_plan_id: Optional[str] = None
         
+        # Conversational state for clarifications
+        self.pending_clarification: Optional[Dict[str, Any]] = None
+        
         # Load today's plan if exists
         self._load_today_plan()
     
@@ -90,6 +94,12 @@ class DayState:
         
         # Update last interaction time
         self.last_interaction_time = datetime.now()
+        
+        # Check if we're waiting for a clarification response
+        if self.pending_clarification:
+            result = self._handle_clarification_response(utterance, event)
+            if result:
+                return result
         
         # Check if this is an edit command first (priority)
         edit_cmd = self.edit_parser.parse(utterance)
@@ -130,6 +140,61 @@ class DayState:
                 message="I didn't understand that. Can you rephrase?",
                 needs_clarification=True
             )
+    
+    def _handle_clarification_response(self, utterance: str, event: VoiceEvent) -> Optional[ProcessingResult]:
+        """Handle a response to a pending clarification question."""
+        if not self.pending_clarification:
+            return None
+        
+        clarification_type = self.pending_clarification.get('type')
+        original_utterance = self.pending_clarification.get('original_utterance', '')
+        
+        if clarification_type == 'matter':
+            # User is specifying which matter
+            matter_match = self.matter_matcher.find_matter(utterance)
+            
+            if matter_match.match:
+                # Got a valid matter - now process the original intent
+                self.pending_clarification = None
+                
+                # Start work on this matter
+                self.active_matter_id = matter_match.match.id
+                self.active_activity_type_id = None
+                self.current_work_started_at = datetime.now()
+                matter_match.match.touch()
+                self.session.commit()
+                
+                event.intent = 'start'
+                event.processed = True
+                
+                return ProcessingResult(
+                    success=True,
+                    message=f"Started: {matter_match.match.display_name}"
+                )
+            else:
+                # Still can't find matter - give up and clear state
+                self.pending_clarification = None
+                available = self._get_available_matters()
+                return ProcessingResult(
+                    success=False,
+                    message=f"Could not find that matter. Available: {available}"
+                )
+        
+        # Unknown clarification type - clear and process normally
+        self.pending_clarification = None
+        return None
+    
+    def _get_available_matters(self) -> str:
+        """Get a list of available matter names for suggestions."""
+        matters = self.session.query(Matter).filter(Matter.is_active == True).order_by(
+            Matter.last_used_at.desc().nullslast()
+        ).limit(5).all()
+        
+        if not matters:
+            return "No matters configured. Add some in the Matters page."
+        
+        names = [m.display_name.split()[0] if m.display_name else m.matter_ref for m in matters]
+        return ", ".join(names)
     
     def _handle_edit_command(self, cmd, event: VoiceEvent) -> ProcessingResult:
         """
@@ -408,12 +473,34 @@ class DayState:
         activity_match = self.activity_matcher.find_activity_type(utterance)
         
         if not matter_match.match:
-            return ProcessingResult(
-                success=False,
-                message="Which matter is this for?",
-                needs_clarification=True,
-                clarification_question="matter"
-            )
+            # No match found - provide helpful suggestions
+            available = self._get_available_matters()
+            
+            # Store state for follow-up
+            self.pending_clarification = {
+                'type': 'matter',
+                'original_utterance': utterance,
+                'timestamp': datetime.now()
+            }
+            
+            # Check if there were close matches
+            if matter_match.candidates:
+                suggestions = [c[0].display_name.split()[0] for c in matter_match.candidates[:3]]
+                return ProcessingResult(
+                    success=False,
+                    message=f"Did you mean: {', '.join(suggestions)}? Say the matter name to start.",
+                    needs_clarification=True,
+                    clarification_question="matter",
+                    data={'suggestions': suggestions, 'available': available}
+                )
+            else:
+                return ProcessingResult(
+                    success=False,
+                    message=f"Matter not found. Available: {available}. Say a matter name to start.",
+                    needs_clarification=True,
+                    clarification_question="matter",
+                    data={'available': available}
+                )
         
         # Start new work block
         self.active_matter_id = matter_match.match.id
@@ -429,7 +516,7 @@ class DayState:
         
         return ProcessingResult(
             success=True,
-            message=f"▶ Started: {matter_name} - {activity_name}"
+            message=f"Started: {matter_name} - {activity_name}"
         )
     
     def _handle_complete(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
@@ -583,10 +670,12 @@ class DayState:
         duration_result = self.temporal_parser.infer_duration(utterance)
         
         if not matter_match.match:
+            available = self._get_available_matters()
             return ProcessingResult(
                 success=False,
-                message="Which matter was this for?",
-                needs_clarification=True
+                message=f"Which matter was this for? Available: {available}",
+                needs_clarification=True,
+                data={'available': available}
             )
         
         # Generate narrative
@@ -612,7 +701,7 @@ class DayState:
         
         return ProcessingResult(
             success=True,
-            message=f"✓ Logged {duration_result.hours}h to {matter_match.match.display_name}"
+            message=f"Logged {duration_result.hours}h to {matter_match.match.display_name}"
         )
     
     def _handle_add_task(self, utterance: str, event: VoiceEvent) -> ProcessingResult:

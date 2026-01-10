@@ -269,12 +269,22 @@ def register_routes(app):
         # Process through state machine
         result = app.day_state.process(utterance)
         
-        # Don't include data in JSON response (may contain non-serializable objects)
-        return jsonify({
+        # Build response with safe data
+        response = {
             'success': result.success,
             'message': result.message,
-            'needs_clarification': result.needs_clarification
-        })
+            'needs_clarification': result.needs_clarification,
+            'clarification_question': result.clarification_question
+        }
+        
+        # Add safe data fields if present
+        if result.data:
+            if 'suggestions' in result.data:
+                response['suggestions'] = result.data['suggestions']
+            if 'available' in result.data:
+                response['available'] = result.data['available']
+        
+        return jsonify(response)
     
     @app.route('/process-voice', methods=['POST'])
     def process_voice():
@@ -319,13 +329,23 @@ def register_routes(app):
             # Process through state machine
             result = app.day_state.process(transcript)
             
-            # Don't include data in JSON response (may contain non-serializable objects)
-            return jsonify({
+            # Build response with safe data
+            response = {
                 'success': result.success,
                 'message': result.message,
                 'transcript': transcript,
-                'needs_clarification': result.needs_clarification
-            })
+                'needs_clarification': result.needs_clarification,
+                'clarification_question': result.clarification_question
+            }
+            
+            # Add safe data fields if present
+            if result.data:
+                if 'suggestions' in result.data:
+                    response['suggestions'] = result.data['suggestions']
+                if 'available' in result.data:
+                    response['available'] = result.data['available']
+            
+            return jsonify(response)
             
         except Exception as e:
             return jsonify({
