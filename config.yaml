@@ -5,7 +5,9 @@ app:
   
 ollama:
   host: "http://localhost:11434"
-  model: "qwen2.5:1.5b-instruct"  # Small, fast, excellent JSON output (~1GB)
+  # Options: qwen2.5:0.5b-instruct, qwen2.5:1.5b-instruct, qwen2.5:3b-instruct, qwen2.5:7b-instruct
+  # Also: llama3.2:3b, mistral:7b (larger = better understanding but slower)
+  model: "qwen2.5:1.5b-instruct"
   timeout: 30
   
 whisper:

@@ -226,6 +226,28 @@
     </div>
 </div>
 
+<!-- LLM Model (Ollama) -->
+<div class="card">
+    <h2>LLM Model (AI Brain)</h2>
+    <p style="color: var(--text-muted); margin-bottom: 16px;">
+        The LLM handles planning, matter matching for ambiguous cases, and narrative generation.
+        Larger models = better understanding but slower.
+    </p>
+    
+    <div id="llm-selector" class="test-card">
+        <div style="display: grid; gap: 12px;" id="llm-model-list">
+            <div style="color: var(--text-muted);">Loading models...</div>
+        </div>
+        <div id="llm-change-status" style="margin-top: 16px; display: none;" class="test-result"></div>
+        
+        <!-- Test LLM button -->
+        <button id="test-llm-btn" class="test-btn" style="margin-top: 16px;" onclick="testLLM()">
+            Test LLM Response
+        </button>
+        <div id="llm-test-result" style="display: none; margin-top: 12px;" class="test-result"></div>
+    </div>
+</div>
+
 <!-- Vocabulary Status -->
 <div class="card">
     <h2>Vocabulary Hints</h2>
@@ -265,8 +287,8 @@
                 <td style="padding: 8px 0;" id="current-model">Loading...</td>
             </tr>
             <tr>
-                <td style="padding: 8px 0; font-weight: 600;">Ollama Model:</td>
-                <td style="padding: 8px 0;">qwen2.5:1.5b-instruct</td>
+                <td style="padding: 8px 0; font-weight: 600;">LLM Model:</td>
+                <td style="padding: 8px 0;" id="current-llm">Loading...</td>
             </tr>
             <tr>
                 <td style="padding: 8px 0; font-weight: 600;">Hotkey:</td>
@@ -767,6 +789,114 @@
         }
     }
     
+    // Load LLM models
+    async function loadLLMModels() {
+        try {
+            const response = await fetch('/api/llm-models');
+            const data = await response.json();
+            
+            const modelList = document.getElementById('llm-model-list');
+            const currentLLMEl = document.getElementById('current-llm');
+            
+            if (currentLLMEl) currentLLMEl.textContent = data.current;
+            
+            let html = '';
+            data.models.forEach(model => {
+                const isActive = model.id === data.current;
+                html += `
+                    <div class="llm-option ${isActive ? 'active' : ''}" 
+                         style="display: flex; justify-content: space-between; align-items: center; padding: 16px; 
+                                background: ${isActive ? 'var(--primary-dim)' : 'var(--bg-hover)'}; 
+                                border: 1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; 
+                                border-radius: var(--radius-md); cursor: pointer;
+                                transition: all 0.2s;"
+                         onclick="selectLLM('${model.id}')"
+                         onmouseover="this.style.borderColor='var(--primary)'"
+                         onmouseout="this.style.borderColor='${isActive ? 'var(--primary)' : 'var(--border)}'">
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-main);">${model.name}</div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 4px;">
+                                ${model.size} · ${model.speed} · ${model.quality} quality
+                            </div>
+                            <div style="font-size: 0.8em; color: var(--text-muted); margin-top: 4px;">
+                                ${model.description}
+                            </div>
+                        </div>
+                        ${isActive ? '<span style="color: var(--primary); font-weight: 600;">Active</span>' : 
+                          '<button class="test-btn" style="padding: 8px 16px; font-size: 0.85em;" onclick="event.stopPropagation(); selectLLM(\'' + model.id + '\')">Select</button>'}
+                    </div>
+                `;
+            });
+            
+            modelList.innerHTML = html;
+        } catch (err) {
+            document.getElementById('llm-model-list').innerHTML = `
+                <div style="color: var(--error);">Could not load LLM models: ${err.message}</div>
+            `;
+        }
+    }
+    
+    async function selectLLM(modelId) {
+        const statusEl = document.getElementById('llm-change-status');
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = `<span style="color: var(--warning);">Switching to ${modelId}... (downloading if needed)</span>`;
+        
+        try {
+            const response = await fetch('/api/llm-model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: modelId })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                statusEl.innerHTML = `<span style="color: var(--success);">${data.message}</span>`;
+                loadLLMModels();
+            } else {
+                statusEl.innerHTML = `<span style="color: var(--error);">${data.message}</span>`;
+            }
+        } catch (err) {
+            statusEl.innerHTML = `<span style="color: var(--error);">Error: ${err.message}</span>`;
+        }
+    }
+    
+    async function testLLM() {
+        const btn = document.getElementById('test-llm-btn');
+        const resultEl = document.getElementById('llm-test-result');
+        
+        btn.disabled = true;
+        btn.textContent = 'Testing...';
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = '<span style="color: var(--text-muted);">Sending test prompt...</span>';
+        
+        try {
+            const response = await fetch('/api/llm-test', { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.success) {
+                resultEl.innerHTML = `
+                    <span style="color: var(--success);">LLM responding!</span><br><br>
+                    <strong>Model:</strong> ${data.model}<br>
+                    <strong>Test prompt:</strong> "Extract matter name from 'working on Acme case'"<br>
+                    <strong>Response:</strong> ${data.response}
+                `;
+            } else {
+                resultEl.innerHTML = `
+                    <span style="color: var(--error);">LLM test failed</span><br><br>
+                    <strong>Model:</strong> ${data.model}<br>
+                    <strong>Error:</strong> ${data.error}<br><br>
+                    Make sure Ollama is running and the model is downloaded.
+                `;
+            }
+        } catch (err) {
+            resultEl.innerHTML = `<span style="color: var(--error);">Error: ${err.message}</span>`;
+        }
+        
+        btn.disabled = false;
+        btn.textContent = 'Test LLM Response';
+    }
+    
     // Load vocabulary status
     async function loadVocabulary() {
         try {
@@ -801,8 +931,9 @@
     
     // Load models and vocabulary on page load
     window.addEventListener('DOMContentLoaded', () => {
-        loadModels();
-        loadVocabulary();
+        loadModels();      // Whisper models
+        loadLLMModels();   // Ollama models
+        loadVocabulary();  // Matter vocabulary
     });
 </script>
 

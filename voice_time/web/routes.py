@@ -293,6 +293,140 @@ def register_routes(app):
             'model': new_model
         })
     
+    @app.route('/api/llm-models')
+    def get_llm_models():
+        """Get available Ollama LLM models."""
+        models = [
+            {
+                'id': 'qwen2.5:0.5b-instruct',
+                'name': 'Qwen 2.5 0.5B',
+                'size': '~400 MB',
+                'speed': 'Fastest',
+                'quality': 'Basic',
+                'description': 'Ultra-fast for simple tasks. May struggle with complex parsing.'
+            },
+            {
+                'id': 'qwen2.5:1.5b-instruct',
+                'name': 'Qwen 2.5 1.5B',
+                'size': '~1 GB',
+                'speed': 'Fast',
+                'quality': 'Good',
+                'description': 'Good balance. Recommended for most users.'
+            },
+            {
+                'id': 'qwen2.5:3b-instruct',
+                'name': 'Qwen 2.5 3B',
+                'size': '~2 GB',
+                'speed': 'Medium',
+                'quality': 'Better',
+                'description': 'Better understanding of complex instructions.'
+            },
+            {
+                'id': 'qwen2.5:7b-instruct',
+                'name': 'Qwen 2.5 7B',
+                'size': '~4.5 GB',
+                'speed': 'Slower',
+                'quality': 'High',
+                'description': 'High quality responses. Good for complex planning.'
+            },
+            {
+                'id': 'llama3.2:3b',
+                'name': 'Llama 3.2 3B',
+                'size': '~2 GB',
+                'speed': 'Medium',
+                'quality': 'Good',
+                'description': 'Meta\'s latest small model. Good general performance.'
+            },
+            {
+                'id': 'mistral:7b',
+                'name': 'Mistral 7B',
+                'size': '~4 GB',
+                'speed': 'Slower',
+                'quality': 'High',
+                'description': 'Excellent reasoning. Popular choice for local AI.'
+            }
+        ]
+        
+        return jsonify({
+            'models': models,
+            'current': app.config_obj.ollama.model
+        })
+    
+    @app.route('/api/llm-model', methods=['POST'])
+    def set_llm_model():
+        """Switch Ollama LLM model."""
+        import yaml
+        import subprocess
+        
+        data = request.json
+        new_model = data.get('model')
+        
+        if not new_model:
+            return jsonify({'success': False, 'message': 'No model specified'})
+        
+        # Update config in memory
+        old_model = app.config_obj.ollama.model
+        app.config_obj.ollama.model = new_model
+        
+        # Update config.yaml file
+        config_path = Path('config.yaml')
+        if config_path.exists():
+            with open(config_path) as f:
+                config_data = yaml.safe_load(f) or {}
+            
+            if 'ollama' not in config_data:
+                config_data['ollama'] = {}
+            config_data['ollama']['model'] = new_model
+            
+            with open(config_path, 'w') as f:
+                yaml.dump(config_data, f, default_flow_style=False)
+        
+        # Try to pull the model in background (don't block)
+        try:
+            subprocess.Popen(
+                ['ollama', 'pull', new_model],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+            )
+        except:
+            pass  # Model will be pulled on first use anyway
+        
+        return jsonify({
+            'success': True,
+            'message': f'LLM changed from {old_model} to {new_model}. Model will download if needed.',
+            'model': new_model
+        })
+    
+    @app.route('/api/llm-test', methods=['POST'])
+    def test_llm():
+        """Test the current LLM model with a simple prompt."""
+        from ..llm.client import OllamaClient
+        
+        try:
+            llm = OllamaClient(app.config_obj.ollama)
+            
+            # Simple test
+            result = llm.generate(
+                "Extract the matter name from: 'working on Acme case'. Reply with just the matter name.",
+                json_mode=False,
+                temperature=0.1
+            )
+            
+            return jsonify({
+                'success': True,
+                'model': app.config_obj.ollama.model,
+                'response': result.get('text', '')[:200],
+                'message': 'LLM is responding'
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'model': app.config_obj.ollama.model,
+                'error': str(e),
+                'message': 'LLM test failed'
+            })
+    
     @app.route('/whisper-status')
     def whisper_status():
         """Check if Whisper model is working and show hardware info."""
