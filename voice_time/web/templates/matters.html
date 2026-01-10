@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Matters - Voice Time{% endblock %}
+
+{% block styles %}
+<style>
+    .matters-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    
+    .add-matter-btn {
+        background: var(--primary);
+        color: var(--bg-app);
+        border: none;
+        padding: 12px 24px;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    
+    .add-matter-btn:hover {
+        background: #d97706;
+        transform: translateY(-1px);
+    }
+    
+    .matter-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        margin-bottom: 16px;
+        border-left: 3px solid var(--primary);
+        transition: all 0.2s;
+    }
+    
+    .matter-card:hover {
+        border-left-color: var(--purple);
+        transform: translateX(4px);
+    }
+    
+    .matter-ref {
+        font-family: monospace;
+        color: var(--text-muted);
+        font-size: 0.85em;
+        margin-bottom: 8px;
+    }
+    
+    .matter-name {
+        font-family: var(--font-serif);
+        font-size: 1.3em;
+        color: var(--text-main);
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+    
+    .matter-client {
+        color: var(--text-muted);
+        margin-bottom: 12px;
+    }
+    
+    .matter-aliases {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+    
+    .alias-tag {
+        background: var(--bg-hover);
+        color: var(--primary);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        border: 1px solid var(--border);
+    }
+    
+    .matter-actions {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .matter-actions button {
+        padding: 6px 16px;
+        border: none;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 0.9em;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .edit-btn {
+        background: var(--bg-hover);
+        color: var(--text-main);
+        border: 1px solid var(--border);
+    }
+    
+    .edit-btn:hover {
+        background: var(--bg-card);
+        border-color: var(--primary);
+    }
+    
+    .archive-btn {
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+    }
+    
+    .archive-btn:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: var(--error);
+        color: var(--error);
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 32px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        color: var(--text-main);
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        background: var(--bg-sidebar);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        color: var(--text-main);
+        font-family: var(--font-sans);
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    
+    .form-help {
+        color: var(--text-muted);
+        font-size: 0.85em;
+        margin-top: 4px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 64px 24px;
+        color: var(--text-muted);
+    }
+    
+    .empty-state-icon {
+        font-size: 4em;
+        margin-bottom: 24px;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <div class="matters-header">
+        <h2>📁 Your Matters</h2>
+        <button class="add-matter-btn" onclick="showAddMatter()">+ Add Matter</button>
+    </div>
+    
+    <p style="color: var(--text-muted); margin-bottom: 24px;">
+        Manage your legal matters. Voice commands will use these names and aliases to log time.
+    </p>
+    
+    <div id="matters-list">
+        {% if matters %}
+            {% for matter in matters %}
+            <div class="matter-card">
+                <div class="matter-ref">{{ matter.matter_ref or 'No reference' }}</div>
+                <div class="matter-name">{{ matter.display_name }}</div>
+                <div class="matter-client">Client: {{ matter.client or 'Not specified' }}</div>
+                
+                <div class="matter-aliases">
+                    {% for alias in matter.aliases %}
+                    <span class="alias-tag">{{ alias.alias }}</span>
+                    {% endfor %}
+                </div>
+                
+                <div style="color: var(--text-muted); font-size: 0.85em; margin-bottom: 12px;">
+                    Used {{ matter.use_count or 0 }} times
+                    {% if matter.last_used_at %}
+                        • Last used: {{ matter.last_used_at.strftime('%b %d') }}
+                    {% endif %}
+                </div>
+                
+                <div class="matter-actions">
+                    <button class="edit-btn" onclick="editMatter('{{ matter.id }}')">Edit</button>
+                    <button class="archive-btn" onclick="archiveMatter('{{ matter.id }}')">
+                        {{ 'Reactivate' if not matter.is_active else 'Archive' }}
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <p style="font-size: 1.1em; margin-bottom: 16px;">No matters yet</p>
+                <p>Click "Add Matter" above to add your first legal matter</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add/Edit Matter Modal -->
+<div id="matter-modal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-bottom: 24px; font-family: var(--font-serif);">Add New Matter</h2>
+        
+        <form id="matter-form" onsubmit="saveMatter(event)">
+            <div class="form-group">
+                <label class="form-label">Matter Reference *</label>
+                <input type="text" id="matter-ref" class="form-input" placeholder="e.g., 2024/CL/087" required>
+                <div class="form-help">Your billing system reference number</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Matter Name *</label>
+                <input type="text" id="matter-name" class="form-input" placeholder="e.g., Thompson Industries Ltd v Apex Manufacturing" required>
+                <div class="form-help">Full case name</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Client</label>
+                <input type="text" id="matter-client" class="form-input" placeholder="e.g., Thompson Industries Ltd">
+                <div class="form-help">Client name (optional)</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Aliases (comma-separated) *</label>
+                <input type="text" id="matter-aliases" class="form-input" placeholder="e.g., Thompson, TI matter, Apex dispute" required>
+                <div class="form-help">
+                    How you'll refer to this matter in voice commands. Add multiple ways you might say it.
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-top: 32px;">
+                <button type="submit" class="btn btn-success" style="flex: 1;">Save Matter</button>
+                <button type="button" class="btn" style="flex: 1; background: var(--bg-hover); color: var(--text-muted);" onclick="closeModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showAddMatter() {
+        document.getElementById('matter-modal').classList.add('active');
+        document.getElementById('matter-form').reset();
+    }
+    
+    function closeModal() {
+        document.getElementById('matter-modal').classList.remove('active');
+    }
+    
+    async function saveMatter(event) {
+        event.preventDefault();
+        
+        const data = {
+            matter_ref: document.getElementById('matter-ref').value,
+            display_name: document.getElementById('matter-name').value,
+            client: document.getElementById('matter-client').value,
+            aliases: document.getElementById('matter-aliases').value.split(',').map(a => a.trim())
+        };
+        
+        try {
+            const response = await fetch('/matters/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('✓ Matter added successfully!');
+                window.location.reload();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (err) {
+            alert('Error saving matter: ' + err.message);
+        }
+    }
+    
+    async function archiveMatter(matterId) {
+        if (!confirm('Archive this matter? (It will be hidden but can be reactivated later)')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/matters/archive/${matterId}`, {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+    
+    function editMatter(matterId) {
+        // TODO: Implement edit functionality
+        alert('Edit functionality coming soon! For now, archive and create a new one.');
+    }
+    
+    // Close modal on background click
+    document.getElementById('matter-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+</script>
+
+{% endblock %}

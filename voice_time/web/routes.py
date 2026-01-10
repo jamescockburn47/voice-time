@@ -307,7 +307,14 @@ def register_routes(app):
     
     @app.route('/matters')
     def matters():
-        """List all active matters."""
+        """Matter management page."""
+        session = app.session
+        matters = session.query(Matter).order_by(Matter.is_active.desc(), Matter.last_used_at.desc()).all()
+        return render_template('matters.html', matters=matters)
+    
+    @app.route('/matters/list')
+    def matters_list():
+        """List all active matters (API)."""
         session = app.session
         matters = session.query(Matter).filter(Matter.is_active == True).all()
         
@@ -322,6 +329,57 @@ def register_routes(app):
                 for m in matters
             ]
         })
+    
+    @app.route('/matters/add', methods=['POST'])
+    def add_matter():
+        """Add a new matter."""
+        data = request.json
+        session = app.session
+        
+        try:
+            from ..database.models import Matter, MatterAlias
+            
+            # Create matter
+            matter = Matter(
+                matter_ref=data.get('matter_ref'),
+                display_name=data['display_name'],
+                client=data.get('client'),
+                is_active=True
+            )
+            session.add(matter)
+            session.flush()
+            
+            # Add aliases
+            for alias_text in data.get('aliases', []):
+                if alias_text.strip():
+                    alias = MatterAlias(
+                        matter_id=matter.id,
+                        alias=alias_text.strip(),
+                        is_primary=False
+                    )
+                    session.add(alias)
+            
+            session.commit()
+            
+            return jsonify({'success': True, 'matter_id': matter.id})
+            
+        except Exception as e:
+            session.rollback()
+            return jsonify({'success': False, 'message': str(e)})
+    
+    @app.route('/matters/archive/<matter_id>', methods=['POST'])
+    def archive_matter(matter_id):
+        """Archive or reactivate a matter."""
+        session = app.session
+        matter = session.query(Matter).get(matter_id)
+        
+        if not matter:
+            return jsonify({'success': False, 'message': 'Matter not found'})
+        
+        matter.is_active = not matter.is_active
+        session.commit()
+        
+        return jsonify({'success': True, 'is_active': matter.is_active})
     
     @app.route('/plan')
     def plan():
