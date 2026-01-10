@@ -44,8 +44,18 @@ class PlanParser:
         # Generate prompt
         prompt = get_morning_plan_prompt(matters_json, transcript)
         
-        # Call LLM
-        result = self.llm.generate(prompt, json_mode=True, temperature=0.2)
+        # Call LLM with error handling
+        try:
+            result = self.llm.generate(prompt, json_mode=True, temperature=0.2)
+        except Exception as e:
+            # Return helpful error with context
+            error_msg = str(e)
+            if 'connection' in error_msg.lower() or 'refused' in error_msg.lower():
+                raise ValueError("Ollama is not running. Please start Ollama: ollama serve")
+            elif 'model' in error_msg.lower():
+                raise ValueError(f"Model not found. Please run: ollama pull {self.llm.config.model}")
+            else:
+                raise ValueError(f"AI error: {error_msg}")
         
         # Parse and validate tasks
         tasks = result.get("tasks", [])
@@ -56,9 +66,20 @@ class PlanParser:
             if validated_task:
                 validated_tasks.append(validated_task)
         
+        # If no tasks were extracted, provide helpful feedback
+        if not validated_tasks:
+            # Check if LLM returned anything useful
+            parsing_notes = result.get("parsing_notes", "")
+            raise ValueError(
+                f"Could not extract any tasks from your plan. "
+                f"Try being more specific, e.g., 'Today I need to work on Thompson disclosure'. "
+                f"{('AI note: ' + parsing_notes) if parsing_notes else ''}"
+            )
+        
         return {
             "tasks": validated_tasks,
-            "unresolved_mentions": result.get("unresolved_mentions", [])
+            "unresolved_mentions": result.get("unresolved_mentions", []),
+            "parsing_notes": result.get("parsing_notes", "")
         }
     
     def _format_matters(self, matters: List[Dict[str, Any]]) -> str:

@@ -163,6 +163,18 @@
 {% endblock %}
 
 {% block content %}
+
+<!-- Ollama Status Indicator -->
+<div id="ollama-status" style="padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <span id="ollama-indicator">🔴</span>
+        <span id="ollama-message" style="color: var(--text-muted); font-size: 0.95em;">Checking AI status...</span>
+    </div>
+    <button onclick="checkOllamaStatus()" style="background: var(--bg-hover); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.85em;">
+        Recheck
+    </button>
+</div>
+
 <div class="card input-area">
     <h2>🎙️ What are you working on?</h2>
     
@@ -286,8 +298,11 @@
     let mediaRecorder = null;
     let audioChunks = [];
     
-    // Check microphone access on page load
-    window.addEventListener('DOMContentLoaded', checkMicrophoneAccess);
+    // Check microphone and Ollama on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        checkMicrophoneAccess();
+        checkOllamaStatus();
+    });
     
     async function checkMicrophoneAccess() {
         try {
@@ -510,6 +525,31 @@
             processInput();
         }
     });
+    
+    // Check Ollama status
+    async function checkOllamaStatus() {
+        const indicator = document.getElementById('ollama-indicator');
+        const message = document.getElementById('ollama-message');
+        
+        try {
+            const response = await fetch('/check-ollama');
+            const data = await response.json();
+            
+            if (data.status === 'ready') {
+                indicator.textContent = '🟢';
+                message.innerHTML = `<span style="color: var(--success);">AI ready</span> <span style="color: var(--text-muted); font-size: 0.85em;">(${data.model})</span>`;
+            } else if (data.status === 'not_running') {
+                indicator.textContent = '🔴';
+                message.innerHTML = `<span style="color: var(--error);">Ollama not running</span> <span style="color: var(--text-muted); font-size: 0.85em;">- AI features disabled. Run: <code style="background: var(--bg-hover); padding: 2px 6px; border-radius: 2px;">ollama serve</code></span>`;
+            } else {
+                indicator.textContent = '🟡';
+                message.innerHTML = `<span style="color: var(--warning);">AI issue:</span> <span style="color: var(--text-muted); font-size: 0.85em;">${data.message}</span>`;
+            }
+        } catch (err) {
+            indicator.textContent = '🔴';
+            message.innerHTML = `<span style="color: var(--error);">Cannot check AI status</span>`;
+        }
+    }
     
     // Global hotkey support (Ctrl+Space)
     let recordingStartedByKeyboard = false;

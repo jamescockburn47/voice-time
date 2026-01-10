@@ -2,46 +2,50 @@
 
 
 def get_morning_plan_prompt(matters_json: str, transcript: str) -> str:
-    """Generate morning planning prompt."""
-    return f'''You are parsing a lawyer's morning plan into structured tasks.
+    """Generate morning planning prompt - FLEXIBLE and forgiving."""
+    return f'''Parse a lawyer's daily plan into tasks. Be flexible and extract what you can.
 
-ACTIVE MATTERS:
+ACTIVE MATTERS (user might mention these):
 {matters_json}
 
-ACTIVITY TYPES:
+ACTIVITY TYPES (guess the best match):
 - DOCREV: Document review, reading, analysis
-- DRAFT: Drafting, writing, preparing documents
-- RESEARCH: Legal research, checking authorities
-- CALL: Phone calls, telephone attendances
-- CONF: Meetings, conferences, attendances
-- EMAIL: Correspondence, emails, letters
-- COURT: Court hearings, applications
+- DRAFT: Drafting, writing, preparing
+- RESEARCH: Legal research, case law
+- CALL: Phone calls, telephone
+- CONF: Meetings, conferences
+- EMAIL: Correspondence, emails
+- COURT: Court hearings
 - TRAVEL: Travel time
-- ADMIN: Administrative, internal matters
+- ADMIN: Administrative, general work
 
-USER'S PLAN:
+WHAT THE USER SAID:
 "{transcript}"
 
-Extract tasks from the plan. For each task, provide:
-- matter_ref: The matter reference or name mentioned (or null for general admin)
-- activity_type: One of the codes above
-- title: Brief description of the task
-- scheduled_time: If a specific time is mentioned (HH:MM format, or null)
-- estimated_hours: If duration is mentioned or implied (or null)
+INSTRUCTIONS:
+- Extract ANY tasks you can identify (even vague ones)
+- If unsure about matter, set matter_ref to null (it's okay!)
+- If unsure about activity, use ADMIN (it's okay!)
+- Be LENIENT - extract something rather than nothing
+- Even "working on stuff" should create a task
+- If you see ANY work intention, create a task for it
 
-Respond with valid JSON only:
+Respond with JSON:
 {{
   "tasks": [
     {{
-      "matter_ref": "Smith" or null,
-      "activity_type": "DOCREV",
-      "title": "Disclosure review",
-      "scheduled_time": null,
-      "estimated_hours": null
+      "matter_ref": "partial name" or null,
+      "activity_type": "best guess or ADMIN",
+      "title": "what they said or best guess",
+      "scheduled_time": "HH:MM" or null,
+      "estimated_hours": number or null
     }}
   ],
-  "unresolved_mentions": ["any matter names you couldn't confidently identify"]
-}}'''
+  "unresolved_mentions": [],
+  "parsing_notes": "brief note about what you extracted"
+}}
+
+IMPORTANT: Always return valid JSON even if you're unsure. Create at least one task if ANY work is mentioned.'''
 
 
 def get_narrative_prompt(

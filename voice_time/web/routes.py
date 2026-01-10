@@ -28,6 +28,47 @@ def register_routes(app):
         """Why Voice Time? - Comparison page."""
         return render_template('why.html')
     
+    @app.route('/check-ollama')
+    def check_ollama():
+        """Check if Ollama is running and model is available."""
+        from ..llm.client import OllamaClient
+        
+        llm_client = OllamaClient(app.config_obj.ollama)
+        
+        # Check if Ollama is reachable
+        is_running = llm_client.health_check()
+        
+        if is_running:
+            # Try a test generation
+            try:
+                result = llm_client.generate(
+                    "Say 'test'",
+                    json_mode=False,
+                    temperature=0.1
+                )
+                return jsonify({
+                    'status': 'ready',
+                    'running': True,
+                    'model': app.config_obj.ollama.model,
+                    'test_response': result.get('text', '')[:100],
+                    'message': 'Ollama is ready and responding'
+                })
+            except Exception as e:
+                return jsonify({
+                    'status': 'error',
+                    'running': True,
+                    'model': app.config_obj.ollama.model,
+                    'error': str(e),
+                    'message': 'Ollama is running but model not responding'
+                })
+        else:
+            return jsonify({
+                'status': 'not_running',
+                'running': False,
+                'message': 'Ollama server is not running',
+                'fix': 'Run: ollama serve'
+            })
+    
     @app.route('/settings')
     def settings():
         """Settings and voice diagnostics page."""
