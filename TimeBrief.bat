@@ -98,14 +98,18 @@ echo Shutting down...
 if defined FLASK_PID (
     :: Kill only the specific Flask process we started
     taskkill /F /PID %FLASK_PID% >nul 2>&1
-    if errorlevel 0 (
+    :: FIX: Use "not errorlevel 1" instead of "errorlevel 0" (which is always true)
+    if not errorlevel 1 (
         echo Backend stopped [PID: %FLASK_PID%]
+    ) else (
+        echo Backend may have already stopped
     )
 ) else (
     :: Fallback: try to find and kill only run.py processes
     for /f "tokens=2" %%p in ('wmic process where "commandline like '%%run.py%%'" get processid 2^>nul ^| findstr /r "[0-9]"') do (
         taskkill /F /PID %%p >nul 2>&1
     )
+    echo Backend stopped
 )
 
 echo Done.
