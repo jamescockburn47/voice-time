@@ -18,6 +18,11 @@ def register_routes(app):
         """Why Voice Time? - Comparison page."""
         return render_template('why.html')
     
+    @app.route('/settings')
+    def settings():
+        """Settings and voice diagnostics page."""
+        return render_template('settings.html')
+    
     @app.route('/')
     def index():
         """Main dashboard."""

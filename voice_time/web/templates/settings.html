@@ -1,0 +1,472 @@
+{% extends "base.html" %}
+
+{% block title %}Settings & Diagnostics - Voice Time{% endblock %}
+
+{% block styles %}
+<style>
+    .settings-hero {
+        background: linear-gradient(135deg, var(--purple-dim), var(--primary-dim));
+        border: 1px solid var(--purple-border);
+        padding: 32px;
+        border-radius: var(--radius-lg);
+        text-align: center;
+        margin-bottom: 32px;
+    }
+    
+    .settings-hero h1 {
+        font-family: var(--font-serif);
+        font-size: 2em;
+        color: var(--text-main);
+        margin-bottom: 12px;
+    }
+    
+    .diagnostic-section {
+        margin-bottom: 24px;
+    }
+    
+    .test-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        margin-bottom: 16px;
+    }
+    
+    .test-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+    
+    .test-title {
+        font-family: var(--font-serif);
+        font-size: 1.2em;
+        color: var(--text-main);
+    }
+    
+    .test-status {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 600;
+    }
+    
+    .status-pending {
+        background: rgba(245, 158, 11, 0.2);
+        color: var(--warning);
+    }
+    
+    .status-testing {
+        background: rgba(139, 92, 246, 0.2);
+        color: var(--purple);
+    }
+    
+    .status-success {
+        background: rgba(34, 197, 94, 0.2);
+        color: var(--success);
+    }
+    
+    .status-error {
+        background: rgba(239, 68, 68, 0.2);
+        color: var(--error);
+    }
+    
+    .test-result {
+        padding: 16px;
+        background: var(--bg-hover);
+        border-radius: var(--radius-md);
+        margin-top: 12px;
+        font-family: monospace;
+        font-size: 0.9em;
+        color: var(--text-muted);
+    }
+    
+    .fix-section {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--error);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        margin-top: 16px;
+    }
+    
+    .fix-section h4 {
+        color: var(--error);
+        margin-bottom: 12px;
+    }
+    
+    .permission-prompt {
+        background: var(--purple-dim);
+        border: 2px dashed var(--purple-border);
+        padding: 32px;
+        border-radius: var(--radius-lg);
+        text-align: center;
+    }
+    
+    .permission-prompt h3 {
+        color: var(--purple);
+        font-family: var(--font-serif);
+        margin-bottom: 16px;
+    }
+    
+    .test-btn {
+        background: var(--primary);
+        color: var(--bg-app);
+        border: none;
+        padding: 12px 24px;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    
+    .test-btn:hover {
+        background: #d97706;
+        transform: translateY(-1px);
+    }
+    
+    .test-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="settings-hero">
+    <h1>⚙️ Settings & Voice Diagnostics</h1>
+    <p style="color: var(--text-muted);">Test your microphone and voice recognition settings</p>
+</div>
+
+<!-- Microphone Permission Test -->
+<div class="card">
+    <h2>🎤 Microphone Access</h2>
+    
+    <div id="mic-permission-status" class="test-card">
+        <div class="test-header">
+            <span class="test-title">Permission Status</span>
+            <span id="perm-status" class="test-status status-pending">Checking...</span>
+        </div>
+        <div id="perm-result" class="test-result">
+            Checking microphone permissions...
+        </div>
+        <button id="grant-mic-btn" class="test-btn" style="margin-top: 16px; display: none;" onclick="requestMicPermission()">
+            Grant Microphone Access
+        </button>
+    </div>
+</div>
+
+<!-- Microphone Test -->
+<div class="card">
+    <h2>🔊 Microphone Test</h2>
+    
+    <div class="test-card">
+        <div class="test-header">
+            <span class="test-title">Record & Playback Test</span>
+            <span id="mic-test-status" class="test-status status-pending">Not Started</span>
+        </div>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">
+            Test your microphone by recording and playing back audio.
+        </p>
+        <button id="mic-test-btn" class="test-btn" onclick="testMicrophone()">
+            🎙️ Start Microphone Test
+        </button>
+        <div id="mic-test-result" class="test-result" style="display: none; margin-top: 16px;">
+        </div>
+        <audio id="playback-audio" controls style="width: 100%; margin-top: 16px; display: none;"></audio>
+    </div>
+</div>
+
+<!-- Voice Recognition Test -->
+<div class="card">
+    <h2>🗣️ Voice Recognition Test</h2>
+    
+    <div class="test-card">
+        <div class="test-header">
+            <span class="test-title">Speech-to-Text Test</span>
+            <span id="transcribe-status" class="test-status status-pending">Not Started</span>
+        </div>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">
+            Test the AI speech recognition. Say a test phrase and see if it's transcribed correctly.
+        </p>
+        <button id="transcribe-test-btn" class="test-btn" onclick="testTranscription()">
+            🎙️ Test Voice Recognition
+        </button>
+        <div id="transcribe-result" class="test-result" style="display: none; margin-top: 16px;">
+        </div>
+    </div>
+</div>
+
+<!-- System Info -->
+<div class="card">
+    <h2>ℹ️ System Information</h2>
+    
+    <div class="test-card">
+        <table style="width: 100%; color: var(--text-muted);">
+            <tr>
+                <td style="padding: 8px 0; font-weight: 600;">Whisper Model:</td>
+                <td style="padding: 8px 0;">base.en</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; font-weight: 600;">Ollama Model:</td>
+                <td style="padding: 8px 0;">qwen2.5:1.5b-instruct</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; font-weight: 600;">Sample Rate:</td>
+                <td style="padding: 8px 0;">16000 Hz</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; font-weight: 600;">Hotkey:</td>
+                <td style="padding: 8px 0;"><span style="background: var(--bg-hover); padding: 4px 8px; border-radius: var(--radius-sm); font-family: monospace; color: var(--primary);">Ctrl+Space</span></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- Troubleshooting -->
+<div class="card">
+    <h2>🔧 Troubleshooting</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="test-card">
+            <h4 style="color: var(--text-main); margin-bottom: 12px;">Common Issues</h4>
+            <ul style="color: var(--text-muted); line-height: 2; padding-left: 20px; font-size: 0.95em;">
+                <li>Microphone blocked by browser</li>
+                <li>Wrong microphone selected</li>
+                <li>Background noise too loud</li>
+                <li>Speaking too quietly</li>
+            </ul>
+        </div>
+        
+        <div class="test-card">
+            <h4 style="color: var(--text-main); margin-bottom: 12px;">Quick Fixes</h4>
+            <ul style="color: var(--text-muted); line-height: 2; padding-left: 20px; font-size: 0.95em;">
+                <li>Click "Grant Access" above</li>
+                <li>Check browser settings</li>
+                <li>Move to quieter location</li>
+                <li>Speak clearly and closer</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-check microphone on page load
+    window.addEventListener('DOMContentLoaded', checkMicrophonePermission);
+    
+    async function checkMicrophonePermission() {
+        const statusEl = document.getElementById('perm-status');
+        const resultEl = document.getElementById('perm-result');
+        const btnEl = document.getElementById('grant-mic-btn');
+        
+        try {
+            const result = await navigator.permissions.query({ name: 'microphone' });
+            
+            if (result.state === 'granted') {
+                statusEl.className = 'test-status status-success';
+                statusEl.textContent = '✓ Granted';
+                resultEl.innerHTML = '✓ Microphone access is granted.<br>You can use voice commands!';
+                btnEl.style.display = 'none';
+                
+                // Also test if mic actually works
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(track => track.stop());
+                    resultEl.innerHTML += '<br><br>✓ Microphone hardware detected and working!';
+                } catch {
+                    resultEl.innerHTML += '<br><br>⚠️ Permission granted but microphone not found.';
+                }
+            } else if (result.state === 'prompt') {
+                statusEl.className = 'test-status status-pending';
+                statusEl.textContent = 'Need Permission';
+                resultEl.textContent = 'Click the button below to grant microphone access.';
+                btnEl.style.display = 'block';
+            } else {
+                statusEl.className = 'test-status status-error';
+                statusEl.textContent = '✗ Denied';
+                resultEl.textContent = 'Microphone access was denied. Click the button to try again or check browser settings.';
+                btnEl.style.display = 'block';
+            }
+        } catch {
+            // Permissions API not supported, try direct access
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                statusEl.className = 'test-status status-success';
+                statusEl.textContent = '✓ Granted';
+                resultEl.textContent = '✓ Microphone access is working!';
+                btnEl.style.display = 'none';
+            } catch {
+                statusEl.className = 'test-status status-error';
+                statusEl.textContent = '✗ Blocked';
+                resultEl.textContent = 'Click the button below to grant access.';
+                btnEl.style.display = 'block';
+            }
+        }
+    }
+    
+    async function requestMicPermission() {
+        const statusEl = document.getElementById('perm-status');
+        const resultEl = document.getElementById('perm-result');
+        const btnEl = document.getElementById('grant-mic-btn');
+        
+        statusEl.className = 'test-status status-testing';
+        statusEl.textContent = 'Requesting...';
+        resultEl.textContent = 'Please allow microphone access in the browser popup...';
+        
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop());
+            
+            statusEl.className = 'test-status status-success';
+            statusEl.textContent = '✓ Granted';
+            resultEl.textContent = '✓ Microphone access granted! Voice commands are now available.';
+            btnEl.style.display = 'none';
+        } catch (err) {
+            statusEl.className = 'test-status status-error';
+            statusEl.textContent = '✗ Denied';
+            resultEl.innerHTML = `
+                <strong style="color: var(--error);">Access denied or no microphone found.</strong><br><br>
+                Please check:<br>
+                • Browser settings (click 🔒 in address bar)<br>
+                • Microphone is plugged in<br>
+                • No other apps are using the microphone
+            `;
+        }
+    }
+    
+    let testRecorder = null;
+    let testChunks = [];
+    
+    async function testMicrophone() {
+        const btnEl = document.getElementById('mic-test-btn');
+        const statusEl = document.getElementById('mic-test-status');
+        const resultEl = document.getElementById('mic-test-result');
+        const audioEl = document.getElementById('playback-audio');
+        
+        if (!testRecorder) {
+            // Start recording
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                testRecorder = new MediaRecorder(stream);
+                testChunks = [];
+                
+                testRecorder.ondataavailable = (e) => testChunks.push(e.data);
+                testRecorder.onstop = () => {
+                    const blob = new Blob(testChunks, { type: 'audio/webm' });
+                    audioEl.src = URL.createObjectURL(blob);
+                    audioEl.style.display = 'block';
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                testRecorder.start();
+                btnEl.textContent = '⏹️ Stop Recording';
+                btnEl.style.background = '#ef4444';
+                statusEl.className = 'test-status status-testing';
+                statusEl.textContent = 'Recording...';
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = '🎤 <strong>Recording now...</strong><br>Say: "Testing microphone one two three"<br>Then click Stop to hear playback.';
+                
+            } catch (err) {
+                statusEl.className = 'test-status status-error';
+                statusEl.textContent = 'Error';
+                resultEl.style.display = 'block';
+                resultEl.textContent = 'Could not access microphone: ' + err.message;
+            }
+        } else {
+            // Stop recording
+            testRecorder.stop();
+            testRecorder = null;
+            btnEl.textContent = '🎙️ Start Microphone Test';
+            btnEl.style.background = 'var(--primary)';
+            statusEl.className = 'test-status status-success';
+            statusEl.textContent = '✓ Complete';
+            resultEl.innerHTML = '✓ Recording saved!<br>Play it back below to verify your microphone is working.';
+        }
+    }
+    
+    let transcribeRecorder = null;
+    let transcribeChunks = [];
+    
+    async function testTranscription() {
+        const btnEl = document.getElementById('transcribe-test-btn');
+        const statusEl = document.getElementById('transcribe-status');
+        const resultEl = document.getElementById('transcribe-result');
+        
+        if (!transcribeRecorder) {
+            // Start recording for transcription
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                transcribeRecorder = new MediaRecorder(stream);
+                transcribeChunks = [];
+                
+                transcribeRecorder.ondataavailable = (e) => transcribeChunks.push(e.data);
+                transcribeRecorder.onstop = async () => {
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    statusEl.className = 'test-status status-testing';
+                    statusEl.textContent = 'Transcribing...';
+                    resultEl.style.display = 'block';
+                    resultEl.textContent = '⚙️ Processing speech with AI...';
+                    
+                    // Send to server for transcription
+                    const blob = new Blob(transcribeChunks, { type: 'audio/webm' });
+                    const formData = new FormData();
+                    formData.append('audio', blob, 'test.webm');
+                    
+                    try {
+                        const response = await fetch('/process-voice', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.transcript) {
+                            statusEl.className = 'test-status status-success';
+                            statusEl.textContent = '✓ Success';
+                            resultEl.innerHTML = `
+                                <strong style="color: var(--success);">✓ Voice recognition working!</strong><br><br>
+                                <strong>You said:</strong><br>
+                                <div style="background: var(--bg-card); padding: 12px; border-radius: var(--radius-sm); margin-top: 8px; color: var(--text-main); font-size: 1.1em;">
+                                    "${data.transcript}"
+                                </div>
+                            `;
+                        } else {
+                            statusEl.className = 'test-status status-error';
+                            statusEl.textContent = 'No Speech';
+                            resultEl.textContent = '⚠️ No speech detected. Try speaking louder or closer to the microphone.';
+                        }
+                    } catch (err) {
+                        statusEl.className = 'test-status status-error';
+                        statusEl.textContent = 'Error';
+                        resultEl.textContent = '✗ Transcription error: ' + err.message;
+                    }
+                };
+                
+                transcribeRecorder.start();
+                btnEl.textContent = '⏹️ Stop & Transcribe';
+                btnEl.style.background = '#ef4444';
+                statusEl.className = 'test-status status-testing';
+                statusEl.textContent = 'Recording...';
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = '🎤 <strong>Recording now...</strong><br><br>Say a test phrase clearly:<br>"Today I need to work on the Thompson case"';
+                
+            } catch (err) {
+                statusEl.className = 'test-status status-error';
+                statusEl.textContent = 'Error';
+                resultEl.style.display = 'block';
+                resultEl.textContent = 'Could not access microphone: ' + err.message;
+            }
+        } else {
+            // Stop and transcribe
+            transcribeRecorder.stop();
+            transcribeRecorder = null;
+            btnEl.textContent = '🎙️ Test Voice Recognition';
+            btnEl.style.background = 'var(--primary)';
+        }
+    }
+</script>
+
+{% endblock %}
