@@ -86,15 +86,20 @@ def register_routes(app):
         
         audio_file = request.files['audio']
         
+        # BUG FIX #2 & #3: Proper temp file handling with cleanup
+        import tempfile
+        import os
+        from ..voice.transcribe import Transcriber
+        
+        tmp_path = None
         try:
-            # Save temporarily
-            import tempfile
-            import os
-            from ..voice.transcribe import Transcriber
-            
+            # Create temp file and get path, then close it (BUG FIX #2)
             with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as tmp:
-                audio_file.save(tmp.name)
                 tmp_path = tmp.name
+            # File is now closed, safe to write on Windows
+            
+            # Save audio to the closed temp file
+            audio_file.save(tmp_path)
             
             # Transcribe
             transcriber = Transcriber(
@@ -102,9 +107,6 @@ def register_routes(app):
                 device=app.config_obj.whisper.device
             )
             transcript = transcriber.transcribe_file(tmp_path)
-            
-            # Clean up temp file
-            os.unlink(tmp_path)
             
             if not transcript or not transcript.strip():
                 return jsonify({
@@ -130,6 +132,13 @@ def register_routes(app):
                 'message': f'Error processing voice: {str(e)}',
                 'transcript': ''
             })
+        finally:
+            # BUG FIX #3: Always clean up temp file, even on exception
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass  # Best effort cleanup
     
     @app.route('/mic-test')
     def mic_test():

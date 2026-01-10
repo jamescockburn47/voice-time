@@ -58,23 +58,14 @@ echo ==========================================
 echo   READY!
 echo ==========================================
 echo.
-echo The app will open in your browser automatically.
-echo.
-echo Web Interface: http://localhost:5000
-echo.
-echo Press Ctrl+C to stop
-echo.
-
-echo ==========================================
-echo   READY!
-echo ==========================================
-echo.
 echo Opening unified interface...
 echo.
 echo   • VOICE: Click button or press Ctrl+Space
 echo   • TEXT: Type as backup
 echo.
 echo http://localhost:5000
+echo.
+echo Press Ctrl+C to stop
 echo.
 
 REM Auto-open browser after 2 seconds

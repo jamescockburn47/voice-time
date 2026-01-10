@@ -459,17 +459,29 @@
     });
     
     // Global hotkey support (Ctrl+Space)
+    let recordingStartedByKeyboard = false;
+    
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.code === 'Space' && !isRecording) {
             e.preventDefault();
+            recordingStartedByKeyboard = true;
             startRecording();
         }
     });
     
     document.addEventListener('keyup', function(e) {
-        if (e.code === 'Space' && isRecording) {
+        // BUG FIX #1: Only stop if recording was started by keyboard AND Ctrl is still held context
+        if (e.code === 'Space' && isRecording && recordingStartedByKeyboard && e.ctrlKey) {
             e.preventDefault();
+            recordingStartedByKeyboard = false;
             stopRecording();
+        }
+        // Reset flag if Ctrl is released
+        if ((e.code === 'ControlLeft' || e.code === 'ControlRight' || e.key === 'Control') && recordingStartedByKeyboard) {
+            recordingStartedByKeyboard = false;
+            if (isRecording) {
+                stopRecording();
+            }
         }
     });
 </script>
