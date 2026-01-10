@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+
+{% block title %}AI Assistant - TimeBrief{% endblock %}
+
+{% block styles %}
+<style>
+    .chat-container {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 24px;
+        height: calc(100vh - 250px);
+        min-height: 500px;
+    }
+    
+    @media (max-width: 900px) {
+        .chat-container {
+            grid-template-columns: 1fr;
+        }
+        .chat-sidebar {
+            display: none;
+        }
+    }
+    
+    .chat-main {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+    
+    .chat-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-sidebar);
+    }
+    
+    .chat-header h2 {
+        font-family: var(--font-serif);
+        font-size: 1.3em;
+        color: var(--text-main);
+        margin: 0;
+    }
+    
+    .chat-header p {
+        color: var(--text-muted);
+        font-size: 0.85em;
+        margin-top: 4px;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .message {
+        max-width: 85%;
+        padding: 14px 18px;
+        border-radius: var(--radius-md);
+        line-height: 1.5;
+    }
+    
+    .message-user {
+        align-self: flex-end;
+        background: var(--primary);
+        color: var(--bg-app);
+    }
+    
+    .message-ai {
+        align-self: flex-start;
+        background: var(--bg-hover);
+        color: var(--text-main);
+        border: 1px solid var(--border);
+    }
+    
+    .message-ai .source {
+        font-size: 0.8em;
+        color: var(--text-muted);
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border);
+    }
+    
+    .message-loading {
+        align-self: flex-start;
+        background: var(--bg-hover);
+        color: var(--text-muted);
+        font-style: italic;
+    }
+    
+    .chat-input-area {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border);
+        background: var(--bg-sidebar);
+    }
+    
+    .chat-input-form {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .chat-input {
+        flex: 1;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 12px 16px;
+        color: var(--text-main);
+        font-size: 1em;
+        font-family: var(--font-sans);
+    }
+    
+    .chat-input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    
+    .chat-input::placeholder {
+        color: var(--text-muted);
+    }
+    
+    .chat-send {
+        background: var(--primary);
+        color: var(--bg-app);
+        border: none;
+        padding: 12px 24px;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .chat-send:hover {
+        background: #d97706;
+    }
+    
+    .chat-send:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    /* Sidebar */
+    .chat-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .quick-action {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .quick-action:hover {
+        border-color: var(--primary);
+        background: var(--bg-hover);
+    }
+    
+    .quick-action h4 {
+        color: var(--text-main);
+        font-size: 0.95em;
+        margin-bottom: 6px;
+    }
+    
+    .quick-action p {
+        color: var(--text-muted);
+        font-size: 0.8em;
+        line-height: 1.4;
+    }
+    
+    .example-queries {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 16px;
+    }
+    
+    .example-queries h4 {
+        color: var(--text-main);
+        font-size: 0.9em;
+        margin-bottom: 12px;
+    }
+    
+    .example-query {
+        color: var(--text-muted);
+        font-size: 0.85em;
+        padding: 8px 0;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+        transition: color 0.2s;
+    }
+    
+    .example-query:last-child {
+        border-bottom: none;
+    }
+    
+    .example-query:hover {
+        color: var(--primary);
+    }
+    
+    .grounding-notice {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        border-radius: var(--radius-md);
+        padding: 12px 16px;
+        font-size: 0.85em;
+        color: var(--success);
+    }
+    
+    /* Loading animation */
+    .typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 8px 0;
+    }
+    
+    .typing-indicator span {
+        width: 8px;
+        height: 8px;
+        background: var(--text-muted);
+        border-radius: 50%;
+        animation: typing 1.4s infinite;
+    }
+    
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes typing {
+        0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+        30% { transform: translateY(-4px); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="chat-container">
+    <div class="chat-main">
+        <div class="chat-header">
+            <h2>AI Assistant</h2>
+            <p>Ask questions about your matters, time entries, and work patterns</p>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <div class="message message-ai">
+                Hello! I'm your TimeBrief assistant. I can answer questions about your matters and time entries using only your actual data - I never make up information.
+                <div class="source">
+                    Try: "How much time did I spend on each matter this week?" or "What should I work on next?"
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-area">
+            <form class="chat-input-form" onsubmit="sendMessage(event)">
+                <input type="text" class="chat-input" id="chat-input" 
+                       placeholder="Ask about your matters, time entries, patterns..." 
+                       autocomplete="off">
+                <button type="submit" class="chat-send" id="send-btn">Send</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="chat-sidebar">
+        <div class="grounding-notice">
+            All responses are based only on your actual data. The AI never invents or hallucinates information.
+        </div>
+        
+        <div class="quick-action" onclick="quickAction('day-summary')">
+            <h4>Day Summary</h4>
+            <p>Generate a professional summary of today's work</p>
+        </div>
+        
+        <div class="quick-action" onclick="quickAction('week-analysis')">
+            <h4>Week Analysis</h4>
+            <p>Analyze your time distribution this week</p>
+        </div>
+        
+        <div class="quick-action" onclick="quickAction('suggest-next')">
+            <h4>What's Next?</h4>
+            <p>Get a suggestion for what to work on</p>
+        </div>
+        
+        <div class="example-queries">
+            <h4>Example Questions</h4>
+            <div class="example-query" onclick="setQuery(this.textContent)">
+                How much time on Smith matter this week?
+            </div>
+            <div class="example-query" onclick="setQuery(this.textContent)">
+                What matters have I worked on today?
+            </div>
+            <div class="example-query" onclick="setQuery(this.textContent)">
+                Which client has the most hours?
+            </div>
+            <div class="example-query" onclick="setQuery(this.textContent)">
+                What's left on my plan for today?
+            </div>
+            <div class="example-query" onclick="setQuery(this.textContent)">
+                Draft a client update for Acme Corp
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const messagesEl = document.getElementById('chat-messages');
+    const inputEl = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    function addMessage(content, isUser = false, source = null) {
+        const div = document.createElement('div');
+        div.className = `message ${isUser ? 'message-user' : 'message-ai'}`;
+        
+        // Convert newlines to <br> for AI messages
+        if (!isUser) {
+            content = content.replace(/\n/g, '<br>');
+        }
+        
+        div.innerHTML = content;
+        
+        if (source && !isUser) {
+            const sourceDiv = document.createElement('div');
+            sourceDiv.className = 'source';
+            sourceDiv.textContent = source;
+            div.appendChild(sourceDiv);
+        }
+        
+        messagesEl.appendChild(div);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        return div;
+    }
+    
+    function addLoadingMessage() {
+        const div = document.createElement('div');
+        div.className = 'message message-loading';
+        div.id = 'loading-message';
+        div.innerHTML = `
+            <div class="typing-indicator">
+                <span></span><span></span><span></span>
+            </div>
+            Thinking...
+        `;
+        messagesEl.appendChild(div);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+    
+    function removeLoadingMessage() {
+        const loading = document.getElementById('loading-message');
+        if (loading) loading.remove();
+    }
+    
+    async function sendMessage(e) {
+        e.preventDefault();
+        
+        const query = inputEl.value.trim();
+        if (!query) return;
+        
+        // Add user message
+        addMessage(query, true);
+        inputEl.value = '';
+        sendBtn.disabled = true;
+        
+        // Show loading
+        addLoadingMessage();
+        
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            
+            const data = await response.json();
+            removeLoadingMessage();
+            
+            if (data.success) {
+                const source = data.context_used ? 
+                    `Based on ${data.context_used.week_entries_count} entries (${data.context_used.week_total_hours.toFixed(1)}h this week)` : 
+                    null;
+                addMessage(data.response, false, source);
+            } else {
+                addMessage(data.response || 'Sorry, I encountered an error.', false);
+            }
+        } catch (err) {
+            removeLoadingMessage();
+            addMessage('Error connecting to AI. Is Ollama running?', false);
+        }
+        
+        sendBtn.disabled = false;
+        inputEl.focus();
+    }
+    
+    function setQuery(text) {
+        inputEl.value = text;
+        inputEl.focus();
+    }
+    
+    async function quickAction(action) {
+        addLoadingMessage();
+        
+        try {
+            let endpoint = '';
+            let label = '';
+            
+            switch(action) {
+                case 'day-summary':
+                    endpoint = '/api/ai/day-summary';
+                    label = 'Day Summary';
+                    break;
+                case 'week-analysis':
+                    endpoint = '/api/ai/week-analysis';
+                    label = 'Week Analysis';
+                    break;
+                case 'suggest-next':
+                    endpoint = '/api/ai/suggest-next';
+                    label = 'Next Task Suggestion';
+                    break;
+            }
+            
+            const response = await fetch(endpoint);
+            const data = await response.json();
+            removeLoadingMessage();
+            
+            if (data.success) {
+                const content = data.summary || data.analysis || data.suggestion;
+                let source = '';
+                
+                if (data.hours !== undefined) {
+                    source = `${data.entries_count || 0} entries, ${data.hours.toFixed(1)}h`;
+                } else if (data.total_hours !== undefined) {
+                    source = `${data.total_hours.toFixed(1)}h total this week`;
+                }
+                
+                addMessage(`<strong>${label}:</strong><br><br>${content}`, false, source);
+            } else {
+                addMessage(data.summary || data.analysis || data.suggestion || 'Error', false);
+            }
+        } catch (err) {
+            removeLoadingMessage();
+            addMessage('Error connecting to AI.', false);
+        }
+    }
+    
+    // Focus input on load
+    inputEl.focus();
+</script>
+{% endblock %}

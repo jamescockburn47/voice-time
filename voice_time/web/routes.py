@@ -131,6 +131,93 @@ def register_routes(app):
             activities=activities
         )
     
+    @app.route('/chat')
+    def chat_page():
+        """AI Chat page for querying your data."""
+        return render_template('chat.html')
+    
+    @app.route('/api/chat', methods=['POST'])
+    def api_chat():
+        """Chat with AI assistant about your matters and time entries."""
+        from ..llm.assistant import GroundedAssistant
+        from ..llm.client import OllamaClient
+        
+        data = request.json
+        query = data.get('query', '').strip()
+        
+        if not query:
+            return jsonify({'success': False, 'response': 'Please ask a question.'})
+        
+        try:
+            llm = OllamaClient(app.config_obj.ollama)
+            assistant = GroundedAssistant(llm, app.session)
+            result = assistant.chat(query)
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'success': False, 'response': f'Error: {str(e)}'})
+    
+    @app.route('/api/ai/day-summary')
+    def api_day_summary():
+        """Generate AI summary of today's work."""
+        from ..llm.assistant import GroundedAssistant
+        from ..llm.client import OllamaClient
+        
+        try:
+            llm = OllamaClient(app.config_obj.ollama)
+            assistant = GroundedAssistant(llm, app.session)
+            result = assistant.generate_day_summary()
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'success': False, 'summary': f'Error: {str(e)}'})
+    
+    @app.route('/api/ai/client-update', methods=['POST'])
+    def api_client_update():
+        """Generate draft client update email for a matter."""
+        from ..llm.assistant import GroundedAssistant
+        from ..llm.client import OllamaClient
+        
+        data = request.json
+        matter_name = data.get('matter', '').strip()
+        
+        if not matter_name:
+            return jsonify({'success': False, 'email': 'Please specify a matter name.'})
+        
+        try:
+            llm = OllamaClient(app.config_obj.ollama)
+            assistant = GroundedAssistant(llm, app.session)
+            result = assistant.generate_client_update(matter_name)
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'success': False, 'email': f'Error: {str(e)}'})
+    
+    @app.route('/api/ai/suggest-next')
+    def api_suggest_next():
+        """Get AI suggestion for what to work on next."""
+        from ..llm.assistant import GroundedAssistant
+        from ..llm.client import OllamaClient
+        
+        try:
+            llm = OllamaClient(app.config_obj.ollama)
+            assistant = GroundedAssistant(llm, app.session)
+            result = assistant.suggest_next_task()
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'success': False, 'suggestion': f'Error: {str(e)}'})
+    
+    @app.route('/api/ai/week-analysis')
+    def api_week_analysis():
+        """Get AI analysis of the week's time distribution."""
+        from ..llm.assistant import GroundedAssistant
+        from ..llm.client import OllamaClient
+        
+        try:
+            llm = OllamaClient(app.config_obj.ollama)
+            assistant = GroundedAssistant(llm, app.session)
+            result = assistant.analyze_week()
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'success': False, 'analysis': f'Error: {str(e)}'})
+    
     @app.route('/check-ollama')
     def check_ollama():
         """Check if Ollama is running and model is available."""
