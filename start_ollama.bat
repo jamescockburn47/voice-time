@@ -15,12 +15,10 @@ if %errorlevel% neq 0 (
 REM Check if Ollama is already running
 curl -s http://localhost:11434/api/tags >nul 2>&1
 if %errorlevel% equ 0 (
-    echo Ollama is already running
     goto check_model
 )
 
 REM Start Ollama in background (minimized window)
-echo Starting Ollama server...
 start "Ollama Server" /MIN ollama serve
 
 REM Wait for it to start (with timeout)
@@ -39,24 +37,38 @@ timeout /t 1 /nobreak >nul
 goto check_loop
 
 :check_model
-REM Check if model is installed
-echo Checking if model is installed...
-ollama list | findstr "qwen2.5:1.5b-instruct" >nul 2>&1
+REM Check if model is already installed (silently)
+ollama list 2>nul | findstr /C:"qwen2.5:1.5b-instruct" >nul 2>&1
 if %errorlevel% equ 0 (
-    echo Model is already installed
+    REM Model exists, exit silently
     exit /b 0
 )
 
-REM Pull the model
+REM Model not found - need to download
 echo.
-echo Model not found. Downloading qwen2.5:1.5b-instruct...
-echo This may take 2-3 minutes (~1GB download - SMALL MODEL)
+echo ==========================================
+echo   FIRST TIME SETUP
+echo ==========================================
 echo.
+echo Downloading AI model: qwen2.5:1.5b-instruct
+echo Size: ~1GB (SMALL, FAST model)
+echo Time: 2-3 minutes
+echo.
+echo This only happens ONCE!
+echo.
+echo ==========================================
+echo.
+
 ollama pull qwen2.5:1.5b-instruct
 
 if %errorlevel% equ 0 (
     echo.
-    echo Model downloaded successfully!
+    echo ==========================================
+    echo   Model downloaded successfully!
+    echo   Future starts will be instant!
+    echo ==========================================
+    echo.
+    timeout /t 2 /nobreak >nul
     exit /b 0
 ) else (
     echo.

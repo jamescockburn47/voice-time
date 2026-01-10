@@ -22,11 +22,9 @@ if not exist "venv\Scripts\activate.bat" (
 )
 
 REM Step 2: Start Ollama and pull model
-echo [2/5] Starting Ollama server and checking model...
+echo [2/5] Checking Ollama...
 call start_ollama.bat
-if %errorlevel% equ 0 (
-    echo Ollama is ready!
-) else (
+if %errorlevel% neq 0 (
     echo.
     echo ERROR: Ollama setup failed
     echo.
