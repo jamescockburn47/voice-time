@@ -135,8 +135,10 @@ class DayState:
         """
         Handle voice editing commands for work log entries - COMPLETELY HANDS-FREE.
         
-        BUG FIX 1: Now handles all command types including 'add_time', 'change_matter', 'change_activity'
-        BUG FIX 2: Validates entry_number >= 1 to prevent negative indexing
+        BUGS FIXED:
+        - Bug #1: Now handles all command types including 'add_time'
+        - Bug #2: Validates entry_number >= 1 to prevent negative indexing  
+        - Bug #3: Infers activity from full utterance, defaults to ADMIN properly
         """
         # Get today's logs
         logs = self.session.query(WorkLog).filter(
@@ -149,7 +151,7 @@ class DayState:
                 message="No entries to edit today"
             )
         
-        # BUG FIX 2: Validate entry number is valid (>= 1 and <= len(logs))
+        # BUG FIX #2: Validate entry number is valid (>= 1 and <= len(logs))
         if cmd.entry_number is not None:
             if cmd.entry_number < 1:
                 return ProcessingResult(
@@ -260,7 +262,9 @@ class DayState:
             )
         
         elif cmd.command_type == 'add_time':
-            # BUG FIX 1: Handle add_time command properly
+            # BUG FIX #1: Handle add_time command (was missing)
+            # BUG FIX #3: Infer activity from FULL utterance, default to ADMIN properly
+            
             # Find matter
             matter_match = self.matter_matcher.find_matter(cmd.matter_name)
             if not matter_match.match:
@@ -270,16 +274,37 @@ class DayState:
                     needs_clarification=True
                 )
             
-            # Infer activity from context or default to ADMIN
-            activity_match = self.activity_matcher.find_activity_type(cmd.matter_name)
-            activity_id = activity_match.match.id if activity_match.match else None
+            # Infer activity from FULL utterance (not just matter name!)
+            # e.g., "Add 2 hours to Thompson for emails" -> should detect EMAIL
+            activity_match = self.activity_matcher.find_activity_type(event.transcript)
+            
+            # Default to ADMIN if no activity found or low confidence
+            if not activity_match.match or activity_match.confidence < 0.5:
+                admin_activity = self.session.query(ActivityType).filter(
+                    ActivityType.code == "ADMIN"
+                ).first()
+                activity_id = admin_activity.id if admin_activity else None
+                activity_code = "ADMIN"
+                activity_name = "Administration"
+            else:
+                activity_id = activity_match.match.id
+                activity_code = activity_match.match.code
+                activity_name = activity_match.match.label
+            
+            # Generate professional narrative from full utterance
+            narrative = self.narrative_generator.generate(
+                event.transcript,
+                matter_match.match.display_name,
+                activity_code,
+                cmd.new_duration
+            )
             
             # Create new work log
             work_log = WorkLog(
                 matter_id=matter_match.match.id,
                 activity_type_id=activity_id,
                 duration_hours=cmd.new_duration,
-                narrative=f"Additional time entry - {cmd.matter_name}",
+                narrative=narrative,
                 started_at=datetime.now() - timedelta(hours=cmd.new_duration),
                 ended_at=datetime.now(),
                 source_event_id=event.id,
@@ -290,13 +315,13 @@ class DayState:
             
             return ProcessingResult(
                 success=True,
-                message=f"✓ Added {cmd.new_duration}h to {matter_match.match.display_name}"
+                message=f"✓ Added {cmd.new_duration}h to {matter_match.match.display_name} ({activity_name})"
             )
         
         # If we get here, command type wasn't recognized
         return ProcessingResult(
             success=False,
-            message=f"Edit command type '{cmd.command_type}' not yet implemented"
+            message=f"Edit command type '{cmd.command_type}' not implemented"
         )
     
     def _handle_plan(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
@@ -464,7 +489,7 @@ class DayState:
         message = f"✓ Logged {duration_result.hours}h to {matter_name} - {activity_name}"
         
         if duration_result.needs_confirmation:
-            message += f"\n(Inferred from {duration_result.source} - say 'change entry X to Y hours' if incorrect)"
+            message += f"\n(Say 'change entry X to Y hours' if incorrect)"
         
         return ProcessingResult(
             success=True,
