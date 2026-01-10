@@ -1,7 +1,8 @@
 """Flask routes for web UI."""
 from flask import render_template, request, jsonify, current_app
-from datetime import date
-from ..database.models import Matter, PlannedTask, WorkLog, DayPlan
+from datetime import date, datetime
+import math
+from ..database.models import Matter, PlannedTask, WorkLog, DayPlan, ActiveTimer, ActivityType
 
 
 def register_routes(app):
@@ -234,24 +235,39 @@ def register_routes(app):
                 PlannedTask.day_plan_id == plan.id
             ).all()
         
-        # Get today's work logs
+        # Get today's work logs (ordered by time, most recent first)
         logs = session.query(WorkLog).filter(
             WorkLog.created_at >= today
-        ).all()
+        ).order_by(WorkLog.created_at.desc()).all()
+        
+        # Get active timer (only one allowed)
+        active_timer = session.query(ActiveTimer).first()
         
         # Calculate totals by matter
         totals = {}
+        total_hours = 0.0
         for log in logs:
             matter_name = log.matter.display_name if log.matter else "General"
             if matter_name not in totals:
                 totals[matter_name] = 0.0
             totals[matter_name] += log.duration_hours
+            total_hours += log.duration_hours
+        
+        # Get all matters for timer dropdown
+        matters = session.query(Matter).filter(Matter.is_active == True).order_by(Matter.last_used_at.desc()).all()
+        
+        # Get activity types
+        activities = session.query(ActivityType).order_by(ActivityType.display_order).all()
         
         return render_template(
             'index.html',
             tasks=tasks,
             logs=logs,
-            totals=totals
+            totals=totals,
+            total_hours=total_hours,
+            active_timer=active_timer,
+            matters=matters,
+            activities=activities
         )
     
     @app.route('/process', methods=['POST'])
@@ -566,3 +582,224 @@ def register_routes(app):
                 'Content-Disposition': f'attachment; filename=time_log_{today}.csv'
             }
         )
+    
+    # ==================== TIMER API ====================
+    
+    @app.route('/api/timer/status')
+    def timer_status():
+        """Get current timer status."""
+        session = app.session
+        timer = session.query(ActiveTimer).first()
+        
+        if not timer:
+            return jsonify({
+                'active': False,
+                'timer': None
+            })
+        
+        return jsonify({
+            'active': True,
+            'timer': {
+                'id': timer.id,
+                'matter_id': timer.matter_id,
+                'matter_name': timer.matter.display_name if timer.matter else 'Unknown',
+                'activity': timer.activity_type.label if timer.activity_type else None,
+                'started_at': timer.started_at.isoformat(),
+                'is_running': timer.is_active,
+                'elapsed_seconds': timer.elapsed_seconds,
+                'elapsed_units': timer.elapsed_units,
+                'elapsed_hours': timer.elapsed_hours,
+                'narrative_draft': timer.narrative_draft
+            }
+        })
+    
+    @app.route('/api/timer/start', methods=['POST'])
+    def timer_start():
+        """Start a new timer. Stops any existing timer first."""
+        session = app.session
+        data = request.json
+        
+        matter_id = data.get('matter_id')
+        activity_id = data.get('activity_id')
+        narrative = data.get('narrative', '')
+        
+        if not matter_id:
+            return jsonify({'success': False, 'message': 'Matter is required'})
+        
+        # Check matter exists
+        matter = session.query(Matter).get(matter_id)
+        if not matter:
+            return jsonify({'success': False, 'message': 'Matter not found'})
+        
+        # Stop any existing timer first
+        existing = session.query(ActiveTimer).first()
+        if existing:
+            # Save existing timer as work log entry
+            _save_timer_to_log(session, existing)
+            session.delete(existing)
+        
+        # Create new timer
+        timer = ActiveTimer(
+            matter_id=matter_id,
+            activity_type_id=activity_id if activity_id else None,
+            started_at=datetime.now(),
+            narrative_draft=narrative,
+            is_active=True
+        )
+        session.add(timer)
+        matter.touch()
+        session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Timer started: {matter.display_name}',
+            'timer_id': timer.id
+        })
+    
+    @app.route('/api/timer/stop', methods=['POST'])
+    def timer_stop():
+        """Stop the active timer and save to work log."""
+        session = app.session
+        data = request.json or {}
+        
+        timer = session.query(ActiveTimer).first()
+        if not timer:
+            return jsonify({'success': False, 'message': 'No active timer'})
+        
+        # Get final narrative if provided
+        final_narrative = data.get('narrative', timer.narrative_draft)
+        
+        # Save to work log
+        _save_timer_to_log(session, timer, final_narrative)
+        
+        # Delete timer
+        matter_name = timer.matter.display_name
+        elapsed_units = timer.elapsed_units
+        session.delete(timer)
+        session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Saved {elapsed_units} units ({elapsed_units * 0.1:.1f}h) to {matter_name}'
+        })
+    
+    @app.route('/api/timer/pause', methods=['POST'])
+    def timer_pause():
+        """Pause the active timer."""
+        session = app.session
+        
+        timer = session.query(ActiveTimer).first()
+        if not timer:
+            return jsonify({'success': False, 'message': 'No active timer'})
+        
+        if not timer.is_active:
+            return jsonify({'success': False, 'message': 'Timer already paused'})
+        
+        # Calculate accumulated time
+        running_time = (datetime.now() - timer.started_at).total_seconds()
+        timer.accumulated_seconds += int(running_time)
+        timer.paused_at = datetime.now()
+        timer.is_active = False
+        session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Timer paused',
+            'elapsed_units': timer.elapsed_units
+        })
+    
+    @app.route('/api/timer/resume', methods=['POST'])
+    def timer_resume():
+        """Resume a paused timer."""
+        session = app.session
+        
+        timer = session.query(ActiveTimer).first()
+        if not timer:
+            return jsonify({'success': False, 'message': 'No active timer'})
+        
+        if timer.is_active:
+            return jsonify({'success': False, 'message': 'Timer already running'})
+        
+        # Reset start time (accumulated time is preserved)
+        timer.started_at = datetime.now()
+        timer.paused_at = None
+        timer.is_active = True
+        session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Timer resumed'
+        })
+    
+    @app.route('/api/timer/resume-entry/<log_id>', methods=['POST'])
+    def timer_resume_entry(log_id):
+        """Resume a previous work log entry (continue timer)."""
+        session = app.session
+        
+        # Get the work log entry
+        log = session.query(WorkLog).get(log_id)
+        if not log:
+            return jsonify({'success': False, 'message': 'Entry not found'})
+        
+        # Stop any existing timer
+        existing = session.query(ActiveTimer).first()
+        if existing:
+            _save_timer_to_log(session, existing)
+            session.delete(existing)
+        
+        # Create new timer from the log entry
+        timer = ActiveTimer(
+            matter_id=log.matter_id,
+            activity_type_id=log.activity_type_id,
+            started_at=datetime.now(),
+            # Pre-load with existing time (convert hours to seconds)
+            accumulated_seconds=int(log.duration_hours * 3600),
+            narrative_draft=log.narrative,
+            is_active=True
+        )
+        session.add(timer)
+        
+        # Delete the original log entry (it will be recreated when timer stops)
+        session.delete(log)
+        session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Continuing: {timer.matter.display_name}',
+            'timer_id': timer.id
+        })
+    
+    @app.route('/api/timer/update-narrative', methods=['POST'])
+    def timer_update_narrative():
+        """Update the narrative of the active timer."""
+        session = app.session
+        data = request.json
+        
+        timer = session.query(ActiveTimer).first()
+        if not timer:
+            return jsonify({'success': False, 'message': 'No active timer'})
+        
+        timer.narrative_draft = data.get('narrative', '')
+        session.commit()
+        
+        return jsonify({'success': True})
+    
+    
+    def _save_timer_to_log(session, timer, narrative=None):
+        """Helper: Save timer to work log."""
+        if narrative is None:
+            narrative = timer.narrative_draft
+        
+        # Calculate hours (minimum 0.1 = 1 unit)
+        hours = max(0.1, timer.elapsed_hours)
+        
+        log = WorkLog(
+            matter_id=timer.matter_id,
+            activity_type_id=timer.activity_type_id,
+            started_at=timer.created_at,
+            ended_at=datetime.now(),
+            duration_hours=hours,
+            narrative=narrative,
+            allocation_status='allocated'
+        )
+        session.add(log)

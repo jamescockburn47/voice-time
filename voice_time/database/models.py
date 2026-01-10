@@ -145,6 +145,50 @@ class SessionState(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
+class ActiveTimer(Base):
+    """
+    Tracks the currently running timer.
+    Only ONE active timer allowed at a time (enforced in app logic).
+    """
+    __tablename__ = "active_timers"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    matter_id = Column(String, ForeignKey("matters.id"), nullable=False)
+    activity_type_id = Column(String, ForeignKey("activity_types.id"))
+    started_at = Column(DateTime, nullable=False, default=func.now())
+    paused_at = Column(DateTime)  # If paused, when it was paused
+    accumulated_seconds = Column(Integer, default=0)  # Time from previous pauses
+    narrative_draft = Column(Text)  # Working narrative
+    is_active = Column(Boolean, default=True)  # False if paused
+    created_at = Column(DateTime, default=func.now())
+    
+    matter = relationship("Matter")
+    activity_type = relationship("ActivityType")
+    
+    @property
+    def elapsed_seconds(self) -> int:
+        """Total elapsed time including pauses."""
+        if self.paused_at:
+            # Timer is paused - return accumulated time
+            return self.accumulated_seconds
+        else:
+            # Timer is running - add time since started
+            from datetime import datetime
+            running_time = (datetime.now() - self.started_at).total_seconds()
+            return self.accumulated_seconds + int(running_time)
+    
+    @property
+    def elapsed_units(self) -> int:
+        """Elapsed time in 6-minute billing units (rounded up)."""
+        import math
+        return math.ceil(self.elapsed_seconds / 360)  # 6 min = 360 sec
+    
+    @property
+    def elapsed_hours(self) -> float:
+        """Elapsed time in decimal hours (for billing)."""
+        return self.elapsed_units * 0.1  # Each unit = 0.1 hour
+
+
 # Indexes
 Index("idx_matters_active", Matter.is_active)
 Index("idx_matters_last_used", Matter.last_used_at.desc())

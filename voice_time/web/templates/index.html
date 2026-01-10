@@ -1,58 +1,202 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Voice Time{% endblock %}
+{% block title %}Dashboard - TimeBrief{% endblock %}
 
 {% block styles %}
 <style>
-    .input-area {
-        margin-bottom: 30px;
-        background: linear-gradient(135deg, var(--purple-dim), var(--primary-dim));
-        border: 1px solid var(--purple-border);
+    /* Active Timer */
+    .timer-display {
+        background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+        border: 2px solid var(--primary);
         border-radius: var(--radius-lg);
-        padding: 24px;
+        padding: 32px;
+        margin-bottom: 24px;
+        position: relative;
     }
     
-    .input-area h2 {
-        background: linear-gradient(135deg, var(--purple), var(--primary));
+    .timer-display.paused {
+        border-color: var(--text-muted);
+        opacity: 0.85;
+    }
+    
+    .timer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 24px;
+    }
+    
+    .timer-matter {
+        font-family: var(--font-serif);
+        font-size: 1.5em;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+    
+    .timer-activity {
+        color: var(--text-muted);
+        font-size: 0.95em;
+        margin-top: 4px;
+    }
+    
+    .timer-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .timer-status .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        animation: pulse-dot 1.5s infinite;
+    }
+    
+    .timer-status.running .dot {
+        background: #22c55e;
+    }
+    
+    .timer-status.paused .dot {
+        background: #f59e0b;
+        animation: none;
+    }
+    
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(0.9); }
+    }
+    
+    .timer-time {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    
+    .timer-clock {
+        font-family: var(--font-mono, 'JetBrains Mono', monospace);
+        font-size: 4em;
+        font-weight: 300;
+        color: var(--text-main);
+        letter-spacing: 0.02em;
+    }
+    
+    .timer-units {
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+        margin-top: 16px;
+    }
+    
+    .timer-unit {
+        text-align: center;
+    }
+    
+    .timer-unit-value {
+        font-family: var(--font-serif);
+        font-size: 2em;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary), var(--purple));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        margin-bottom: 20px;
     }
     
-    .voice-primary {
-        margin-bottom: 24px;
-        padding: 24px;
-        background: var(--bg-card);
-        border: 2px solid var(--primary);
+    .timer-unit-label {
+        font-size: 0.85em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .timer-controls {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+    
+    .timer-btn {
+        padding: 12px 24px;
+        border: none;
         border-radius: var(--radius-md);
+        font-size: 1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
     }
     
-    .voice-btn {
-        width: 100%;
-        padding: 24px;
+    .timer-btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .timer-btn.primary {
+        background: var(--primary);
+        color: var(--bg-app);
+    }
+    
+    .timer-btn.stop {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .timer-btn.secondary {
+        background: var(--bg-hover);
+        color: var(--text-main);
+        border: 1px solid var(--border);
+    }
+    
+    /* Start Timer Section */
+    .start-timer-section {
+        background: var(--bg-card);
+        border: 1px dashed var(--border);
+        border-radius: var(--radius-lg);
+        padding: 32px;
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    
+    .start-timer-btn {
         background: var(--primary);
         color: var(--bg-app);
         border: none;
+        padding: 16px 32px;
         border-radius: var(--radius-md);
-        font-size: 1.3em;
+        font-size: 1.1em;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 16px;
     }
     
-    .voice-btn:hover {
-        background: #d97706;
+    .start-timer-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
     }
     
-    .voice-btn:active {
-        transform: scale(0.98);
+    /* Input area */
+    .input-area {
+        margin-bottom: 24px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+    }
+    
+    .voice-btn {
+        width: 100%;
+        padding: 20px;
+        background: var(--primary);
+        color: var(--bg-app);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 1.1em;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .voice-btn:hover {
+        background: #d97706;
     }
     
     .voice-btn.recording {
@@ -67,8 +211,8 @@
     
     #utterance-input {
         width: 100%;
-        padding: 16px;
-        font-size: 1.05em;
+        padding: 14px;
+        font-size: 1em;
         font-family: var(--font-sans);
         background: var(--bg-sidebar);
         border: 1px solid var(--border);
@@ -80,59 +224,17 @@
     #utterance-input:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px var(--primary-dim);
     }
     
-    #utterance-input::placeholder {
-        color: var(--text-muted);
-    }
-    
-    .btn-group {
-        display: flex;
-        gap: 12px;
-    }
-    
-    .task-list {
-        list-style: none;
-    }
-    
-    .task-item {
-        padding: 14px 16px;
-        border-left: 3px solid var(--primary);
-        margin-bottom: 12px;
-        background: var(--bg-hover);
-        border-radius: var(--radius-sm);
-        transition: all 0.2s;
-    }
-    
-    .task-item:hover {
-        background: var(--bg-card);
-        border-left-color: var(--purple);
-    }
-    
-    .task-item.done {
-        opacity: 0.7;
-        border-left-color: var(--success);
-    }
-    
-    .task-item .matter {
-        font-weight: 600;
-        color: var(--text-main);
-        font-size: 1.05em;
-    }
-    
-    .task-item .title {
-        margin-top: 6px;
-        color: var(--text-muted);
-        font-size: 0.95em;
-    }
-    
+    /* Work Log */
     .log-entry {
-        padding: 14px 16px;
-        border-left: 3px solid var(--success);
-        margin-bottom: 12px;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px;
         background: var(--bg-hover);
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
         transition: all 0.2s;
     }
     
@@ -140,335 +242,571 @@
         background: var(--bg-card);
     }
     
-    .log-entry .matter {
+    .log-time {
+        min-width: 80px;
+        text-align: center;
+        padding: 8px 0;
+    }
+    
+    .log-time-value {
+        font-family: var(--font-serif);
+        font-size: 1.5em;
+        font-weight: 700;
+        color: var(--primary);
+    }
+    
+    .log-time-units {
+        font-size: 0.75em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    
+    .log-details {
+        flex: 1;
+    }
+    
+    .log-matter {
         font-weight: 600;
         color: var(--text-main);
         font-size: 1.05em;
     }
     
-    .log-entry .duration {
-        float: right;
-        color: var(--primary);
-        font-weight: 700;
-        font-family: var(--font-serif);
-        font-size: 1.1em;
+    .log-activity {
+        color: var(--text-muted);
+        font-size: 0.9em;
+        margin-top: 2px;
     }
     
-    .log-entry .narrative {
+    .log-narrative {
         margin-top: 8px;
         color: var(--text-muted);
         font-size: 0.95em;
         line-height: 1.5;
     }
     
-    .totals {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
+    .log-actions {
+        display: flex;
+        gap: 8px;
     }
     
-    .total-card {
-        background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+    .log-action-btn {
+        padding: 8px 12px;
+        background: var(--bg-sidebar);
         border: 1px solid var(--border);
-        padding: 20px;
-        border-radius: var(--radius-md);
-        text-align: center;
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+        font-size: 0.85em;
+        cursor: pointer;
         transition: all 0.2s;
     }
     
-    .total-card:hover {
-        transform: translateY(-2px);
+    .log-action-btn:hover {
+        background: var(--primary);
+        color: var(--bg-app);
         border-color: var(--primary);
-        box-shadow: 0 4px 12px var(--primary-glow);
     }
     
-    .total-card .matter-name {
+    /* Summary */
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .summary-row:last-child {
+        border-bottom: none;
+        font-weight: 600;
+        padding-top: 16px;
+    }
+    
+    .summary-matter {
+        color: var(--text-main);
+    }
+    
+    .summary-hours {
+        font-family: var(--font-serif);
+        color: var(--primary);
+        font-weight: 600;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal-overlay.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: var(--bg-app);
+        border-radius: var(--radius-lg);
+        padding: 32px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .modal-title {
+        font-family: var(--font-serif);
+        font-size: 1.5em;
+        margin-bottom: 24px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
         font-size: 0.9em;
         color: var(--text-muted);
         margin-bottom: 8px;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 500;
+        letter-spacing: 0.03em;
     }
     
-    .total-card .hours {
-        font-size: 2.5em;
-        font-weight: 700;
-        font-family: var(--font-serif);
-        background: linear-gradient(135deg, var(--primary), var(--purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    
-    #response-message {
-        margin-top: 16px;
-    }
-    
-    .debug-panel {
-        margin-top: 24px;
-        padding: 20px;
+    .form-select {
+        width: 100%;
+        padding: 12px;
         background: var(--bg-sidebar);
         border: 1px solid var(--border);
         border-radius: var(--radius-md);
-        font-family: monospace;
-        font-size: 0.85em;
-    }
-    
-    .debug-title {
         color: var(--text-main);
-        font-weight: 600;
-        margin-bottom: 12px;
-        font-family: var(--font-sans);
+        font-size: 1em;
     }
     
-    .debug-content {
-        color: var(--text-muted);
-        line-height: 1.6;
+    .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    
+    .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 24px;
+    }
+    
+    /* Status bar */
+    .status-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        margin-bottom: 20px;
+        font-size: 0.9em;
+    }
+    
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- Ollama Status Indicator -->
-<div id="ollama-status" style="padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <span id="ollama-indicator" style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
-        <span id="ollama-message" style="color: var(--text-muted); font-size: 0.95em;">Checking AI status...</span>
+<!-- Status Bar -->
+<div class="status-bar">
+    <div class="status-item">
+        <span id="ollama-dot" class="status-dot" style="background: #666;"></span>
+        <span id="ollama-status">Checking AI...</span>
     </div>
-    <button onclick="checkOllamaStatus()" style="background: var(--bg-hover); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.85em;">
-        Recheck
-    </button>
+    <div class="status-item">
+        <span id="mic-dot" class="status-dot" style="background: #666;"></span>
+        <span id="mic-status">Checking mic...</span>
+    </div>
 </div>
 
-<div class="card input-area">
-    <h2>What are you working on?</h2>
-    
-    <!-- Voice Input (Primary) -->
-    <div class="voice-primary">
-        <button id="voice-btn" class="voice-btn" onclick="toggleVoiceRecording()">
-            <span id="voice-text">Press to Talk (or Ctrl+Space)</span>
-        </button>
-        <div id="mic-status" style="margin-top: 16px; text-align: center; color: var(--text-muted); font-size: 0.95em;">
-            <span id="mic-indicator">●</span> <span id="mic-message">Click button or press Ctrl+Space to start</span>
+<!-- Active Timer -->
+{% if active_timer %}
+<div id="timer-display" class="timer-display {{ 'paused' if not active_timer.is_active else '' }}" 
+     data-started="{{ active_timer.started_at.isoformat() }}"
+     data-accumulated="{{ active_timer.accumulated_seconds }}"
+     data-running="{{ 'true' if active_timer.is_active else 'false' }}">
+    <div class="timer-header">
+        <div>
+            <div class="timer-matter">{{ active_timer.matter.display_name }}</div>
+            <div class="timer-activity">{{ active_timer.activity_type.label if active_timer.activity_type else 'General work' }}</div>
+        </div>
+        <div class="timer-status {{ 'running' if active_timer.is_active else 'paused' }}">
+            <span class="dot"></span>
+            <span>{{ 'Running' if active_timer.is_active else 'Paused' }}</span>
         </div>
     </div>
     
-    <!-- Text Input (Backup) -->
-    <div style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
-        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 12px; text-align: center;">
-            Or type your command:
-        </p>
-        <input 
-            type="text" 
-            id="utterance-input" 
-            placeholder="e.g., 'Today I need to work on Thompson' or 'Done with disclosure'"
-        >
-        <div class="btn-group">
-            <button class="btn" onclick="processInput()" style="flex: 1;">Submit Text</button>
+    <div class="timer-time">
+        <div class="timer-clock" id="timer-clock">00:00:00</div>
+        <div class="timer-units">
+            <div class="timer-unit">
+                <div class="timer-unit-value" id="timer-units">0</div>
+                <div class="timer-unit-label">6-min units</div>
+            </div>
+            <div class="timer-unit">
+                <div class="timer-unit-value" id="timer-hours">0.0h</div>
+                <div class="timer-unit-label">Billable</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="timer-controls">
+        {% if active_timer.is_active %}
+        <button class="timer-btn secondary" onclick="pauseTimer()">Pause</button>
+        {% else %}
+        <button class="timer-btn primary" onclick="resumeTimer()">Resume</button>
+        {% endif %}
+        <button class="timer-btn stop" onclick="stopTimer()">Stop & Save</button>
+    </div>
+</div>
+{% else %}
+<!-- Start Timer Section -->
+<div class="start-timer-section">
+    <p style="color: var(--text-muted); margin-bottom: 16px;">No timer running</p>
+    <button class="start-timer-btn" onclick="openStartTimerModal()">Start Timer</button>
+</div>
+{% endif %}
+
+<!-- Voice/Text Input -->
+<div class="card input-area">
+    <h2 style="font-size: 1.1em; margin-bottom: 16px; color: var(--text-muted); font-weight: 500;">Voice Command</h2>
+    
+    <button id="voice-btn" class="voice-btn" onclick="toggleVoiceRecording()">
+        <span id="voice-text">Press to Talk (Ctrl+Space)</span>
+    </button>
+    
+    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+        <input type="text" id="utterance-input" placeholder="Or type: 'Working on Smith matter' or 'Done with disclosure'">
+        <div style="display: flex; gap: 8px;">
+            <button class="btn" onclick="processInput()" style="flex: 1;">Submit</button>
             <button class="btn" onclick="clearInput()" style="background: var(--bg-hover); color: var(--text-muted);">Clear</button>
         </div>
     </div>
     
-    <!-- Recognized Text Display -->
-    <div id="recognized-text" style="display: none; margin-top: 20px; padding: 16px; background: var(--bg-card); border-left: 3px solid var(--primary); border-radius: var(--radius-sm);">
-        <div style="color: var(--text-muted); font-size: 0.85em; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">
-            You said:
-        </div>
-        <div id="recognized-text-content" style="color: var(--text-main); font-size: 1.15em; font-style: italic;"></div>
+    <div id="recognized-text" style="display: none; margin-top: 16px; padding: 12px; background: var(--bg-sidebar); border-left: 3px solid var(--primary); border-radius: var(--radius-sm);">
+        <div style="color: var(--text-muted); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Recognized:</div>
+        <div id="recognized-text-content" style="color: var(--text-main); font-style: italic;"></div>
     </div>
     
-    <!-- Processing Status -->
-    <div id="processing-status" style="display: none; margin-top: 12px; padding: 12px; background: var(--purple-dim); border: 1px solid var(--purple-border); border-radius: var(--radius-sm); text-align: center;">
-        <span style="color: var(--purple); font-size: 0.95em;"><span id="processing-stage">Processing...</span></span>
+    <div id="processing-status" style="display: none; margin-top: 12px; padding: 12px; background: var(--purple-dim); border-radius: var(--radius-sm); text-align: center;">
+        <span style="color: var(--purple);"><span id="processing-stage">Processing...</span></span>
     </div>
     
-    <!-- Debug Info -->
-    <div id="debug-info" style="display: none;" class="debug-panel">
-        <div class="debug-title">Debug Information</div>
-        <div id="debug-content" class="debug-content"></div>
-    </div>
-    
-    <div id="response-message"></div>
+    <div id="response-message" style="margin-top: 16px;"></div>
 </div>
 
+<!-- Today's Summary -->
 <div class="card">
     <h2>Today's Summary</h2>
-    <div class="totals">
-        {% if totals %}
-            {% for matter, hours in totals.items() %}
-            <div class="total-card">
-                <div class="matter-name">{{ matter }}</div>
-                <div class="hours">{{ "%.1f"|format(hours) }}h</div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <p style="text-align: center; color: var(--text-muted); padding: 32px;">
-                No time logged yet today
-            </p>
-        {% endif %}
-    </div>
-</div>
-
-<div class="card">
-    <h2>Today's Plan</h2>
-    {% if tasks %}
-    <ul class="task-list">
-        {% for task in tasks %}
-        <li class="task-item {{ 'done' if task.status == 'done' else '' }}">
-            <div class="matter">
-                {% if task.matter %}
-                    {{ task.matter.display_name }}
-                {% else %}
-                    General
-                {% endif %}
-                {% if task.activity_type %}
-                    - {{ task.activity_type.label }}
-                {% endif %}
-            </div>
-            <div class="title">{{ task.title }}</div>
-        </li>
+    {% if totals %}
+    <div>
+        {% for matter, hours in totals.items() %}
+        <div class="summary-row">
+            <span class="summary-matter">{{ matter }}</span>
+            <span class="summary-hours">{{ "%.1f"|format(hours) }}h ({{ (hours / 0.1)|int }} units)</span>
+        </div>
         {% endfor %}
-    </ul>
+        <div class="summary-row">
+            <span class="summary-matter">Total</span>
+            <span class="summary-hours">{{ "%.1f"|format(total_hours) }}h</span>
+        </div>
+    </div>
     {% else %}
-    <p style="color: var(--text-muted); text-align: center; padding: 32px;">
-        No plan for today yet. Try: "Today I need to work on Thompson disclosure"
+    <p style="text-align: center; color: var(--text-muted); padding: 24px;">
+        No time logged yet today
     </p>
     {% endif %}
 </div>
 
+<!-- Work Log -->
 <div class="card">
     <h2>Work Log</h2>
     {% if logs %}
     <div>
         {% for log in logs %}
-        <div class="log-entry">
-            <span class="duration">{{ "%.1f"|format(log.duration_hours) }}h</span>
-            <div class="matter">
-                {% if log.matter %}
-                    {{ log.matter.display_name }}
-                {% else %}
-                    General
-                {% endif %}
-                {% if log.activity_type %}
-                    - {{ log.activity_type.label }}
+        <div class="log-entry" data-log-id="{{ log.id }}">
+            <div class="log-time">
+                <div class="log-time-value">{{ "%.1f"|format(log.duration_hours) }}</div>
+                <div class="log-time-units">{{ (log.duration_hours / 0.1)|int }} units</div>
+            </div>
+            <div class="log-details">
+                <div class="log-matter">
+                    {% if log.matter %}{{ log.matter.display_name }}{% else %}General{% endif %}
+                </div>
+                <div class="log-activity">
+                    {{ log.activity_type.label if log.activity_type else 'Work' }}
+                </div>
+                {% if log.narrative %}
+                <div class="log-narrative">{{ log.narrative }}</div>
                 {% endif %}
             </div>
-            {% if log.narrative %}
-            <div class="narrative">{{ log.narrative }}</div>
-            {% endif %}
+            <div class="log-actions">
+                <button class="log-action-btn" onclick="resumeEntry('{{ log.id }}')" title="Continue this timer">Resume</button>
+            </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <p style="color: var(--text-muted); text-align: center; padding: 32px;">
+    <p style="color: var(--text-muted); text-align: center; padding: 24px;">
         No work logged yet today
     </p>
     {% endif %}
+</div>
+
+<!-- Start Timer Modal -->
+<div id="start-timer-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="modal-title">Start Timer</h2>
+        
+        <div class="form-group">
+            <label class="form-label">Matter *</label>
+            <select id="timer-matter" class="form-select" required>
+                <option value="">Select a matter...</option>
+                {% for matter in matters %}
+                <option value="{{ matter.id }}">{{ matter.display_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Activity Type</label>
+            <select id="timer-activity" class="form-select">
+                <option value="">General work</option>
+                {% for activity in activities %}
+                <option value="{{ activity.id }}">{{ activity.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Description (optional)</label>
+            <input type="text" id="timer-narrative" class="form-select" placeholder="What are you working on?">
+        </div>
+        
+        <div class="modal-actions">
+            <button class="timer-btn secondary" onclick="closeStartTimerModal()">Cancel</button>
+            <button class="timer-btn primary" onclick="startTimer()">Start</button>
+        </div>
+    </div>
 </div>
 
 <script>
     let isRecording = false;
     let mediaRecorder = null;
     let audioChunks = [];
-    let debugMode = true;  // Enable debug logging
+    let timerInterval = null;
     
-    // Check microphone and Ollama on page load
+    // Initialize on page load
     window.addEventListener('DOMContentLoaded', function() {
-        checkMicrophoneAccess();
         checkOllamaStatus();
-        
-        // Check for debug parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('debug') === 'true') {
-            document.getElementById('debug-info').style.display = 'block';
-        }
+        checkMicrophoneAccess();
+        initTimer();
     });
     
-    function addDebugLog(message) {
-        if (!debugMode) return;
-        const debugContent = document.getElementById('debug-content');
-        const timestamp = new Date().toLocaleTimeString();
-        debugContent.innerHTML += `[${timestamp}] ${message}<br>`;
-        document.getElementById('debug-info').style.display = 'block';
+    // Timer functions
+    function initTimer() {
+        const timerDisplay = document.getElementById('timer-display');
+        if (!timerDisplay) return;
+        
+        updateTimerDisplay();
+        timerInterval = setInterval(updateTimerDisplay, 1000);
     }
     
-    // Check Ollama status
-    async function checkOllamaStatus() {
-        const indicator = document.getElementById('ollama-indicator');
-        const message = document.getElementById('ollama-message');
+    function updateTimerDisplay() {
+        const timerDisplay = document.getElementById('timer-display');
+        if (!timerDisplay) return;
         
-        addDebugLog('Checking Ollama status...');
+        const accumulated = parseInt(timerDisplay.dataset.accumulated) || 0;
+        const isRunning = timerDisplay.dataset.running === 'true';
+        
+        let totalSeconds = accumulated;
+        
+        if (isRunning) {
+            const started = new Date(timerDisplay.dataset.started);
+            const now = new Date();
+            const runningSeconds = Math.floor((now - started) / 1000);
+            totalSeconds = accumulated + runningSeconds;
+        }
+        
+        // Format HH:MM:SS
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        const clockStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        
+        // Calculate units (6-minute increments, rounded up)
+        const units = Math.ceil(totalSeconds / 360);
+        const billableHours = (units * 0.1).toFixed(1);
+        
+        document.getElementById('timer-clock').textContent = clockStr;
+        document.getElementById('timer-units').textContent = units;
+        document.getElementById('timer-hours').textContent = billableHours + 'h';
+    }
+    
+    function openStartTimerModal() {
+        document.getElementById('start-timer-modal').classList.add('active');
+    }
+    
+    function closeStartTimerModal() {
+        document.getElementById('start-timer-modal').classList.remove('active');
+    }
+    
+    async function startTimer() {
+        const matterId = document.getElementById('timer-matter').value;
+        const activityId = document.getElementById('timer-activity').value;
+        const narrative = document.getElementById('timer-narrative').value;
+        
+        if (!matterId) {
+            alert('Please select a matter');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/timer/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    matter_id: matterId,
+                    activity_id: activityId || null,
+                    narrative: narrative
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('Error starting timer: ' + err.message);
+        }
+    }
+    
+    async function pauseTimer() {
+        try {
+            const response = await fetch('/api/timer/pause', { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('Error pausing timer: ' + err.message);
+        }
+    }
+    
+    async function resumeTimer() {
+        try {
+            const response = await fetch('/api/timer/resume', { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('Error resuming timer: ' + err.message);
+        }
+    }
+    
+    async function stopTimer() {
+        if (!confirm('Stop timer and save this time entry?')) return;
+        
+        try {
+            const response = await fetch('/api/timer/stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('Error stopping timer: ' + err.message);
+        }
+    }
+    
+    async function resumeEntry(logId) {
+        try {
+            const response = await fetch('/api/timer/resume-entry/' + logId, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('Error resuming entry: ' + err.message);
+        }
+    }
+    
+    // Status checks
+    async function checkOllamaStatus() {
+        const dot = document.getElementById('ollama-dot');
+        const status = document.getElementById('ollama-status');
         
         try {
             const response = await fetch('/check-ollama');
             const data = await response.json();
             
-            addDebugLog(`Ollama status: ${data.status}`);
-            
             if (data.status === 'ready') {
-                indicator.style.background = '#22c55e';
-                message.innerHTML = `<span style="color: var(--success);">AI ready</span> <span style="color: var(--text-muted); font-size: 0.85em;">(${data.model})</span>`;
-                addDebugLog('Ollama ready and responding');
-            } else if (data.status === 'not_running') {
-                indicator.style.background = '#ef4444';
-                message.innerHTML = `<span style="color: var(--error);">Ollama not running</span> <span style="color: var(--text-muted); font-size: 0.85em;">- Run: <code style="background: var(--bg-hover); padding: 2px 6px; border-radius: 2px;">ollama serve</code></span>`;
-                addDebugLog('Ollama not running');
+                dot.style.background = '#22c55e';
+                status.textContent = 'AI ready';
             } else {
-                indicator.style.background = '#f59e0b';
-                message.innerHTML = `<span style="color: var(--warning);">AI issue:</span> <span style="color: var(--text-muted); font-size: 0.85em;">${data.message}</span>`;
-                addDebugLog(`Ollama issue: ${data.message}`);
+                dot.style.background = '#ef4444';
+                status.textContent = 'AI offline';
             }
         } catch (err) {
-            indicator.style.background = '#ef4444';
-            message.innerHTML = `<span style="color: var(--error);">Cannot check AI status</span>`;
-            addDebugLog(`Error checking Ollama: ${err.message}`);
+            dot.style.background = '#ef4444';
+            status.textContent = 'AI error';
         }
     }
     
     async function checkMicrophoneAccess() {
-        addDebugLog('Checking microphone access...');
+        const dot = document.getElementById('mic-dot');
+        const status = document.getElementById('mic-status');
+        
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(track => track.stop());
-            updateMicStatus('ready', 'Microphone ready');
-            addDebugLog('Microphone access granted');
+            dot.style.background = '#22c55e';
+            status.textContent = 'Mic ready';
         } catch (err) {
-            updateMicStatus('error', 'Microphone access denied - Click to grant');
-            document.getElementById('mic-status').onclick = requestMicrophoneAccess;
-            addDebugLog(`Microphone error: ${err.message}`);
+            dot.style.background = '#ef4444';
+            status.textContent = 'Mic denied';
         }
     }
     
-    async function requestMicrophoneAccess() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(track => track.stop());
-            updateMicStatus('ready', 'Microphone ready');
-            document.getElementById('mic-status').onclick = null;
-            addDebugLog('Microphone access granted after request');
-        } catch (err) {
-            alert('Please allow microphone access in your browser settings');
-            addDebugLog(`Microphone request denied: ${err.message}`);
-        }
-    }
-    
-    function updateMicStatus(status, message) {
-        const indicator = document.getElementById('mic-indicator');
-        const msg = document.getElementById('mic-message');
-        
-        const colors = {
-            'ready': '#22c55e',
-            'recording': '#ef4444',
-            'processing': '#a78bfa',
-            'error': '#ef4444'
-        };
-        
-        indicator.style.cssText = `width: 8px; height: 8px; border-radius: 50%; background: ${colors[status] || '#666'}; display: inline-block; margin-right: 6px;`;
-        msg.textContent = message || '';
-    }
-    
+    // Voice recording
     async function toggleVoiceRecording() {
         if (!isRecording) {
             await startRecording();
@@ -478,26 +816,14 @@
     }
     
     async function startRecording() {
-        addDebugLog('Starting voice recording...');
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    channelCount: 1,
-                    sampleRate: 16000
-                }
-            });
-            
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, sampleRate: 16000 } });
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
             
-            mediaRecorder.ondataavailable = (event) => {
-                audioChunks.push(event.data);
-                addDebugLog(`Audio chunk: ${event.data.size} bytes`);
-            };
-            
+            mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                addDebugLog(`Total audio: ${audioBlob.size} bytes`);
                 await processVoiceInput(audioBlob);
                 stream.getTracks().forEach(track => track.stop());
             };
@@ -505,32 +831,19 @@
             mediaRecorder.start();
             isRecording = true;
             
-            // Update UI
-            const voiceBtn = document.getElementById('voice-btn');
-            voiceBtn.classList.add('recording');
+            document.getElementById('voice-btn').classList.add('recording');
             document.getElementById('voice-text').textContent = 'Recording... Click to Stop';
-            updateMicStatus('recording', 'Recording... speak now!');
-            
-            addDebugLog('Recording started');
-            
         } catch (err) {
-            alert('Could not access microphone. Please check permissions.');
-            console.error(err);
-                addDebugLog(`Recording error: ${err.message}`);
+            alert('Could not access microphone');
         }
     }
     
     async function stopRecording() {
         if (mediaRecorder && isRecording) {
-            addDebugLog('Stopping recording...');
             mediaRecorder.stop();
             isRecording = false;
-            
-            // Update UI
-            const voiceBtn = document.getElementById('voice-btn');
-            voiceBtn.classList.remove('recording');
-            document.getElementById('voice-text').textContent = 'Press to Talk (or Ctrl+Space)';
-            updateMicStatus('processing', 'Processing speech...');
+            document.getElementById('voice-btn').classList.remove('recording');
+            document.getElementById('voice-text').textContent = 'Press to Talk (Ctrl+Space)';
         }
     }
     
@@ -544,95 +857,46 @@
         const processingStage = document.getElementById('processing-stage');
         const responseDiv = document.getElementById('response-message');
         
-        // Show processing status
         processingDiv.style.display = 'block';
-        processingStage.textContent = 'Transcribing speech...';
-        addDebugLog('Sending audio to server for transcription...');
+        processingStage.textContent = 'Transcribing...';
         
         try {
-            const response = await fetch('/process-voice', {
-                method: 'POST',
-                body: formData
-            });
-            
+            const response = await fetch('/process-voice', { method: 'POST', body: formData });
             const data = await response.json();
-            addDebugLog(`Server response: success=${data.success}, transcript="${data.transcript}"`);
             
-            // ALWAYS show what was recognized
             if (data.transcript) {
                 recognizedDiv.style.display = 'block';
-                recognizedContent.textContent = `"${data.transcript}"`;
-                document.getElementById('utterance-input').value = data.transcript;
-                addDebugLog(`Transcript: "${data.transcript}"`);
-                
-                // Update processing stage
-                processingStage.textContent = 'Processing with AI (matching matters, inferring intent)...';
-            } else {
-                processingDiv.style.display = 'none';
-                responseDiv.innerHTML = '<div class="message message-error">No speech detected. Try speaking louder and clearer.</div>';
-                updateMicStatus('ready', 'Try again');
-                addDebugLog('No transcript returned');
-                return;
+                recognizedContent.textContent = '"' + data.transcript + '"';
+                processingStage.textContent = 'Processing...';
             }
             
-            // Wait so user sees the transcript
             await new Promise(resolve => setTimeout(resolve, 500));
             
+            processingDiv.style.display = 'none';
+            
             if (data.success) {
-                processingDiv.style.display = 'none';
-                responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
-                updateMicStatus('ready', 'Microphone ready');
-                addDebugLog(`Success: ${data.message}`);
-                
-                // Reload to show updates
+                responseDiv.innerHTML = '<div class="message message-success">' + data.message + '</div>';
                 setTimeout(() => window.location.reload(), 1500);
-            } else if (data.needs_clarification) {
-                processingDiv.style.display = 'none';
-                
-                // Show clarification UI with suggestions
-                let html = `<div class="message message-info" style="border-left-color: var(--warning);">
-                    <strong>${data.message}</strong>`;
-                
-                // Add suggestion buttons if available
-                if (data.suggestions && data.suggestions.length > 0) {
-                    html += `<div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">`;
-                    for (const suggestion of data.suggestions) {
-                        html += `<button onclick="quickSelect('${suggestion}')" style="padding: 8px 16px; background: var(--primary); color: var(--bg-app); border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">${suggestion}</button>`;
-                    }
-                    html += `</div>`;
-                }
-                
-                html += `<p style="margin-top: 12px; font-size: 0.9em; color: var(--text-muted);">
-                    Click a button above or speak/type the matter name
-                </p></div>`;
-                
+            } else if (data.needs_clarification && data.suggestions) {
+                let html = '<div class="message message-info" style="border-left-color: var(--warning);"><strong>' + data.message + '</strong><div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">';
+                data.suggestions.forEach(s => {
+                    html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 8px 16px; background: var(--primary); color: var(--bg-app); border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">' + s + '</button>';
+                });
+                html += '</div></div>';
                 responseDiv.innerHTML = html;
-                updateMicStatus('ready', 'Clarification needed');
-                addDebugLog(`Clarification needed: ${data.clarification_question}`);
             } else {
-                processingDiv.style.display = 'none';
-                responseDiv.innerHTML = 
-                    `<div class="message message-error"><strong>Not understood:</strong><br>${data.message || 'Could not process voice input'}</div>`;
-                updateMicStatus('ready', 'Try again');
-                addDebugLog(`Failed: ${data.message}`);
+                responseDiv.innerHTML = '<div class="message message-error">' + (data.message || 'Could not process') + '</div>';
             }
         } catch (err) {
             processingDiv.style.display = 'none';
-            recognizedDiv.style.display = 'none';
-            responseDiv.innerHTML = 
-                `<div class="message message-error"><strong>Error:</strong> ${err.message}<br><br>Check the debug log below for details.</div>`;
-            updateMicStatus('error', 'Error - try again');
-            addDebugLog(`Exception: ${err.message}`);
+            responseDiv.innerHTML = '<div class="message message-error">Error: ' + err.message + '</div>';
         }
     }
     
     function processInput() {
         const input = document.getElementById('utterance-input');
         const utterance = input.value.trim();
-        
-        if (!utterance) {
-            return;
-        }
+        if (!utterance) return;
         
         const recognizedDiv = document.getElementById('recognized-text');
         const recognizedContent = document.getElementById('recognized-text-content');
@@ -640,67 +904,38 @@
         const processingStage = document.getElementById('processing-stage');
         const responseDiv = document.getElementById('response-message');
         
-        addDebugLog(`Processing text input: "${utterance}"`);
-        
-        // Show what was typed
         recognizedDiv.style.display = 'block';
-        recognizedContent.textContent = `"${utterance}"`;
-        
-        // Show processing
+        recognizedContent.textContent = '"' + utterance + '"';
         processingDiv.style.display = 'block';
-        processingStage.textContent = 'Processing with AI (matching matters, inferring intent)...';
-        responseDiv.innerHTML = '';
+        processingStage.textContent = 'Processing...';
         
-        // Send to server
         fetch('/process', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ utterance: utterance })
         })
-        .then(response => {
-            addDebugLog(`Server responded with status: ${response.status}`);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             processingDiv.style.display = 'none';
-            addDebugLog(`Result: success=${data.success}, message="${data.message}"`);
             
             if (data.success) {
-                responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
-                addDebugLog(`Success: ${data.message}`);
+                responseDiv.innerHTML = '<div class="message message-success">' + data.message + '</div>';
                 setTimeout(() => window.location.reload(), 1500);
-            } else if (data.needs_clarification) {
-                // Show clarification UI with suggestions
-                let html = `<div class="message message-info" style="border-left-color: var(--warning);">
-                    <strong>${data.message}</strong>`;
-                
-                // Add suggestion buttons if available
-                if (data.suggestions && data.suggestions.length > 0) {
-                    html += `<div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">`;
-                    for (const suggestion of data.suggestions) {
-                        html += `<button onclick="quickSelect('${suggestion}')" style="padding: 8px 16px; background: var(--primary); color: var(--bg-app); border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">${suggestion}</button>`;
-                    }
-                    html += `</div>`;
-                }
-                
-                html += `<p style="margin-top: 12px; font-size: 0.9em; color: var(--text-muted);">
-                    Click a button above or type/speak a matter name
-                </p></div>`;
-                
+            } else if (data.needs_clarification && data.suggestions) {
+                let html = '<div class="message message-info" style="border-left-color: var(--warning);"><strong>' + data.message + '</strong><div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">';
+                data.suggestions.forEach(s => {
+                    html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 8px 16px; background: var(--primary); color: var(--bg-app); border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">' + s + '</button>';
+                });
+                html += '</div></div>';
                 responseDiv.innerHTML = html;
-                addDebugLog(`Clarification needed: ${data.clarification_question}`);
             } else {
-                responseDiv.innerHTML = `<div class="message message-error"><strong>Not understood:</strong><br>${data.message}</div>`;
-                addDebugLog(`Failed: ${data.message}`);
+                responseDiv.innerHTML = '<div class="message message-error">' + data.message + '</div>';
             }
             input.value = '';
         })
-        .catch(error => {
+        .catch(err => {
             processingDiv.style.display = 'none';
-            responseDiv.innerHTML = `<div class="message message-error"><strong>Error:</strong> ${error.message}<br><br><strong>Possible causes:</strong><br>• Ollama not running (check status above)<br>• Network issue<br>• Server error<br><br>Check debug log below for details.</div>`;
-            addDebugLog(`✗ Exception: ${error.message}`);
+            responseDiv.innerHTML = '<div class="message message-error">Error: ' + err.message + '</div>';
         });
     }
     
@@ -711,21 +946,16 @@
         document.getElementById('processing-status').style.display = 'none';
     }
     
-    // Quick select a matter from suggestions
     function quickSelect(matterName) {
-        const input = document.getElementById('utterance-input');
-        input.value = matterName;
+        document.getElementById('utterance-input').value = matterName;
         processInput();
     }
     
-    // Submit on Enter
+    // Keyboard shortcuts
     document.getElementById('utterance-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            processInput();
-        }
+        if (e.key === 'Enter') processInput();
     });
     
-    // Global hotkey support (Ctrl+Space)
     let recordingStartedByKeyboard = false;
     
     document.addEventListener('keydown', function(e) {
@@ -744,10 +974,18 @@
         }
         if ((e.code === 'ControlLeft' || e.code === 'ControlRight' || e.key === 'Control') && recordingStartedByKeyboard) {
             recordingStartedByKeyboard = false;
-            if (isRecording) {
-                stopRecording();
-            }
+            if (isRecording) stopRecording();
         }
+    });
+    
+    // Close modal on escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeStartTimerModal();
+    });
+    
+    // Close modal on backdrop click
+    document.getElementById('start-timer-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeStartTimerModal();
     });
 </script>
 {% endblock %}
