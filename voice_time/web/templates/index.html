@@ -17,7 +17,52 @@
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .voice-primary {
+        margin-bottom: 24px;
+        padding: 24px;
+        background: var(--bg-card);
+        border: 2px solid var(--primary);
+        border-radius: var(--radius-md);
+    }
+    
+    .voice-btn {
+        width: 100%;
+        padding: 24px;
+        background: var(--primary);
+        color: var(--bg-app);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 1.3em;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+    }
+    
+    .voice-btn:hover {
+        background: #d97706;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+    }
+    
+    .voice-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .voice-btn.recording {
+        background: #ef4444;
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
     }
     
     #utterance-input {
@@ -159,6 +204,28 @@
     #response-message {
         margin-top: 16px;
     }
+    
+    .debug-panel {
+        margin-top: 24px;
+        padding: 20px;
+        background: var(--bg-sidebar);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        font-family: monospace;
+        font-size: 0.85em;
+    }
+    
+    .debug-title {
+        color: var(--text-main);
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-family: var(--font-sans);
+    }
+    
+    .debug-content {
+        color: var(--text-muted);
+        line-height: 1.6;
+    }
 </style>
 {% endblock %}
 
@@ -179,44 +246,49 @@
     <h2>🎙️ What are you working on?</h2>
     
     <!-- Voice Input (Primary) -->
-    <div style="margin-bottom: 20px;">
-        <button id="voice-btn" class="btn btn-success" style="width: 100%; padding: 20px; font-size: 1.2em; display: flex; align-items: center; justify-content: center; gap: 12px;" onclick="toggleVoiceRecording()">
-            <span id="voice-icon">🎤</span>
-            <span id="voice-text">Press to Talk (or use Ctrl+Space)</span>
+    <div class="voice-primary">
+        <button id="voice-btn" class="voice-btn" onclick="toggleVoiceRecording()">
+            <span id="voice-icon" style="font-size: 1.2em;">🎤</span>
+            <span id="voice-text">Press to Talk (or Ctrl+Space)</span>
         </button>
-        <div id="mic-status" style="margin-top: 12px; text-align: center; color: var(--text-muted); font-size: 0.9em;">
-            <span id="mic-indicator">🔴</span> <span id="mic-message">Click button or press Ctrl+Space to start</span>
+        <div id="mic-status" style="margin-top: 16px; text-align: center; color: var(--text-muted); font-size: 0.95em;">
+            <span id="mic-indicator">●</span> <span id="mic-message">Click button or press Ctrl+Space to start</span>
         </div>
     </div>
     
     <!-- Text Input (Backup) -->
-    <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+    <div style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
         <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 12px; text-align: center;">
             Or type your command:
         </p>
         <input 
             type="text" 
             id="utterance-input" 
-            placeholder="e.g., 'Done with Smith disclosure' or 'Working on Brown skeleton'"
-            style="margin-bottom: 12px;"
+            placeholder="e.g., 'Today I need to work on Thompson' or 'Done with disclosure'"
         >
         <div class="btn-group">
-            <button class="btn" onclick="processInput()">Submit Text</button>
+            <button class="btn" onclick="processInput()" style="flex: 1;">Submit Text</button>
             <button class="btn" onclick="clearInput()" style="background: var(--bg-hover); color: var(--text-muted);">Clear</button>
         </div>
     </div>
     
     <!-- Recognized Text Display -->
-    <div id="recognized-text" style="display: none; margin-top: 16px; padding: 16px; background: var(--bg-card); border: 1px solid var(--primary); border-radius: var(--radius-md);">
+    <div id="recognized-text" style="display: none; margin-top: 20px; padding: 16px; background: var(--bg-card); border-left: 3px solid var(--primary); border-radius: var(--radius-sm);">
         <div style="color: var(--text-muted); font-size: 0.85em; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">
-            Recognized:
+            You said:
         </div>
-        <div id="recognized-text-content" style="color: var(--text-main); font-size: 1.1em; font-style: italic;"></div>
+        <div id="recognized-text-content" style="color: var(--text-main); font-size: 1.15em; font-style: italic;"></div>
     </div>
     
     <!-- Processing Status -->
     <div id="processing-status" style="display: none; margin-top: 12px; padding: 12px; background: var(--purple-dim); border: 1px solid var(--purple-border); border-radius: var(--radius-sm); text-align: center;">
-        <span style="color: var(--purple); font-size: 0.9em;">⚙️ <span id="processing-stage">Processing...</span></span>
+        <span style="color: var(--purple); font-size: 0.95em;">⚙️ <span id="processing-stage">Processing...</span></span>
+    </div>
+    
+    <!-- Debug Info -->
+    <div id="debug-info" style="display: none;" class="debug-panel">
+        <div class="debug-title">🔍 Debug Information</div>
+        <div id="debug-content" class="debug-content"></div>
     </div>
     
     <div id="response-message"></div>
@@ -233,7 +305,7 @@
             </div>
             {% endfor %}
         {% else %}
-            <p style="grid-column: 1/-1; text-align: center; color: #7f8c8d;">
+            <p style="text-align: center; color: var(--text-muted); padding: 32px;">
                 No time logged yet today
             </p>
         {% endif %}
@@ -261,7 +333,9 @@
         {% endfor %}
     </ul>
     {% else %}
-    <p style="color: #7f8c8d;">No plan for today yet. Try saying: "Today I need to..."</p>
+    <p style="color: var(--text-muted); text-align: center; padding: 32px;">
+        No plan for today yet. Try: "Today I need to work on Thompson disclosure"
+    </p>
     {% endif %}
 </div>
 
@@ -289,7 +363,9 @@
         {% endfor %}
     </div>
     {% else %}
-    <p style="color: #7f8c8d;">No work logged yet today</p>
+    <p style="color: var(--text-muted); text-align: center; padding: 32px;">
+        No work logged yet today
+    </p>
     {% endif %}
 </div>
 
@@ -297,21 +373,72 @@
     let isRecording = false;
     let mediaRecorder = null;
     let audioChunks = [];
+    let debugMode = true;  // Enable debug logging
     
     // Check microphone and Ollama on page load
     window.addEventListener('DOMContentLoaded', function() {
         checkMicrophoneAccess();
         checkOllamaStatus();
+        
+        // Check for debug parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('debug') === 'true') {
+            document.getElementById('debug-info').style.display = 'block';
+        }
     });
     
+    function addDebugLog(message) {
+        if (!debugMode) return;
+        const debugContent = document.getElementById('debug-content');
+        const timestamp = new Date().toLocaleTimeString();
+        debugContent.innerHTML += `[${timestamp}] ${message}<br>`;
+        document.getElementById('debug-info').style.display = 'block';
+    }
+    
+    // Check Ollama status
+    async function checkOllamaStatus() {
+        const indicator = document.getElementById('ollama-indicator');
+        const message = document.getElementById('ollama-message');
+        
+        addDebugLog('Checking Ollama status...');
+        
+        try {
+            const response = await fetch('/check-ollama');
+            const data = await response.json();
+            
+            addDebugLog(`Ollama status: ${data.status}`);
+            
+            if (data.status === 'ready') {
+                indicator.textContent = '🟢';
+                message.innerHTML = `<span style="color: var(--success);">AI ready</span> <span style="color: var(--text-muted); font-size: 0.85em;">(${data.model})</span>`;
+                addDebugLog('✓ Ollama ready and responding');
+            } else if (data.status === 'not_running') {
+                indicator.textContent = '🔴';
+                message.innerHTML = `<span style="color: var(--error);">Ollama not running</span> <span style="color: var(--text-muted); font-size: 0.85em;">- Run: <code style="background: var(--bg-hover); padding: 2px 6px; border-radius: 2px;">ollama serve</code></span>`;
+                addDebugLog('✗ Ollama not running');
+            } else {
+                indicator.textContent = '🟡';
+                message.innerHTML = `<span style="color: var(--warning);">AI issue:</span> <span style="color: var(--text-muted); font-size: 0.85em;">${data.message}</span>`;
+                addDebugLog(`⚠ Ollama issue: ${data.message}`);
+            }
+        } catch (err) {
+            indicator.textContent = '🔴';
+            message.innerHTML = `<span style="color: var(--error);">Cannot check AI status</span>`;
+            addDebugLog(`✗ Error checking Ollama: ${err.message}`);
+        }
+    }
+    
     async function checkMicrophoneAccess() {
+        addDebugLog('Checking microphone access...');
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(track => track.stop());
             updateMicStatus('ready', '🟢 Microphone ready');
+            addDebugLog('✓ Microphone access granted');
         } catch (err) {
             updateMicStatus('error', '🔴 Microphone access denied - Click to grant');
             document.getElementById('mic-status').onclick = requestMicrophoneAccess;
+            addDebugLog(`✗ Microphone error: ${err.message}`);
         }
     }
     
@@ -321,8 +448,10 @@
             stream.getTracks().forEach(track => track.stop());
             updateMicStatus('ready', '🟢 Microphone ready');
             document.getElementById('mic-status').onclick = null;
+            addDebugLog('✓ Microphone access granted after request');
         } catch (err) {
             alert('Please allow microphone access in your browser settings');
+            addDebugLog(`✗ Microphone request denied: ${err.message}`);
         }
     }
     
@@ -330,19 +459,15 @@
         const indicator = document.getElementById('mic-indicator');
         const msg = document.getElementById('mic-message');
         
-        if (status === 'ready') {
-            indicator.textContent = '🟢';
-            msg.textContent = message || 'Microphone ready';
-        } else if (status === 'recording') {
-            indicator.textContent = '🔴';
-            msg.textContent = message || 'Recording...';
-        } else if (status === 'processing') {
-            indicator.textContent = '⚙️';
-            msg.textContent = message || 'Processing speech...';
-        } else if (status === 'error') {
-            indicator.textContent = '🔴';
-            msg.textContent = message || 'Microphone error';
-        }
+        const indicators = {
+            'ready': '🟢',
+            'recording': '🔴',
+            'processing': '⚙️',
+            'error': '🔴'
+        };
+        
+        indicator.textContent = indicators[status] || '●';
+        msg.textContent = message || '';
     }
     
     async function toggleVoiceRecording() {
@@ -354,6 +479,7 @@
     }
     
     async function startRecording() {
+        addDebugLog('Starting voice recording...');
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 audio: {
@@ -367,10 +493,12 @@
             
             mediaRecorder.ondataavailable = (event) => {
                 audioChunks.push(event.data);
+                addDebugLog(`Audio chunk: ${event.data.size} bytes`);
             };
             
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                addDebugLog(`Total audio: ${audioBlob.size} bytes`);
                 await processVoiceInput(audioBlob);
                 stream.getTracks().forEach(track => track.stop());
             };
@@ -379,26 +507,32 @@
             isRecording = true;
             
             // Update UI
-            document.getElementById('voice-btn').style.background = '#ef4444';
+            const voiceBtn = document.getElementById('voice-btn');
+            voiceBtn.classList.add('recording');
             document.getElementById('voice-icon').textContent = '⏹️';
             document.getElementById('voice-text').textContent = 'Recording... Click to Stop';
-            updateMicStatus('recording', 'Recording... Click to stop or release Ctrl+Space');
+            updateMicStatus('recording', 'Recording... speak now!');
+            
+            addDebugLog('✓ Recording started');
             
         } catch (err) {
             alert('Could not access microphone. Please check permissions.');
             console.error(err);
+            addDebugLog(`✗ Recording error: ${err.message}`);
         }
     }
     
     async function stopRecording() {
         if (mediaRecorder && isRecording) {
+            addDebugLog('Stopping recording...');
             mediaRecorder.stop();
             isRecording = false;
             
             // Update UI
-            document.getElementById('voice-btn').style.background = 'var(--success)';
+            const voiceBtn = document.getElementById('voice-btn');
+            voiceBtn.classList.remove('recording');
             document.getElementById('voice-icon').textContent = '🎤';
-            document.getElementById('voice-text').textContent = 'Press to Talk (or use Ctrl+Space)';
+            document.getElementById('voice-text').textContent = 'Press to Talk (or Ctrl+Space)';
             updateMicStatus('processing', 'Processing speech...');
         }
     }
@@ -416,6 +550,7 @@
         // Show processing status
         processingDiv.style.display = 'block';
         processingStage.textContent = 'Transcribing speech...';
+        addDebugLog('Sending audio to server for transcription...');
         
         try {
             const response = await fetch('/process-voice', {
@@ -424,44 +559,50 @@
             });
             
             const data = await response.json();
+            addDebugLog(`Server response: success=${data.success}, transcript="${data.transcript}"`);
             
             // ALWAYS show what was recognized
             if (data.transcript) {
                 recognizedDiv.style.display = 'block';
                 recognizedContent.textContent = `"${data.transcript}"`;
                 document.getElementById('utterance-input').value = data.transcript;
+                addDebugLog(`✓ Transcript: "${data.transcript}"`);
                 
                 // Update processing stage
-                processingStage.textContent = 'Processing with AI...';
+                processingStage.textContent = 'Processing with AI (matching matters, inferring intent)...';
             } else {
                 processingDiv.style.display = 'none';
-                responseDiv.innerHTML = '<div class="message message-error">No speech detected. Try speaking louder.</div>';
+                responseDiv.innerHTML = '<div class="message message-error">No speech detected. Try speaking louder and clearer.</div>';
                 updateMicStatus('ready', '🟢 Try again');
+                addDebugLog('✗ No transcript returned');
                 return;
             }
             
-            // Wait a moment so user sees the transcript
+            // Wait so user sees the transcript
             await new Promise(resolve => setTimeout(resolve, 500));
             
             if (data.success) {
                 processingDiv.style.display = 'none';
                 responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
                 updateMicStatus('ready', '🟢 Microphone ready');
+                addDebugLog(`✓ Success: ${data.message}`);
                 
                 // Reload to show updates
-                setTimeout(() => window.location.reload(), 1000);
+                setTimeout(() => window.location.reload(), 1500);
             } else {
                 processingDiv.style.display = 'none';
                 responseDiv.innerHTML = 
-                    `<div class="message message-error">${data.message || 'Could not process voice input'}</div>`;
+                    `<div class="message message-error"><strong>Processing failed:</strong><br>${data.message || 'Could not process voice input'}</div>`;
                 updateMicStatus('ready', '🟢 Try again');
+                addDebugLog(`✗ Failed: ${data.message}`);
             }
         } catch (err) {
             processingDiv.style.display = 'none';
             recognizedDiv.style.display = 'none';
             responseDiv.innerHTML = 
-                `<div class="message message-error">Error processing voice: ${err.message}</div>`;
+                `<div class="message message-error"><strong>Error:</strong> ${err.message}<br><br>Check the debug log below for details.</div>`;
             updateMicStatus('error', '🔴 Error - try again');
+            addDebugLog(`✗ Exception: ${err.message}`);
         }
     }
     
@@ -479,13 +620,15 @@
         const processingStage = document.getElementById('processing-stage');
         const responseDiv = document.getElementById('response-message');
         
+        addDebugLog(`Processing text input: "${utterance}"`);
+        
         // Show what was typed
         recognizedDiv.style.display = 'block';
         recognizedContent.textContent = `"${utterance}"`;
         
         // Show processing
         processingDiv.style.display = 'block';
-        processingStage.textContent = 'Processing with AI...';
+        processingStage.textContent = 'Processing with AI (matching matters, inferring intent)...';
         responseDiv.innerHTML = '';
         
         // Send to server
@@ -496,27 +639,36 @@
             },
             body: JSON.stringify({ utterance: utterance })
         })
-        .then(response => response.json())
+        .then(response => {
+            addDebugLog(`Server responded with status: ${response.status}`);
+            return response.json();
+        })
         .then(data => {
             processingDiv.style.display = 'none';
+            addDebugLog(`Result: success=${data.success}, message="${data.message}"`);
             
             if (data.success) {
                 responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
-                setTimeout(() => window.location.reload(), 1000);
+                addDebugLog(`✓ Success: ${data.message}`);
+                setTimeout(() => window.location.reload(), 1500);
             } else {
-                responseDiv.innerHTML = `<div class="message message-error">${data.message}</div>`;
+                responseDiv.innerHTML = `<div class="message message-error"><strong>Processing failed:</strong><br>${data.message}</div>`;
+                addDebugLog(`✗ Failed: ${data.message}`);
             }
             input.value = '';
         })
         .catch(error => {
             processingDiv.style.display = 'none';
-            responseDiv.innerHTML = `<div class="message message-error">Error: ${error.message}<br><br>Make sure Ollama is running: <code style="background: var(--bg-card); padding: 4px 8px; border-radius: 4px;">ollama serve</code></div>`;
+            responseDiv.innerHTML = `<div class="message message-error"><strong>Error:</strong> ${error.message}<br><br><strong>Possible causes:</strong><br>• Ollama not running (check status above)<br>• Network issue<br>• Server error<br><br>Check debug log below for details.</div>`;
+            addDebugLog(`✗ Exception: ${error.message}`);
         });
     }
     
     function clearInput() {
         document.getElementById('utterance-input').value = '';
         document.getElementById('response-message').innerHTML = '';
+        document.getElementById('recognized-text').style.display = 'none';
+        document.getElementById('processing-status').style.display = 'none';
     }
     
     // Submit on Enter
@@ -525,31 +677,6 @@
             processInput();
         }
     });
-    
-    // Check Ollama status
-    async function checkOllamaStatus() {
-        const indicator = document.getElementById('ollama-indicator');
-        const message = document.getElementById('ollama-message');
-        
-        try {
-            const response = await fetch('/check-ollama');
-            const data = await response.json();
-            
-            if (data.status === 'ready') {
-                indicator.textContent = '🟢';
-                message.innerHTML = `<span style="color: var(--success);">AI ready</span> <span style="color: var(--text-muted); font-size: 0.85em;">(${data.model})</span>`;
-            } else if (data.status === 'not_running') {
-                indicator.textContent = '🔴';
-                message.innerHTML = `<span style="color: var(--error);">Ollama not running</span> <span style="color: var(--text-muted); font-size: 0.85em;">- AI features disabled. Run: <code style="background: var(--bg-hover); padding: 2px 6px; border-radius: 2px;">ollama serve</code></span>`;
-            } else {
-                indicator.textContent = '🟡';
-                message.innerHTML = `<span style="color: var(--warning);">AI issue:</span> <span style="color: var(--text-muted); font-size: 0.85em;">${data.message}</span>`;
-            }
-        } catch (err) {
-            indicator.textContent = '🔴';
-            message.innerHTML = `<span style="color: var(--error);">Cannot check AI status</span>`;
-        }
-    }
     
     // Global hotkey support (Ctrl+Space)
     let recordingStartedByKeyboard = false;
@@ -563,13 +690,11 @@
     });
     
     document.addEventListener('keyup', function(e) {
-        // BUG FIX #1: Only stop if recording was started by keyboard AND Ctrl is still held context
         if (e.code === 'Space' && isRecording && recordingStartedByKeyboard && e.ctrlKey) {
             e.preventDefault();
             recordingStartedByKeyboard = false;
             stopRecording();
         }
-        // Reset flag if Ctrl is released
         if ((e.code === 'ControlLeft' || e.code === 'ControlRight' || e.key === 'Control') && recordingStartedByKeyboard) {
             recordingStartedByKeyboard = false;
             if (isRecording) {
