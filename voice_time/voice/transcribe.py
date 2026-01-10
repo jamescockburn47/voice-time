@@ -18,20 +18,27 @@ class Transcriber:
         
         Args:
             model_size: Whisper model size (tiny.en, base.en, small.en, medium.en)
-            device: "cpu" or "cuda"
+            device: "cpu" or "cuda" (user config respected)
             compute_type: "int8", "float16", "float32" (auto-detected if None)
         """
         self.model_size = model_size
-        self.device = device
         
-        # Auto-detect optimal compute type based on hardware
-        if compute_type is None:
+        # BUG FIX #2: Respect user-configured device, only auto-detect if default
+        # Auto-detect optimal settings only if user hasn't configured
+        if compute_type is None and device == "cpu":
+            # User hasn't explicitly configured - use auto-detection
             from .hardware import get_optimal_whisper_config
             config = get_optimal_whisper_config()
             self.device = config['device']
             self.compute_type = config['compute_type']
         else:
-            self.compute_type = compute_type
+            # User has configured device or compute_type - respect their choice
+            self.device = device
+            if compute_type is None:
+                # Auto-detect compute type for user's chosen device
+                self.compute_type = "float16" if device == "cuda" else "int8"
+            else:
+                self.compute_type = compute_type
         
         self.model: Optional[WhisperModel] = None
     

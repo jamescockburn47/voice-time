@@ -63,11 +63,17 @@ def detect_hardware() -> Dict[str, Any]:
                     info['notes'].append('AMD Ryzen AI with NPU detected (Evo x2)')
                     info['notes'].append('Note: NPU not yet supported by Whisper, using optimized CPU')
                 
-                # For AMD on Windows, CPU with int8 is still best for Whisper
-                # DirectML support would require different setup
-                info['recommended_device'] = 'cpu'
-                info['compute_type'] = 'int8'
-                info['notes'].append('Using CPU with int8 quantization (optimized for AMD Ryzen)')
+                # BUG FIX #1: Only set CPU mode if CUDA is NOT available
+                # Don't override CUDA if NVIDIA GPU is also present
+                if not info['has_cuda']:
+                    # For AMD-only systems on Windows, CPU with int8 is best
+                    # DirectML support would require different setup
+                    info['recommended_device'] = 'cpu'
+                    info['compute_type'] = 'int8'
+                    info['notes'].append('Using CPU with int8 quantization (optimized for AMD Ryzen)')
+                else:
+                    # Hybrid system (AMD CPU + NVIDIA GPU) - keep CUDA
+                    info['notes'].append('Hybrid GPU config: Using NVIDIA CUDA (faster than AMD CPU)')
                 
         except:
             pass
