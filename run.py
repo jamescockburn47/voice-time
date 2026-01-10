@@ -150,8 +150,8 @@ def run_web(config: Config):
     print("\nOpen your browser to: http://localhost:5000")
     print("Press Ctrl+C to stop\n")
     
-    # Run Flask
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Run Flask (debug=False for production)
+    app.run(debug=False, host='0.0.0.0', port=5000)
 
 
 def main():
