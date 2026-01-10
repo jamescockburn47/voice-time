@@ -16,6 +16,9 @@ set PATH=%USERPROFILE%\.cargo\bin;%PATH%
 :: Change to script directory
 cd /d "%~dp0"
 
+:: Initialize PID variable
+set FLASK_PID=
+
 :: Activate venv
 if not exist "venv\Scripts\activate.bat" (
     echo [1/4] Creating Python environment...
@@ -52,9 +55,17 @@ if not exist "%USERPROFILE%\.voice_time\voice_time.db" (
     python run.py --init
 )
 
-:: Start Flask in background
+:: Start Flask in background and capture PID
 echo [4/4] Starting backend...
-start "" /B python run.py
+
+:: Use PowerShell to start process and get PID
+for /f "tokens=*" %%i in ('powershell -NoProfile -Command "Start-Process -FilePath 'python' -ArgumentList 'run.py' -WindowStyle Hidden -PassThru | Select-Object -ExpandProperty Id"') do set FLASK_PID=%%i
+
+if defined FLASK_PID (
+    echo Backend started [PID: %FLASK_PID%]
+) else (
+    echo Backend started
+)
 
 :: Wait for server
 echo Waiting for server...
@@ -80,8 +91,21 @@ if errorlevel 1 (
     cargo tauri dev
 )
 
-:: Cleanup
+:: Cleanup - only kill OUR Flask process
 echo.
 echo Shutting down...
-taskkill /F /IM python.exe >nul 2>&1
+
+if defined FLASK_PID (
+    :: Kill only the specific Flask process we started
+    taskkill /F /PID %FLASK_PID% >nul 2>&1
+    if errorlevel 0 (
+        echo Backend stopped [PID: %FLASK_PID%]
+    )
+) else (
+    :: Fallback: try to find and kill only run.py processes
+    for /f "tokens=2" %%p in ('wmic process where "commandline like '%%run.py%%'" get processid 2^>nul ^| findstr /r "[0-9]"') do (
+        taskkill /F /PID %%p >nul 2>&1
+    )
+)
+
 echo Done.
