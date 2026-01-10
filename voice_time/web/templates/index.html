@@ -194,6 +194,19 @@
         </div>
     </div>
     
+    <!-- Recognized Text Display -->
+    <div id="recognized-text" style="display: none; margin-top: 16px; padding: 16px; background: var(--bg-card); border: 1px solid var(--primary); border-radius: var(--radius-md);">
+        <div style="color: var(--text-muted); font-size: 0.85em; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">
+            Recognized:
+        </div>
+        <div id="recognized-text-content" style="color: var(--text-main); font-size: 1.1em; font-style: italic;"></div>
+    </div>
+    
+    <!-- Processing Status -->
+    <div id="processing-status" style="display: none; margin-top: 12px; padding: 12px; background: var(--purple-dim); border: 1px solid var(--purple-border); border-radius: var(--radius-sm); text-align: center;">
+        <span style="color: var(--purple); font-size: 0.9em;">⚙️ <span id="processing-stage">Processing...</span></span>
+    </div>
+    
     <div id="response-message"></div>
 </div>
 
@@ -379,6 +392,16 @@
         const formData = new FormData();
         formData.append('audio', audioBlob, 'recording.webm');
         
+        const recognizedDiv = document.getElementById('recognized-text');
+        const recognizedContent = document.getElementById('recognized-text-content');
+        const processingDiv = document.getElementById('processing-status');
+        const processingStage = document.getElementById('processing-stage');
+        const responseDiv = document.getElementById('response-message');
+        
+        // Show processing status
+        processingDiv.style.display = 'block';
+        processingStage.textContent = 'Transcribing speech...';
+        
         try {
             const response = await fetch('/process-voice', {
                 method: 'POST',
@@ -387,25 +410,41 @@
             
             const data = await response.json();
             
+            // ALWAYS show what was recognized
+            if (data.transcript) {
+                recognizedDiv.style.display = 'block';
+                recognizedContent.textContent = `"${data.transcript}"`;
+                document.getElementById('utterance-input').value = data.transcript;
+                
+                // Update processing stage
+                processingStage.textContent = 'Processing with AI...';
+            } else {
+                processingDiv.style.display = 'none';
+                responseDiv.innerHTML = '<div class="message message-error">No speech detected. Try speaking louder.</div>';
+                updateMicStatus('ready', '🟢 Try again');
+                return;
+            }
+            
+            // Wait a moment so user sees the transcript
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
             if (data.success) {
-                // Show what was said
-                document.getElementById('utterance-input').value = data.transcript || '';
-                
-                // Show result
-                const responseDiv = document.getElementById('response-message');
+                processingDiv.style.display = 'none';
                 responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
-                
                 updateMicStatus('ready', '🟢 Microphone ready');
                 
                 // Reload to show updates
                 setTimeout(() => window.location.reload(), 1000);
             } else {
-                document.getElementById('response-message').innerHTML = 
+                processingDiv.style.display = 'none';
+                responseDiv.innerHTML = 
                     `<div class="message message-error">${data.message || 'Could not process voice input'}</div>`;
                 updateMicStatus('ready', '🟢 Try again');
             }
         } catch (err) {
-            document.getElementById('response-message').innerHTML = 
+            processingDiv.style.display = 'none';
+            recognizedDiv.style.display = 'none';
+            responseDiv.innerHTML = 
                 `<div class="message message-error">Error processing voice: ${err.message}</div>`;
             updateMicStatus('error', '🔴 Error - try again');
         }
@@ -419,9 +458,20 @@
             return;
         }
         
-        // Show loading
+        const recognizedDiv = document.getElementById('recognized-text');
+        const recognizedContent = document.getElementById('recognized-text-content');
+        const processingDiv = document.getElementById('processing-status');
+        const processingStage = document.getElementById('processing-stage');
         const responseDiv = document.getElementById('response-message');
-        responseDiv.innerHTML = '<div class="message message-info">Processing...</div>';
+        
+        // Show what was typed
+        recognizedDiv.style.display = 'block';
+        recognizedContent.textContent = `"${utterance}"`;
+        
+        // Show processing
+        processingDiv.style.display = 'block';
+        processingStage.textContent = 'Processing with AI...';
+        responseDiv.innerHTML = '';
         
         // Send to server
         fetch('/process', {
@@ -433,6 +483,8 @@
         })
         .then(response => response.json())
         .then(data => {
+            processingDiv.style.display = 'none';
+            
             if (data.success) {
                 responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
                 setTimeout(() => window.location.reload(), 1000);
@@ -442,7 +494,8 @@
             input.value = '';
         })
         .catch(error => {
-            responseDiv.innerHTML = `<div class="message message-error">Error: ${error.message}</div>`;
+            processingDiv.style.display = 'none';
+            responseDiv.innerHTML = `<div class="message message-error">Error: ${error.message}<br><br>Make sure Ollama is running: <code style="background: var(--bg-card); padding: 4px 8px; border-radius: 4px;">ollama serve</code></div>`;
         });
     }
     
