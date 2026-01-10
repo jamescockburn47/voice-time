@@ -1,0 +1,28 @@
+# Core
+sqlalchemy>=2.0.0
+pydantic>=2.0.0
+pyyaml>=6.0
+
+# LLM
+ollama>=0.1.0
+httpx>=0.24.0
+
+# Speech
+faster-whisper>=0.9.0
+sounddevice>=0.4.6
+numpy>=1.24.0
+pynput>=1.7.6
+
+# Web UI
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# Utilities
+rapidfuzz>=3.0.0
+python-dateutil>=2.8.0
+rich>=13.0.0  # For nice CLI output
+
+# Development
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+black>=23.0.0

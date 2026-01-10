@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Voice Time{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Solicitor Navy Palette (Humane Calendar inspired) */
+            --bg-app: #0a192f;
+            --bg-sidebar: #061221;
+            --bg-card: #112240;
+            --bg-hover: #233554;
+            
+            --primary: #f59e0b;
+            --primary-dim: rgba(245, 158, 11, 0.1);
+            --primary-glow: rgba(245, 158, 11, 0.25);
+            
+            --purple: #a78bfa;
+            --purple-dim: rgba(139, 92, 246, 0.15);
+            --purple-border: rgba(139, 92, 246, 0.3);
+            
+            --text-main: #e6f1ff;
+            --text-muted: #8892b0;
+            --text-accent: #f59e0b;
+            
+            --border: #233554;
+            
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            
+            --radius-lg: 4px;
+            --radius-md: 4px;
+            --radius-sm: 2px;
+            
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-app);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            text-align: center;
+            font-family: var(--font-serif);
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 0.02em;
+        }
+        
+        nav {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            transition: all 0.2s;
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+        
+        nav a:hover {
+            background: var(--bg-hover);
+            color: var(--primary);
+        }
+        
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .card h2 {
+            margin-bottom: 20px;
+            color: var(--text-main);
+            font-family: var(--font-serif);
+            font-weight: 600;
+            font-size: 1.5em;
+        }
+        
+        .btn {
+            background: var(--primary);
+            color: var(--bg-app);
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #d97706;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #16a34a;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+        }
+        
+        .message {
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+            border-left: 3px solid;
+        }
+        
+        .message-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            border-left-color: var(--success);
+        }
+        
+        .message-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border-left-color: var(--error);
+        }
+        
+        .message-info {
+            background: var(--purple-dim);
+            color: var(--purple);
+            border-left-color: var(--purple);
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>⏱️ Voice Time</h1>
+            <nav>
+                <a href="/">Dashboard</a>
+                <a href="/plan">Plan</a>
+                <a href="/review">Review</a>
+                <a href="/export/csv">Export CSV</a>
+            </nav>
+        </div>
+    </header>
+    
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

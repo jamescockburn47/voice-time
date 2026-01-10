@@ -1,0 +1,173 @@
+================================================================================
+                         VOICE TIME - SIMPLE START
+================================================================================
+
+                    ONE FILE - THAT'S IT!
+
+--------------------------------------------------------------------------------
+STEP 1: DOUBLE-CLICK THIS FILE
+--------------------------------------------------------------------------------
+
+        ⭐ START HERE.bat
+
+That's the ONLY file you need!
+
+--------------------------------------------------------------------------------
+STEP 2: CHOOSE VOICE MODE
+--------------------------------------------------------------------------------
+
+When the menu appears, press 1 for VOICE MODE
+
+You'll see:
+
+   ==========================================
+     Voice Time Recording System
+   ==========================================
+   
+   How do you want to use it today?
+   
+     1. VOICE MODE (Recommended)         ← Press 1
+        Press Ctrl+Space to talk
+   
+     2. WEB MODE (Type in browser)
+        http://localhost:5000
+   
+     3. Exit
+
+Press 1 and hit Enter.
+
+--------------------------------------------------------------------------------
+STEP 3: USE IT!
+--------------------------------------------------------------------------------
+
+You'll see:
+
+   🎤 Hotkey listener started!
+      Push-to-talk: Ctrl+Space (hold to record)
+      Toggle: Ctrl+Shift+T (press to start/stop)
+   
+   ✓ Ready!
+   
+   Listening for hotkey... Press Ctrl+Space to talk!
+
+Now just:
+
+   1. Press and HOLD Ctrl+Space
+   2. Say: "Today I need to finish Smith disclosure"
+   3. RELEASE Ctrl+Space
+   4. System processes automatically!
+
+Example:
+
+   You said: Today I need to finish Smith disclosure
+   Processing...
+   ✓ Planned 1 task
+   
+   Ready for next command... (Press hotkey)
+
+--------------------------------------------------------------------------------
+HOTKEY EXPLAINED
+--------------------------------------------------------------------------------
+
+Ctrl+Space means:
+   - Hold down the Ctrl key (left or right)
+   - While holding Ctrl, press Spacebar
+   - Keep both held while you SPEAK
+   - RELEASE both when done speaking
+
+Like a walkie-talkie button!
+
+--------------------------------------------------------------------------------
+EXAMPLE DAY
+--------------------------------------------------------------------------------
+
+Morning:
+   Ctrl+Space → "Today I need to work on Smith and Brown" → Release
+
+During day:
+   Ctrl+Space → "Working on Smith disclosure" → Release
+   
+   ... work work work ...
+   
+   Ctrl+Space → "Done with the disclosure" → Release
+   
+   You said: Done with the disclosure
+   ✓ Logged 2.5h to Smith v Jones - Document Review
+
+Interruption:
+   Ctrl+Space → "Quick call about Brown" → Release
+   
+   ... handle call ...
+   
+   Ctrl+Space → "Back to what I was doing" → Release
+
+--------------------------------------------------------------------------------
+DAILY USAGE
+--------------------------------------------------------------------------------
+
+Every day:
+   1. Double-click: ⭐ START HERE.bat
+   2. Press: 1 (for VOICE MODE)
+   3. Use Ctrl+Space whenever you need to log time
+   4. At end of day, press Ctrl+C to exit
+
+That's it!
+
+--------------------------------------------------------------------------------
+ALTERNATIVE: WEB MODE
+--------------------------------------------------------------------------------
+
+Don't want to use voice? No problem!
+
+   1. Double-click: ⭐ START HERE.bat
+   2. Press: 2 (for WEB MODE)
+   3. Browser opens automatically
+   4. Type your commands instead
+
+Both modes work the same way, just different input method.
+
+--------------------------------------------------------------------------------
+FILES EXPLAINED
+--------------------------------------------------------------------------------
+
+YOU ONLY NEED ONE:
+   ⭐ START HERE.bat  ← This is the ONLY file to double-click
+
+Everything else is automatic!
+
+Other files (you can ignore these):
+   - START.bat           (what START HERE.bat calls)
+   - RUN.bat             (old web-only launcher)
+   - 🚀 CLICK ME...      (old launcher)
+   - 🎤 VOICE MODE.bat   (direct voice launcher)
+   
+All roads lead to the same place. Use ⭐ START HERE.bat for simplicity.
+
+--------------------------------------------------------------------------------
+TROUBLESHOOTING
+--------------------------------------------------------------------------------
+
+Q: Ctrl+Space doesn't work
+A: Make sure you're in the console window (the black window)
+   Try Ctrl+Shift+T instead (toggle mode)
+
+Q: No speech detected
+A: Speak louder, check microphone permissions
+
+Q: "Module 'pynput' not found"
+A: The system will install it automatically on first run
+
+Q: I prefer typing
+A: Choose option 2 (WEB MODE) from the menu instead
+
+--------------------------------------------------------------------------------
+THAT'S ALL YOU NEED TO KNOW!
+--------------------------------------------------------------------------------
+
+Double-click: ⭐ START HERE.bat
+Press: 1
+Use: Ctrl+Space to talk
+
+Done!
+
+================================================================================

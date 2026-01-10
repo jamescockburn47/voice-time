@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Review - Voice Time{% endblock %}
+
+{% block styles %}
+<style>
+    .review-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    
+    .review-icon {
+        font-size: 2em;
+        background: linear-gradient(135deg, var(--success), var(--primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .export-section {
+        text-align: center;
+        padding: 24px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="review-header">
+        <span class="review-icon">📊</span>
+        <h2>Day Summary</h2>
+    </div>
+    
+    {% if summary %}
+    {% for matter, data in summary.items() %}
+    <div class="matter-summary">
+        <h3>{{ matter }}</h3>
+        <div class="total">Total: <strong>{{ "%.1f"|format(data.total) }}h</strong></div>
+        <ul>
+            {% for activity, hours in data.activities.items() %}
+            <li>{{ activity }}: {{ "%.1f"|format(hours) }}h</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+    
+    <div class="grand-total">
+        <strong>Total Day: {{ "%.1f"|format(summary.values() | sum(attribute='total')) }}h</strong>
+    </div>
+    {% else %}
+    <p style="color: #7f8c8d;">No time logged today</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>📋 Detailed Log</h2>
+    
+    {% if logs %}
+    <table class="log-table">
+        <thead>
+            <tr>
+                <th>Matter</th>
+                <th>Activity</th>
+                <th>Duration</th>
+                <th>Narrative</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>
+                    {% if log.matter %}
+                        {{ log.matter.display_name }}
+                    {% else %}
+                        General
+                    {% endif %}
+                </td>
+                <td>
+                    {% if log.activity_type %}
+                        {{ log.activity_type.label }}
+                    {% endif %}
+                </td>
+                <td>{{ "%.1f"|format(log.duration_hours) }}h</td>
+                <td>{{ log.narrative or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #7f8c8d;">No entries to review</p>
+    {% endif %}
+</div>
+
+<div class="card export-section">
+    <a href="/export/csv" class="btn btn-success" style="text-decoration: none; display: inline-block;">📥 Export to CSV</a>
+</div>
+
+<style>
+    .matter-summary {
+        padding: 18px 20px;
+        border-left: 3px solid var(--primary);
+        margin-bottom: 20px;
+        background: var(--bg-hover);
+        border-radius: var(--radius-sm);
+        transition: all 0.2s;
+    }
+    
+    .matter-summary:hover {
+        background: var(--bg-card);
+        border-left-color: var(--purple);
+    }
+    
+    .matter-summary h3 {
+        margin-bottom: 12px;
+        color: var(--text-main);
+        font-family: var(--font-serif);
+        font-weight: 600;
+    }
+    
+    .matter-summary .total {
+        font-size: 1.2em;
+        margin-bottom: 12px;
+        color: var(--text-muted);
+    }
+    
+    .matter-summary .total strong {
+        color: var(--primary);
+        font-family: var(--font-serif);
+    }
+    
+    .matter-summary ul {
+        list-style: none;
+        padding-left: 20px;
+    }
+    
+    .matter-summary li {
+        padding: 6px 0;
+        color: var(--text-muted);
+        font-size: 0.95em;
+    }
+    
+    .grand-total {
+        padding: 20px;
+        background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+        border: 2px solid var(--primary);
+        color: var(--text-main);
+        text-align: center;
+        font-size: 1.4em;
+        font-family: var(--font-serif);
+        border-radius: var(--radius-md);
+        margin-top: 24px;
+    }
+    
+    .grand-total strong {
+        background: linear-gradient(135deg, var(--primary), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .log-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .log-table th {
+        background: var(--bg-sidebar);
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-main);
+        border-bottom: 1px solid var(--border);
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .log-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-muted);
+    }
+    
+    .log-table tr:hover {
+        background: var(--bg-hover);
+    }
+    
+    .log-table tr td:first-child {
+        color: var(--text-main);
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

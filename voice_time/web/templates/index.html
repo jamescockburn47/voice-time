@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Voice Time{% endblock %}
+
+{% block styles %}
+<style>
+    .input-area {
+        margin-bottom: 30px;
+        background: linear-gradient(135deg, var(--purple-dim), var(--primary-dim));
+        border: 1px solid var(--purple-border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+    }
+    
+    .input-area h2 {
+        background: linear-gradient(135deg, var(--purple), var(--primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 16px;
+    }
+    
+    #utterance-input {
+        width: 100%;
+        padding: 16px;
+        font-size: 1.05em;
+        font-family: var(--font-sans);
+        background: var(--bg-sidebar);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
+        color: var(--text-main);
+    }
+    
+    #utterance-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-dim);
+    }
+    
+    #utterance-input::placeholder {
+        color: var(--text-muted);
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .task-list {
+        list-style: none;
+    }
+    
+    .task-item {
+        padding: 14px 16px;
+        border-left: 3px solid var(--primary);
+        margin-bottom: 12px;
+        background: var(--bg-hover);
+        border-radius: var(--radius-sm);
+        transition: all 0.2s;
+    }
+    
+    .task-item:hover {
+        background: var(--bg-card);
+        border-left-color: var(--purple);
+    }
+    
+    .task-item.done {
+        opacity: 0.7;
+        border-left-color: var(--success);
+    }
+    
+    .task-item .matter {
+        font-weight: 600;
+        color: var(--text-main);
+        font-size: 1.05em;
+    }
+    
+    .task-item .title {
+        margin-top: 6px;
+        color: var(--text-muted);
+        font-size: 0.95em;
+    }
+    
+    .log-entry {
+        padding: 14px 16px;
+        border-left: 3px solid var(--success);
+        margin-bottom: 12px;
+        background: var(--bg-hover);
+        border-radius: var(--radius-sm);
+        transition: all 0.2s;
+    }
+    
+    .log-entry:hover {
+        background: var(--bg-card);
+    }
+    
+    .log-entry .matter {
+        font-weight: 600;
+        color: var(--text-main);
+        font-size: 1.05em;
+    }
+    
+    .log-entry .duration {
+        float: right;
+        color: var(--primary);
+        font-weight: 700;
+        font-family: var(--font-serif);
+        font-size: 1.1em;
+    }
+    
+    .log-entry .narrative {
+        margin-top: 8px;
+        color: var(--text-muted);
+        font-size: 0.95em;
+        line-height: 1.5;
+    }
+    
+    .totals {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+    
+    .total-card {
+        background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+        border: 1px solid var(--border);
+        padding: 20px;
+        border-radius: var(--radius-md);
+        text-align: center;
+        transition: all 0.2s;
+    }
+    
+    .total-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px var(--primary-glow);
+    }
+    
+    .total-card .matter-name {
+        font-size: 0.9em;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 500;
+    }
+    
+    .total-card .hours {
+        font-size: 2.5em;
+        font-weight: 700;
+        font-family: var(--font-serif);
+        background: linear-gradient(135deg, var(--primary), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    #response-message {
+        margin-top: 16px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card input-area">
+    <h2>🎙️ What are you working on?</h2>
+    <input 
+        type="text" 
+        id="utterance-input" 
+        placeholder="e.g., 'Done with Smith disclosure' or 'Working on Brown skeleton'"
+        autofocus
+    >
+    <div class="btn-group">
+        <button class="btn btn-success" onclick="processInput()">Submit</button>
+        <button class="btn" onclick="clearInput()">Clear</button>
+    </div>
+    <div id="response-message"></div>
+</div>
+
+<div class="card">
+    <h2>📊 Today's Summary</h2>
+    <div class="totals">
+        {% if totals %}
+            {% for matter, hours in totals.items() %}
+            <div class="total-card">
+                <div class="matter-name">{{ matter }}</div>
+                <div class="hours">{{ "%.1f"|format(hours) }}h</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="grid-column: 1/-1; text-align: center; color: #7f8c8d;">
+                No time logged yet today
+            </p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h2>📝 Today's Plan</h2>
+    {% if tasks %}
+    <ul class="task-list">
+        {% for task in tasks %}
+        <li class="task-item {{ 'done' if task.status == 'done' else '' }}">
+            <div class="matter">
+                {% if task.matter %}
+                    {{ task.matter.display_name }}
+                {% else %}
+                    General
+                {% endif %}
+                {% if task.activity_type %}
+                    - {{ task.activity_type.label }}
+                {% endif %}
+            </div>
+            <div class="title">{{ task.title }}</div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color: #7f8c8d;">No plan for today yet. Try saying: "Today I need to..."</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>✅ Work Log</h2>
+    {% if logs %}
+    <div>
+        {% for log in logs %}
+        <div class="log-entry">
+            <span class="duration">{{ "%.1f"|format(log.duration_hours) }}h</span>
+            <div class="matter">
+                {% if log.matter %}
+                    {{ log.matter.display_name }}
+                {% else %}
+                    General
+                {% endif %}
+                {% if log.activity_type %}
+                    - {{ log.activity_type.label }}
+                {% endif %}
+            </div>
+            {% if log.narrative %}
+            <div class="narrative">{{ log.narrative }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="color: #7f8c8d;">No work logged yet today</p>
+    {% endif %}
+</div>
+
+<script>
+    function processInput() {
+        const input = document.getElementById('utterance-input');
+        const utterance = input.value.trim();
+        
+        if (!utterance) {
+            return;
+        }
+        
+        // Show loading
+        const responseDiv = document.getElementById('response-message');
+        responseDiv.innerHTML = '<div class="message message-info">Processing...</div>';
+        
+        // Send to server
+        fetch('/process', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ utterance: utterance })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
+                // Reload page after 1 second to show updates
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                responseDiv.innerHTML = `<div class="message message-error">${data.message}</div>`;
+            }
+            input.value = '';
+        })
+        .catch(error => {
+            responseDiv.innerHTML = `<div class="message message-error">Error: ${error.message}</div>`;
+        });
+    }
+    
+    function clearInput() {
+        document.getElementById('utterance-input').value = '';
+        document.getElementById('response-message').innerHTML = '';
+    }
+    
+    // Submit on Enter
+    document.getElementById('utterance-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            processInput();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+# config.yaml
+app:
+  name: "Voice Time"
+  data_dir: "~/.voice_time"
+  
+ollama:
+  host: "http://localhost:11434"
+  model: "qwen2.5:7b-instruct"  # Small, fast, excellent JSON output
+  timeout: 30
+  
+whisper:
+  model: "base.en"  # Options: tiny.en, base.en, small.en
+  device: "cpu"  # or "cuda" if available
+  
+audio:
+  sample_rate: 16000
+  channels: 1
+  
+matching:
+  confidence_threshold: 0.7
+  ambiguity_threshold: 0.9  # Top 2 within 90% = ambiguous
+  
+temporal:
+  working_day_start: "09:00"
+  working_day_end: "18:00"
+  lunch_start: "12:30"
+  lunch_end: "13:30"
+  
+export:
+  format: "csv"
+  date_format: "%Y-%m-%d"
+  time_format: "%H:%M"
