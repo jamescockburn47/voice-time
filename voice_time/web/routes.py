@@ -7,6 +7,16 @@ from ..database.models import Matter, PlannedTask, WorkLog, DayPlan
 def register_routes(app):
     """Register all routes with the Flask app."""
     
+    @app.route('/landing')
+    def landing():
+        """Beautiful landing page."""
+        return render_template('landing.html')
+    
+    @app.route('/app')
+    def app_interface():
+        """Main app interface (redirect from landing)."""
+        return index()
+    
     @app.route('/tutorial')
     def tutorial():
         """Tutorial and testing page."""

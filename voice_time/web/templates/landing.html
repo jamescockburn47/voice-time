@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Time - AI-Powered Time Recording for Legal Professionals</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-app: #0a192f;
+            --bg-card: #112240;
+            --bg-hover: #233554;
+            
+            --primary: #f59e0b;
+            --primary-dim: rgba(245, 158, 11, 0.1);
+            
+            --purple: #a78bfa;
+            --purple-dim: rgba(139, 92, 246, 0.15);
+            
+            --text-main: #e6f1ff;
+            --text-muted: #8892b0;
+            
+            --border: #233554;
+            
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', system-ui, sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-app);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 80px 0;
+        }
+        
+        .brand {
+            font-family: var(--font-serif);
+            font-size: 4em;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .tagline {
+            font-size: 1.5em;
+            color: var(--text-muted);
+            font-weight: 300;
+            max-width: 700px;
+            margin: 0 auto 48px;
+            letter-spacing: 0.01em;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 18px 48px;
+            background: var(--primary);
+            color: var(--bg-app);
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.2s;
+            margin-top: 24px;
+        }
+        
+        .cta-button:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+        }
+        
+        /* Features Grid */
+        .section {
+            padding: 120px 0;
+            border-top: 1px solid var(--border);
+        }
+        
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 64px;
+            font-weight: 600;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 48px;
+            margin-top: 48px;
+        }
+        
+        .feature {
+            text-align: center;
+        }
+        
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--purple), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .feature-title {
+            font-family: var(--font-serif);
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            color: var(--text-main);
+        }
+        
+        .feature-desc {
+            color: var(--text-muted);
+            font-size: 1em;
+            line-height: 1.7;
+        }
+        
+        /* Innovation Section */
+        .innovation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-top: 48px;
+        }
+        
+        .innovation-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 32px;
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .innovation-card h3 {
+            font-family: var(--font-serif);
+            font-size: 1.3em;
+            margin-bottom: 16px;
+            color: var(--text-main);
+        }
+        
+        .innovation-card p {
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+        
+        /* Privacy Badge */
+        .privacy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, var(--purple-dim), var(--primary-dim));
+            border: 1px solid var(--purple);
+            padding: 12px 24px;
+            border-radius: 24px;
+            margin-top: 32px;
+            font-size: 0.95em;
+            color: var(--purple);
+            font-weight: 500;
+        }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 48px;
+            margin: 64px 0;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-family: var(--font-serif);
+            font-size: 4em;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 1.1em;
+            margin-top: 8px;
+        }
+        
+        /* Quote */
+        .quote {
+            max-width: 800px;
+            margin: 64px auto;
+            padding: 48px;
+            background: var(--bg-card);
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+        }
+        
+        .quote-text {
+            font-family: var(--font-serif);
+            font-size: 1.5em;
+            color: var(--text-main);
+            font-style: italic;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        
+        .quote-author {
+            color: var(--text-muted);
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="brand">Voice Time</h1>
+            <p class="tagline">
+                AI-powered time recording for legal professionals.<br>
+                Private. Intelligent. Effortless.
+            </p>
+            
+            <div class="privacy-badge">
+                🔒 100% Local - Your data never leaves your machine
+            </div>
+            
+            <a href="/app" class="cta-button">Get Started →</a>
+        </div>
+    </section>
+    
+    <!-- Core Innovation -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">The Core Insight</h2>
+            
+            <div class="quote">
+                <p class="quote-text">
+                    "Time recording becomes trivial when combined with morning planning. 
+                    The system knows what you intended to do, so matching 'done with that' 
+                    to the right matter is easy."
+                </p>
+            </div>
+            
+            <div class="innovation-grid">
+                <div class="innovation-card">
+                    <h3>🧠 Context Awareness</h3>
+                    <p>
+                        Describe your day in the morning. Throughout the day, just say "done with that" 
+                        and the system knows exactly what you mean. No clicking through dropdowns, 
+                        no re-entering matter names.
+                    </p>
+                </div>
+                
+                <div class="innovation-card" style="border-left-color: var(--purple);">
+                    <h3>⏱️ Temporal Intelligence</h3>
+                    <p>
+                        "Couple of hours", "all morning", "since lunch" - the system understands natural language. 
+                        Infers duration from context. No manual timer management required.
+                    </p>
+                </div>
+                
+                <div class="innovation-card">
+                    <h3>🔄 Interruption Handling</h3>
+                    <p>
+                        "Quick call about Brown" then "back to what I was doing" - task stack remembers 
+                        your context. Handle interruptions naturally without losing track.
+                    </p>
+                </div>
+                
+                <div class="innovation-card" style="border-left-color: var(--purple);">
+                    <h3>📝 Narrative Generation</h3>
+                    <p>
+                        "Went through the witness statements" becomes "Review and analysis of witness 
+                        evidence with particular focus on chronological timeline." AI generates professional 
+                        billing narratives from casual speech.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Time Saved -->
+    <section class="section" style="background: var(--bg-card);">
+        <div class="container">
+            <h2 class="section-title">Time Saved, Billable Hours Gained</h2>
+            
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-number">25</div>
+                    <div class="stat-label">Minutes saved per day</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">100+</div>
+                    <div class="stat-label">Hours recovered per year</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">£25k</div>
+                    <div class="stat-label">In billable time annually</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Technical Innovations -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Technical Innovations</h2>
+            
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-title">Absolute Privacy</h3>
+                    <p class="feature-desc">
+                        Everything runs locally. Voice processing, AI inference, all data - stays on your machine. 
+                        No cloud, no third parties, no data breaches. Client confidentiality guaranteed.
+                    </p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">GPU Acceleration</h3>
+                    <p class="feature-desc">
+                        Auto-detects your hardware. NVIDIA CUDA for RTX GPUs, optimized int8 for AMD Ryzen, 
+                        intelligent fallback to CPU. Sub-200ms transcription on modern laptops.
+                    </p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <h3 class="feature-title">Fast Path Architecture</h3>
+                    <p class="feature-desc">
+                        80% of during-day commands process without LLM using heuristics and fuzzy matching. 
+                        Sub-second response. LLM only for complex planning and narrative generation.
+                    </p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🧠</div>
+                    <h3 class="feature-title">Small, Fast LLM</h3>
+                    <p class="feature-desc">
+                        Qwen 1.5B runs locally on CPU. Excellent JSON parsing for plans, professional narrative 
+                        generation. 200-400ms inference. No OpenAI API, no internet required.
+                    </p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Recency Weighting</h3>
+                    <p class="feature-desc">
+                        Matters used today score 2x higher in matching. "Smith" resolves to the Smith you're 
+                        actually working on, not the Smith from last month. Context-aware intelligence.
+                    </p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🎙️</div>
+                    <h3 class="feature-title">Hotkey Activation</h3>
+                    <p class="feature-desc">
+                        Press Ctrl+Space to talk. No wake words, no constant listening, no privacy concerns. 
+                        Professional, reliable, and respects your privacy. Works in browser or globally.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- How It Works -->
+    <section class="section" style="background: var(--bg-card);">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            
+            <div style="max-width: 700px; margin: 0 auto;">
+                <div style="margin-bottom: 48px;">
+                    <div style="color: var(--primary); font-weight: 600; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">
+                        Morning (9:00 AM)
+                    </div>
+                    <div style="background: var(--bg-hover); padding: 24px; border-radius: 4px; border-left: 3px solid var(--primary);">
+                        <p style="color: var(--text-main); font-size: 1.1em; margin-bottom: 8px; font-style: italic;">
+                            "Today I need to finish the Thompson disclosure, draft the Greenfield skeleton, and I've got a call with counsel at 3"
+                        </p>
+                        <p style="color: var(--text-muted); font-size: 0.95em;">
+                            → System parses into 3 structured tasks across 2 matters
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 48px;">
+                    <div style="color: var(--purple); font-weight: 600; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">
+                        During Day (10:30 AM)
+                    </div>
+                    <div style="background: var(--bg-hover); padding: 24px; border-radius: 4px; border-left: 3px solid var(--purple);">
+                        <p style="color: var(--text-main); font-size: 1.1em; margin-bottom: 8px; font-style: italic;">
+                            "Done with the disclosure"
+                        </p>
+                        <p style="color: var(--text-muted); font-size: 0.95em;">
+                            → Infers 1.5 hours, generates "Review and analysis of disclosure bundle", logs to Thompson
+                        </p>
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="color: var(--primary); font-weight: 600; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">
+                        End of Day (5:00 PM)
+                    </div>
+                    <div style="background: var(--bg-hover); padding: 24px; border-radius: 4px; border-left: 3px solid var(--primary);">
+                        <p style="color: var(--text-muted); font-size: 0.95em;">
+                            Review entries with voice commands. "Change entry 2 to 3 hours." Export to CSV. 
+                            Done in 60 seconds instead of 30 minutes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Privacy First -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Privacy First</h2>
+            
+            <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                <p style="font-size: 1.3em; color: var(--text-muted); line-height: 1.8; margin-bottom: 48px;">
+                    In an era of cloud services and data breaches, we took a different approach. 
+                    <strong style="color: var(--text-main);">Everything runs on your machine.</strong>
+                </p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; text-align: left;">
+                    <div>
+                        <h4 style="color: var(--primary); margin-bottom: 16px; font-size: 1.1em;">Your Data</h4>
+                        <ul style="list-style: none; padding: 0; color: var(--text-muted); line-height: 2;">
+                            <li>✓ Voice recordings - local only</li>
+                            <li>✓ Transcripts - never transmitted</li>
+                            <li>✓ Matter details - stay private</li>
+                            <li>✓ Client names - remain confidential</li>
+                            <li>✓ Time entries - yours alone</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--purple); margin-bottom: 16px; font-size: 1.1em;">How We Do It</h4>
+                        <ul style="list-style: none; padding: 0; color: var(--text-muted); line-height: 2;">
+                            <li>✓ Local Whisper model for STT</li>
+                            <li>✓ Local Ollama for AI inference</li>
+                            <li>✓ SQLite database on your disk</li>
+                            <li>✓ No external API calls</li>
+                            <li>✓ Works completely offline</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Technical Stack -->
+    <section class="section" style="background: var(--bg-card);">
+        <div class="container">
+            <h2 class="section-title">Built for Performance</h2>
+            
+            <div style="max-width: 700px; margin: 0 auto;">
+                <div style="display: grid; gap: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--bg-hover); border-radius: 4px;">
+                        <span style="color: var(--text-main); font-weight: 500;">Speech Recognition</span>
+                        <span style="color: var(--text-muted);">faster-whisper (base.en, 300MB)</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--bg-hover); border-radius: 4px;">
+                        <span style="color: var(--text-main); font-weight: 500;">AI Inference</span>
+                        <span style="color: var(--text-muted);">Ollama Qwen 1.5B (local, 1GB)</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--bg-hover); border-radius: 4px;">
+                        <span style="color: var(--text-main); font-weight: 500;">GPU Support</span>
+                        <span style="color: var(--text-muted);">CUDA, AMD, Intel (auto-detected)</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--bg-hover); border-radius: 4px;">
+                        <span style="color: var(--text-main); font-weight: 500;">Response Time</span>
+                        <span style="color: var(--primary); font-weight: 600);">Sub-second for 80% of commands</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Final CTA -->
+    <section class="section">
+        <div class="container" style="text-align: center;">
+            <h2 class="section-title">Ready to Reclaim Your Time?</h2>
+            
+            <p style="font-size: 1.2em; color: var(--text-muted); max-width: 600px; margin: 0 auto 48px;">
+                Join legal professionals who've transformed their time recording from 
+                tedious admin into effortless logging.
+            </p>
+            
+            <a href="/app" class="cta-button" style="font-size: 1.2em; padding: 20px 56px;">
+                Start Using Voice Time →
+            </a>
+            
+            <p style="color: var(--text-muted); margin-top: 32px; font-size: 0.95em;">
+                Free and open source. Runs entirely on your machine.
+            </p>
+        </div>
+    </section>
+    
+    <div style="border-top: 1px solid var(--border); padding: 48px 0; text-align: center;">
+        <p style="color: var(--text-muted); font-size: 0.9em;">
+            Made with care for lawyers who value their time<br>
+            <a href="https://github.com/jamescockburn47/voice-time" style="color: var(--primary); text-decoration: none;">View on GitHub →</a>
+        </p>
+    </div>
+    
+</body>
+</html>
