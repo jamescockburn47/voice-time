@@ -1,0 +1,539 @@
+{% extends "base.html" %}
+
+{% block title %}How It Works - TimeBrief{% endblock %}
+
+{% block styles %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 40px 20px;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .hero-section h1 {
+        font-family: var(--font-display);
+        font-size: 2.2em;
+        margin-bottom: 16px;
+    }
+    
+    .hero-tagline {
+        font-size: 1.1em;
+        color: var(--text-muted);
+        line-height: 1.6;
+    }
+    
+    .hero-tagline strong {
+        color: var(--primary);
+    }
+    
+    .proof-badge {
+        display: inline-block;
+        background: var(--accent);
+        color: var(--bg-app);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+    
+    .philosophy {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        margin: 30px auto;
+        max-width: 600px;
+    }
+    
+    .philosophy p {
+        margin: 0;
+        line-height: 1.7;
+    }
+    
+    .section {
+        padding: 40px 20px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .section h2 {
+        font-family: var(--font-display);
+        font-size: 1.6em;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .section-intro {
+        text-align: center;
+        color: var(--text-muted);
+        margin-bottom: 30px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    /* Feature Grid */
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+    }
+    
+    .feature-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+    }
+    
+    .feature-card h3 {
+        font-size: 1.1em;
+        margin-bottom: 8px;
+    }
+    
+    .feature-card p {
+        color: var(--text-muted);
+        font-size: 0.95em;
+        line-height: 1.5;
+        margin: 0;
+    }
+    
+    /* Comparison Table */
+    .comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 30px;
+    }
+    
+    @media (max-width: 600px) {
+        .comparison {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .comparison-col {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+    }
+    
+    .comparison-col.highlight {
+        border-color: var(--primary);
+        background: rgba(30, 58, 95, 0.3);
+    }
+    
+    .comparison-title {
+        font-weight: 600;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .comparison-col ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .comparison-col li {
+        padding: 8px 0;
+        color: var(--text-muted);
+        font-size: 0.95em;
+    }
+    
+    .comparison-col.highlight li {
+        color: var(--text-primary);
+    }
+    
+    /* Numbered Steps */
+    .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-top: 30px;
+    }
+    
+    .step {
+        display: flex;
+        gap: 16px;
+    }
+    
+    .step-number {
+        width: 36px;
+        height: 36px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    
+    .step-content h3 {
+        font-size: 1.05em;
+        margin-bottom: 6px;
+    }
+    
+    .step-content p {
+        color: var(--text-muted);
+        font-size: 0.95em;
+        line-height: 1.5;
+        margin: 0;
+    }
+    
+    /* Built For */
+    .built-for {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 30px;
+    }
+    
+    .built-for-item {
+        text-align: center;
+        padding: 20px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+    }
+    
+    .built-for-item strong {
+        display: block;
+        margin-bottom: 6px;
+    }
+    
+    .built-for-item p {
+        color: var(--text-muted);
+        font-size: 0.9em;
+        margin: 0;
+    }
+    
+    /* Privacy Section */
+    .privacy-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 30px;
+        margin-top: 30px;
+    }
+    
+    .privacy-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .privacy-item strong {
+        display: block;
+        margin-bottom: 6px;
+    }
+    
+    .privacy-item p {
+        color: var(--text-muted);
+        font-size: 0.9em;
+        margin: 0;
+    }
+    
+    /* CTA */
+    .cta-section {
+        text-align: center;
+        padding: 50px 20px;
+        background: var(--bg-card);
+        border-radius: 12px;
+        margin-top: 40px;
+    }
+    
+    .cta-section h2 {
+        margin-bottom: 12px;
+    }
+    
+    .cta-section p {
+        color: var(--text-muted);
+        margin-bottom: 20px;
+    }
+    
+    .cta-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .cta-buttons a {
+        padding: 12px 28px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .cta-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .cta-secondary {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+    }
+    
+    /* Tech Stack */
+    .tech-stack {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+    
+    .tech-badge {
+        background: var(--bg-hover);
+        border: 1px solid var(--border);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.85em;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="proof-badge">Vibe Coded in 24 Hours</div>
+    <h1>How TimeBrief Works</h1>
+    <p class="hero-tagline">
+        Traditional time tracking tools make you click through menus and type descriptions.
+        <strong>We let you just speak.</strong>
+    </p>
+    
+    <div class="philosophy">
+        <p>
+            Most legal time tools ask: <em>"What do you want to record?"</em> 
+            We ask: <strong>"What are you working on?"</strong>
+            Say it naturally. Our AI understands your intent, matches the matter, 
+            and starts the timer. No menus. No typing. Just work.
+        </p>
+    </div>
+</div>
+
+<!-- AI Section -->
+<div class="section">
+    <h2>Cutting-Edge AI, Running Locally</h2>
+    <p class="section-intro">
+        Unlike cloud-based tools, TimeBrief runs entirely on your machine. 
+        Your voice never leaves your computer. Your data stays yours.
+    </p>
+    
+    <!-- Hardware Detection Highlight -->
+    <div class="philosophy" style="border-color: var(--primary); margin-bottom: 30px;">
+        <p style="text-align: center;">
+            <strong style="color: var(--primary); font-size: 1.1em;">Smart Hardware Detection</strong><br><br>
+            TimeBrief automatically detects your hardware - NVIDIA GPU, AMD Ryzen AI, or standard CPU - 
+            and downloads the <strong>optimal AI models</strong> for your specific machine. 
+            Powerful laptop? Get larger, more accurate models. 
+            Modest hardware? Get lightweight models that still deliver.
+            <br><br>
+            <span style="color: var(--text-muted); font-size: 0.9em;">
+                No configuration needed. The right models are selected and downloaded automatically on first run.
+            </span>
+        </p>
+    </div>
+    
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h3>Voice-First Intelligence</h3>
+            <p>State-of-the-art speech recognition (Whisper) transcribes your voice locally. No internet required.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Intent Recognition</h3>
+            <p>Local LLM understands what you mean. Say "working on the Smith case" and it knows exactly which matter.</p>
+        </div>
+        <div class="feature-card">
+            <h3>100% Local Processing</h3>
+            <p>Your confidential client information never touches the cloud. Everything runs on your hardware.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Hardware-Optimized</h3>
+            <p>GPU acceleration on NVIDIA (CUDA), int8 optimization on AMD Ryzen AI, and efficient CPU fallback for any machine.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison -->
+<div class="section">
+    <h2>Why TimeBrief is Different</h2>
+    
+    <div class="comparison">
+        <div class="comparison-col">
+            <div class="comparison-title">Traditional Time Recording</div>
+            <ul>
+                <li>Open app, find matter, select activity, type description</li>
+                <li>Multiple timer windows cluttering your desktop</li>
+                <li>Forget to stop timer, lose track of time</li>
+                <li>End of day: reconstruct what you did from memory</li>
+                <li>Data sent to cloud servers you don't control</li>
+            </ul>
+        </div>
+        <div class="comparison-col highlight">
+            <div class="comparison-title">The TimeBrief Way</div>
+            <ul>
+                <li>Say "working on Smith" - timer starts instantly</li>
+                <li>One clean interface, voice-controlled</li>
+                <li>Plan your day, then just say task names to switch</li>
+                <li>AI generates professional narratives from your notes</li>
+                <li>100% local - your data never leaves your machine</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Four Things -->
+<div class="section">
+    <h2>Four Things We Do Differently</h2>
+    
+    <div class="steps">
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Voice as Primary Input</h3>
+                <p>Lawyers talk all day. Why force them to type? Speak naturally and the AI handles the rest. Ctrl+Space to talk, release to process.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Plan-Aware Recognition</h3>
+                <p>Plan your day in the morning. When you say "Smith letter" later, the system knows you mean that planned task and starts with all details pre-filled.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Intelligent Clarification</h3>
+                <p>If it's not sure, it asks. "What type of work?" "Which matter?" Natural conversation, not error messages.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h3>6-Minute Billing Units</h3>
+                <p>Industry-standard billing increments built in. See units accumulate in real-time. No manual calculation needed.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Three-Step Flow -->
+<div class="section">
+    <h2>The Three-Step Flow</h2>
+    
+    <div class="steps">
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Plan Your Day</h3>
+                <p>Add tasks by voice or form. "Write letter on Smith, research for Brown, call on Thompson." Tasks become vocabulary hints for better recognition.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Work and Speak</h3>
+                <p>When you start a task, just say it. "Working on Smith letter." Timer starts with matter, activity, and description already filled in.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Review and Export</h3>
+                <p>End of day, review entries by voice. "Change entry 3 to 30 minutes." Export to your practice management system.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Built For -->
+<div class="section">
+    <h2>Built For</h2>
+    
+    <div class="built-for">
+        <div class="built-for-item">
+            <strong>Litigation Lawyers</strong>
+            <p>Multiple matters, constant switching, detailed narratives</p>
+        </div>
+        <div class="built-for-item">
+            <strong>Solo Practitioners</strong>
+            <p>No IT department needed - runs on your laptop</p>
+        </div>
+        <div class="built-for-item">
+            <strong>Privacy-Conscious Firms</strong>
+            <p>Client data stays on your machine, period</p>
+        </div>
+        <div class="built-for-item">
+            <strong>Efficiency Seekers</strong>
+            <p>Stop context-switching to record time</p>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy -->
+<div class="section">
+    <h2>Privacy by Design</h2>
+    
+    <div class="privacy-section">
+        <p>Legal work demands confidentiality. That's why TimeBrief is built local-first:</p>
+        
+        <div class="privacy-grid">
+            <div class="privacy-item">
+                <strong>No Cloud Required</strong>
+                <p>Voice recognition, AI processing, and data storage all happen on your machine.</p>
+            </div>
+            <div class="privacy-item">
+                <strong>No Account Needed</strong>
+                <p>No sign-up, no login, no tracking. Just run the app.</p>
+            </div>
+            <div class="privacy-item">
+                <strong>Your Data, Your Control</strong>
+                <p>SQLite database stored locally. Export or delete anytime.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tech Stack -->
+<div class="section">
+    <h2>The Technology</h2>
+    <p class="section-intro">
+        Built as a proof of concept in 24 hours using the latest local AI models.
+    </p>
+    
+    <div class="tech-stack">
+        <span class="tech-badge">Whisper (Speech-to-Text)</span>
+        <span class="tech-badge">Ollama (Local LLM)</span>
+        <span class="tech-badge">Qwen 2.5 (Language Model)</span>
+        <span class="tech-badge">Flask (Backend)</span>
+        <span class="tech-badge">Tauri (Desktop App)</span>
+        <span class="tech-badge">SQLite (Database)</span>
+    </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+    <h2>Ready to try voice-first time recording?</h2>
+    <p>Free, local, and open source. No cloud account required.</p>
+    
+    <div class="cta-buttons">
+        <a href="/" class="cta-primary">Start Recording</a>
+        <a href="https://github.com/yourusername/timebrief" class="cta-secondary">View on GitHub</a>
+    </div>
+</div>
+{% endblock %}

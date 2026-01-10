@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Voice Time Recording System - Entry Point
+TimeBrief - Entry Point
 
 Usage:
     python run.py                 # Run web UI
@@ -29,7 +29,7 @@ def init_database(config: Config):
     db_path = config.data_dir / "voice_time.db"
     session = init_db(db_path)
     
-    print(f"✓ Database created at: {db_path}")
+    print(f"[OK] Database created at: {db_path}")
     
     # Create realistic sample matters
     print("\nCreating realistic sample matters...")
@@ -37,11 +37,11 @@ def init_database(config: Config):
     matters = create_realistic_matters(session)
     
     if matters:
-        print(f"✓ Created {len(matters)} sample matters:")
+        print(f"[OK] Created {len(matters)} sample matters:")
         for matter in matters:
             print(f"  - {matter.display_name} ({matter.matter_ref})")
     else:
-        print("✓ Sample matters already exist")
+        print("[OK] Sample matters already exist")
     
     print("\nDatabase initialization complete!")
     print("\nYou can now run:")
@@ -77,7 +77,7 @@ def run_cli(config: Config):
     
     # Show welcome
     console.print(Panel.fit(
-        "[bold blue]Voice Time Recording System - CLI Mode[/bold blue]\n\n"
+        "[bold blue]TimeBrief - CLI Mode[/bold blue]\n\n"
         "Try saying:\n"
         "  • Today I need to finish Smith disclosure and draft Brown skeleton\n"
         "  • Working on Smith disclosure\n"
@@ -114,7 +114,7 @@ def run_cli(config: Config):
             
             # Display result
             if result.success:
-                console.print(f"[green]✓ {result.message}[/green]")
+                console.print(f"[green][OK] {result.message}[/green]")
             else:
                 console.print(f"[red]✗ {result.message}[/red]")
             
@@ -131,7 +131,7 @@ def run_cli(config: Config):
 
 def run_web(config: Config):
     """Run Flask web UI."""
-    print("Starting Voice Time web server...")
+    print("Starting TimeBrief web server...")
     print(f"Database: {config.data_dir / 'voice_time.db'}")
     print("\nInitializing...")
     
@@ -140,23 +140,23 @@ def run_web(config: Config):
     
     # Check Ollama is available
     if not app.day_state.plan_parser.llm.health_check():
-        print("\n⚠️  Warning: Ollama is not running or model not available")
+        print("\n[WARNING] Ollama is not running or model not available")
         print(f"\nPlease ensure Ollama is running and model '{config.ollama.model}' is installed:")
         print(f"  ollama serve")
         print(f"  ollama pull {config.ollama.model}")
         print("\nContinuing anyway (some features will fail)...\n")
     
-    print("\n✓ Ready!")
+    print("\n[OK] Ready!")
     print("\nOpen your browser to: http://localhost:5000")
     print("Press Ctrl+C to stop\n")
     
-    # Run Flask (debug=False for production)
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    # Run Flask (debug=True for template auto-reload during development)
+    app.run(debug=True, host='0.0.0.0', port=5000)
 
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Voice Time Recording System")
+    parser = argparse.ArgumentParser(description="TimeBrief - Voice-first time recording")
     parser.add_argument('--cli', action='store_true', help='Run in CLI mode')
     parser.add_argument('--init', action='store_true', help='Initialize database with sample data')
     parser.add_argument('--config', type=str, help='Path to config file', default='config.yaml')

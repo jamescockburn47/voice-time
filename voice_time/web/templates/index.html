@@ -9,8 +9,8 @@
         background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
         border: 2px solid var(--primary);
         border-radius: var(--radius-lg);
-        padding: 32px;
-        margin-bottom: 24px;
+        padding: 24px;
+        margin-bottom: 20px;
         position: relative;
     }
     
@@ -23,19 +23,19 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 24px;
+        margin-bottom: 16px;
     }
     
     .timer-matter {
         font-family: var(--font-serif);
-        font-size: 1.5em;
+        font-size: 1.3em;
         font-weight: 600;
         color: var(--text-main);
     }
     
     .timer-activity {
         color: var(--text-muted);
-        font-size: 0.95em;
+        font-size: 0.9em;
         margin-top: 4px;
     }
     
@@ -43,7 +43,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        font-size: 0.9em;
+        font-size: 0.85em;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
@@ -55,14 +55,8 @@
         animation: pulse-dot 1.5s infinite;
     }
     
-    .timer-status.running .dot {
-        background: #22c55e;
-    }
-    
-    .timer-status.paused .dot {
-        background: #f59e0b;
-        animation: none;
-    }
+    .timer-status.running .dot { background: #22c55e; }
+    .timer-status.paused .dot { background: #f59e0b; animation: none; }
     
     @keyframes pulse-dot {
         0%, 100% { opacity: 1; transform: scale(1); }
@@ -71,43 +65,36 @@
     
     .timer-time {
         text-align: center;
-        margin-bottom: 24px;
+        margin-bottom: 16px;
     }
     
     .timer-clock {
-        font-family: var(--font-mono, 'JetBrains Mono', monospace);
-        font-size: 4em;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 3em;
         font-weight: 300;
         color: var(--text-main);
-        letter-spacing: 0.02em;
     }
     
     .timer-units {
         display: flex;
         justify-content: center;
-        gap: 32px;
-        margin-top: 16px;
+        gap: 24px;
+        margin-top: 12px;
     }
     
-    .timer-unit {
-        text-align: center;
-    }
+    .timer-unit { text-align: center; }
     
     .timer-unit-value {
         font-family: var(--font-serif);
-        font-size: 2em;
+        font-size: 1.5em;
         font-weight: 700;
-        background: linear-gradient(135deg, var(--primary), var(--purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--primary);
     }
     
     .timer-unit-label {
-        font-size: 0.85em;
+        font-size: 0.75em;
         color: var(--text-muted);
         text-transform: uppercase;
-        letter-spacing: 0.05em;
     }
     
     .timer-controls {
@@ -117,52 +104,37 @@
     }
     
     .timer-btn {
-        padding: 12px 24px;
+        padding: 10px 20px;
         border: none;
         border-radius: var(--radius-md);
-        font-size: 1em;
+        font-size: 0.95em;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
     }
     
-    .timer-btn:hover {
-        transform: translateY(-2px);
-    }
-    
-    .timer-btn.primary {
-        background: var(--primary);
-        color: var(--bg-app);
-    }
-    
-    .timer-btn.stop {
-        background: #ef4444;
-        color: white;
-    }
-    
-    .timer-btn.secondary {
-        background: var(--bg-hover);
-        color: var(--text-main);
-        border: 1px solid var(--border);
-    }
+    .timer-btn:hover { transform: translateY(-1px); }
+    .timer-btn.primary { background: var(--primary); color: var(--bg-app); }
+    .timer-btn.stop { background: #ef4444; color: white; }
+    .timer-btn.secondary { background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border); }
     
     /* Start Timer Section */
     .start-timer-section {
         background: var(--bg-card);
         border: 1px dashed var(--border);
         border-radius: var(--radius-lg);
-        padding: 32px;
+        padding: 24px;
         text-align: center;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
     }
     
     .start-timer-btn {
         background: var(--primary);
         color: var(--bg-app);
         border: none;
-        padding: 16px 32px;
+        padding: 14px 28px;
         border-radius: var(--radius-md);
-        font-size: 1.1em;
+        font-size: 1em;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.2s;
@@ -175,34 +147,28 @@
     
     /* Input area */
     .input-area {
-        margin-bottom: 24px;
+        margin-bottom: 20px;
         background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: var(--radius-lg);
-        padding: 24px;
+        padding: 20px;
     }
     
     .voice-btn {
         width: 100%;
-        padding: 20px;
+        padding: 16px;
         background: var(--primary);
         color: var(--bg-app);
         border: none;
         border-radius: var(--radius-md);
-        font-size: 1.1em;
+        font-size: 1em;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.2s;
     }
     
-    .voice-btn:hover {
-        background: #d97706;
-    }
-    
-    .voice-btn.recording {
-        background: #ef4444;
-        animation: pulse 1.5s infinite;
-    }
+    .voice-btn:hover { background: #d97706; }
+    .voice-btn.recording { background: #ef4444; animation: pulse 1.5s infinite; }
     
     @keyframes pulse {
         0%, 100% { opacity: 1; }
@@ -211,13 +177,13 @@
     
     #utterance-input {
         width: 100%;
-        padding: 14px;
-        font-size: 1em;
+        padding: 12px;
+        font-size: 0.95em;
         font-family: var(--font-sans);
         background: var(--bg-sidebar);
         border: 1px solid var(--border);
         border-radius: var(--radius-md);
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         color: var(--text-main);
     }
     
@@ -230,75 +196,45 @@
     .log-entry {
         display: flex;
         align-items: flex-start;
-        gap: 16px;
-        padding: 16px;
+        gap: 12px;
+        padding: 12px;
         background: var(--bg-hover);
         border-radius: var(--radius-md);
-        margin-bottom: 12px;
-        transition: all 0.2s;
-    }
-    
-    .log-entry:hover {
-        background: var(--bg-card);
+        margin-bottom: 10px;
     }
     
     .log-time {
-        min-width: 80px;
+        min-width: 60px;
         text-align: center;
-        padding: 8px 0;
+        padding: 6px 0;
     }
     
     .log-time-value {
         font-family: var(--font-serif);
-        font-size: 1.5em;
+        font-size: 1.3em;
         font-weight: 700;
         color: var(--primary);
     }
     
     .log-time-units {
-        font-size: 0.75em;
+        font-size: 0.7em;
         color: var(--text-muted);
         text-transform: uppercase;
-        letter-spacing: 0.03em;
     }
     
-    .log-details {
-        flex: 1;
-    }
-    
-    .log-matter {
-        font-weight: 600;
-        color: var(--text-main);
-        font-size: 1.05em;
-    }
-    
-    .log-activity {
-        color: var(--text-muted);
-        font-size: 0.9em;
-        margin-top: 2px;
-    }
-    
-    .log-narrative {
-        margin-top: 8px;
-        color: var(--text-muted);
-        font-size: 0.95em;
-        line-height: 1.5;
-    }
-    
-    .log-actions {
-        display: flex;
-        gap: 8px;
-    }
+    .log-details { flex: 1; }
+    .log-matter { font-weight: 600; color: var(--text-main); font-size: 0.95em; }
+    .log-activity { color: var(--text-muted); font-size: 0.85em; }
+    .log-narrative { margin-top: 6px; color: var(--text-muted); font-size: 0.85em; line-height: 1.4; }
     
     .log-action-btn {
-        padding: 8px 12px;
+        padding: 6px 10px;
         background: var(--bg-sidebar);
         border: 1px solid var(--border);
         border-radius: var(--radius-sm);
         color: var(--text-muted);
-        font-size: 0.85em;
+        font-size: 0.8em;
         cursor: pointer;
-        transition: all 0.2s;
     }
     
     .log-action-btn:hover {
@@ -307,30 +243,130 @@
         border-color: var(--primary);
     }
     
-    /* Summary */
-    .summary-row {
+    /* Status bar */
+    .status-bar {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 12px 0;
-        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+        padding: 10px 14px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        margin-bottom: 16px;
+        font-size: 0.85em;
     }
     
-    .summary-row:last-child {
-        border-bottom: none;
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+    
+    /* Date nav compact */
+    .date-nav-compact {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        margin-bottom: 16px;
+    }
+    
+    .date-nav-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.2em;
+        cursor: pointer;
+        padding: 4px 8px;
+        text-decoration: none;
+    }
+    
+    .date-nav-btn:hover { color: var(--text-main); }
+    
+    .date-display {
+        text-align: center;
+    }
+    
+    .date-display-main {
+        font-family: var(--font-serif);
+        font-size: 1.1em;
         font-weight: 600;
-        padding-top: 16px;
-    }
-    
-    .summary-matter {
         color: var(--text-main);
     }
     
-    .summary-hours {
-        font-family: var(--font-serif);
-        color: var(--primary);
+    .date-today-badge {
+        display: inline-block;
+        background: var(--primary);
+        color: var(--bg-app);
+        font-size: 0.65em;
+        padding: 2px 6px;
+        border-radius: 8px;
+        margin-left: 6px;
         font-weight: 600;
+        text-transform: uppercase;
     }
+    
+    .date-past-badge {
+        display: inline-block;
+        background: var(--bg-hover);
+        color: var(--text-muted);
+        font-size: 0.65em;
+        padding: 2px 6px;
+        border-radius: 8px;
+        margin-left: 6px;
+    }
+    
+    /* Week View */
+    .week-view {
+        display: flex;
+        justify-content: center;
+        gap: 4px;
+        margin-bottom: 16px;
+    }
+    
+    .week-day {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        text-decoration: none;
+        min-width: 42px;
+    }
+    
+    .week-day:hover { background: var(--bg-hover); }
+    .week-day.selected { background: var(--primary-dim); border: 1px solid var(--primary); }
+    .week-day.today { border: 1px solid var(--purple); }
+    
+    .week-day-name { font-size: 0.65em; color: var(--text-muted); text-transform: uppercase; }
+    .week-day-num { font-size: 0.95em; font-weight: 600; color: var(--text-main); margin-top: 2px; }
+    .week-day.selected .week-day-num { color: var(--primary); }
+    
+    /* Past day notice */
+    .past-day-notice {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: var(--warning);
+        padding: 10px 14px;
+        border-radius: var(--radius-md);
+        margin-bottom: 16px;
+        font-size: 0.85em;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .past-day-notice a { color: var(--primary); text-decoration: none; font-weight: 600; }
     
     /* Modal */
     .modal-overlay {
@@ -346,378 +382,93 @@
         align-items: center;
     }
     
-    .modal-overlay.active {
-        display: flex;
-    }
+    .modal-overlay.active { display: flex; }
     
     .modal-content {
         background: var(--bg-app);
         border-radius: var(--radius-lg);
-        padding: 32px;
-        max-width: 500px;
+        padding: 24px;
+        max-width: 450px;
         width: 90%;
-        max-height: 80vh;
-        overflow-y: auto;
     }
     
     .modal-title {
         font-family: var(--font-serif);
-        font-size: 1.5em;
-        margin-bottom: 24px;
-    }
-    
-    .form-group {
+        font-size: 1.3em;
         margin-bottom: 20px;
     }
     
-    .form-label {
-        display: block;
-        font-size: 0.9em;
-        color: var(--text-muted);
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 0.85em; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
     
     .form-select {
         width: 100%;
-        padding: 12px;
+        padding: 10px;
         background: var(--bg-sidebar);
         border: 1px solid var(--border);
         border-radius: var(--radius-md);
         color: var(--text-main);
-        font-size: 1em;
+        font-size: 0.95em;
     }
     
-    .form-select:focus {
-        outline: none;
-        border-color: var(--primary);
-    }
+    .form-select:focus { outline: none; border-color: var(--primary); }
     
     .modal-actions {
         display: flex;
-        gap: 12px;
+        gap: 10px;
         justify-content: flex-end;
-        margin-top: 24px;
-    }
-    
-    /* Status bar */
-    .status-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 16px;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-        margin-bottom: 20px;
-        font-size: 0.9em;
-    }
-    
-    .status-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-    }
-    
-    /* Two Column Layout */
-    .page-layout {
-        display: grid;
-        grid-template-columns: 280px 1fr;
-        gap: 24px;
-    }
-    
-    @media (max-width: 900px) {
-        .page-layout {
-            grid-template-columns: 1fr;
-        }
-        .sidebar {
-            order: 2;
-        }
-    }
-    
-    /* Sidebar */
-    .sidebar {
-        position: sticky;
-        top: 20px;
-        height: fit-content;
-    }
-    
-    .sidebar-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        padding: 20px;
-        margin-bottom: 16px;
-    }
-    
-    .sidebar-title {
-        font-family: var(--font-serif);
-        font-size: 1.1em;
-        font-weight: 600;
-        margin-bottom: 16px;
-        color: var(--text-main);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .sidebar-title a {
-        font-size: 0.75em;
-        color: var(--primary);
-        text-decoration: none;
-        font-family: var(--font-sans);
-        font-weight: 500;
-    }
-    
-    .plan-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--border);
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    
-    .plan-item:last-child {
-        border-bottom: none;
-    }
-    
-    .plan-item:hover {
-        background: var(--bg-hover);
-        margin: 0 -12px;
-        padding: 10px 12px;
-        border-radius: var(--radius-sm);
-    }
-    
-    .plan-item.done {
-        opacity: 0.5;
-    }
-    
-    .plan-number {
-        width: 24px;
-        height: 24px;
-        background: var(--bg-hover);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75em;
-        font-weight: 600;
-        color: var(--text-muted);
-        flex-shrink: 0;
-    }
-    
-    .plan-item.done .plan-number {
-        background: var(--success);
-        color: white;
-    }
-    
-    .plan-content {
-        flex: 1;
-        min-width: 0;
-    }
-    
-    .plan-matter {
-        font-weight: 500;
-        font-size: 0.9em;
-        color: var(--text-main);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    .plan-task {
-        font-size: 0.8em;
-        color: var(--text-muted);
-        margin-top: 2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    .empty-sidebar {
-        text-align: center;
-        padding: 20px;
-        color: var(--text-muted);
-        font-size: 0.9em;
-    }
-    
-    .empty-sidebar a {
-        color: var(--primary);
-        text-decoration: none;
-    }
-    
-    /* Main content area */
-    .main-content {
-        min-width: 0;
-    }
-    
-    /* Date Navigation */
-    .date-nav {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 16px;
-        margin-bottom: 24px;
-        padding: 16px;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-    }
-    
-    .date-nav-btn {
-        background: none;
-        border: none;
-        color: var(--text-muted);
-        font-size: 1.5em;
-        cursor: pointer;
-        padding: 8px;
-        border-radius: var(--radius-sm);
-        transition: all 0.2s;
-    }
-    
-    .date-nav-btn:hover {
-        background: var(--bg-hover);
-        color: var(--text-main);
-    }
-    
-    .date-display {
-        text-align: center;
-        min-width: 200px;
-    }
-    
-    .date-display-main {
-        font-family: var(--font-serif);
-        font-size: 1.3em;
-        font-weight: 600;
-        color: var(--text-main);
-    }
-    
-    .date-display-sub {
-        font-size: 0.85em;
-        color: var(--text-muted);
-        margin-top: 4px;
-    }
-    
-    .date-today-badge {
-        display: inline-block;
-        background: var(--primary);
-        color: var(--bg-app);
-        font-size: 0.7em;
-        padding: 2px 8px;
-        border-radius: 10px;
-        margin-left: 8px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    
-    .date-past-badge {
-        display: inline-block;
-        background: var(--bg-hover);
-        color: var(--text-muted);
-        font-size: 0.7em;
-        padding: 2px 8px;
-        border-radius: 10px;
-        margin-left: 8px;
-        font-weight: 500;
-    }
-    
-    /* Week View */
-    .week-view {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        margin-top: 12px;
-    }
-    
-    .week-day {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 8px 12px;
-        border-radius: var(--radius-md);
-        cursor: pointer;
-        transition: all 0.2s;
-        min-width: 50px;
-        text-decoration: none;
-    }
-    
-    .week-day:hover {
-        background: var(--bg-hover);
-    }
-    
-    .week-day.selected {
-        background: var(--primary-dim);
-        border: 1px solid var(--primary);
-    }
-    
-    .week-day.today {
-        border: 1px solid var(--purple);
-    }
-    
-    .week-day.has-entries::after {
-        content: '';
-        width: 6px;
-        height: 6px;
-        background: var(--primary);
-        border-radius: 50%;
-        margin-top: 4px;
-    }
-    
-    .week-day-name {
-        font-size: 0.7em;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    
-    .week-day-num {
-        font-size: 1.1em;
-        font-weight: 600;
-        color: var(--text-main);
-        margin-top: 2px;
-    }
-    
-    .week-day.selected .week-day-num {
-        color: var(--primary);
-    }
-    
-    /* Past day indicator */
-    .past-day-notice {
-        background: rgba(245, 158, 11, 0.1);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        color: var(--warning);
-        padding: 12px 16px;
-        border-radius: var(--radius-md);
-        margin-bottom: 20px;
-        font-size: 0.9em;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    
-    .past-day-notice a {
-        color: var(--primary);
-        text-decoration: none;
-        font-weight: 600;
+        margin-top: 20px;
     }
 </style>
 {% endblock %}
 
-{% block content %}
+{% block sidebar %}
+<!-- Today's Plan -->
+<div class="sidebar-section">
+    <h3>{% if is_today %}Today's Plan{% else %}{{ selected_date.strftime('%b %d') }} Plan{% endif %} <a href="/planning{% if not is_today %}?date={{ selected_date.strftime('%Y-%m-%d') }}{% endif %}">Edit</a></h3>
+    {% if tasks %}
+    <div id="sidebar-plan">
+        {% for task in tasks %}
+        <div class="plan-item" onclick="startTaskTimer('{{ task.matter.id if task.matter else '' }}', '{{ task.activity_type.id if task.activity_type else '' }}')" style="cursor: pointer;">
+            <div class="plan-number">{{ loop.index }}</div>
+            <div class="plan-text">
+                <div class="plan-matter">{% if task.matter %}{{ task.matter.display_name|truncate(20) }}{% else %}General{% endif %}</div>
+                <div class="plan-desc">{{ task.title|truncate(25) }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">No tasks planned. <a href="/planning" style="color: var(--primary);">Add some</a></div>
+    {% endif %}
+</div>
 
+<!-- Today's Time -->
+<div class="sidebar-section">
+    <h3>{% if is_today %}Today's Time{% else %}{{ selected_date.strftime('%b %d') }} Time{% endif %}</h3>
+    {% if totals %}
+    <div id="sidebar-totals">
+        {% for matter, hours in totals.items() %}
+        <div class="today-row">
+            <span class="today-matter">{{ matter|truncate(15) }}</span>
+            <span class="today-hours">{{ "%.1f"|format(hours) }}h</span>
+        </div>
+        {% endfor %}
+        <div class="today-total">
+            <span class="today-matter">Total</span>
+            <span class="today-hours">{{ "%.1f"|format(total_hours) }}h</span>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">No time recorded yet</div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
 <!-- Date Navigation -->
-<div class="date-nav">
-    <a href="?date={{ prev_date.strftime('%Y-%m-%d') }}" class="date-nav-btn" title="Previous day">&larr;</a>
+<div class="date-nav-compact">
+    <a href="?date={{ prev_date.strftime('%Y-%m-%d') }}" class="date-nav-btn">&larr;</a>
     
     <div class="date-display">
         <div class="date-display-main">
@@ -730,22 +481,20 @@
             <span class="date-past-badge">Future</span>
             {% endif %}
         </div>
-        <div class="date-display-sub">{{ selected_date.strftime('%Y') }}</div>
     </div>
     
     {% if not is_today %}
-    <a href="/" class="date-nav-btn" title="Go to today" style="font-size: 0.9em; padding: 6px 12px; background: var(--primary-dim); border-radius: var(--radius-md);">Today</a>
+    <a href="/" class="date-nav-btn" style="font-size: 0.85em; padding: 4px 10px; background: var(--primary-dim); border-radius: var(--radius-md);">Today</a>
     {% endif %}
     
-    <a href="?date={{ next_date.strftime('%Y-%m-%d') }}" class="date-nav-btn" title="Next day">&rarr;</a>
+    <a href="?date={{ next_date.strftime('%Y-%m-%d') }}" class="date-nav-btn">&rarr;</a>
 </div>
 
 <!-- Week View -->
-<div class="week-view" id="week-view">
+<div class="week-view">
     {% for day in week_dates %}
     <a href="?date={{ day.strftime('%Y-%m-%d') }}" 
-       class="week-day {{ 'selected' if day == selected_date else '' }} {{ 'today' if day == today else '' }}"
-       data-date="{{ day.strftime('%Y-%m-%d') }}">
+       class="week-day {{ 'selected' if day == selected_date else '' }} {{ 'today' if day == today else '' }}">
         <span class="week-day-name">{{ day.strftime('%a') }}</span>
         <span class="week-day-num">{{ day.day }}</span>
     </a>
@@ -753,9 +502,8 @@
 </div>
 
 {% if not is_today %}
-<!-- Past Day Notice -->
 <div class="past-day-notice">
-    <span>You're viewing {{ selected_date.strftime('%A, %B %d') }}. Timer is disabled for past/future days.</span>
+    <span>Viewing {{ selected_date.strftime('%B %d') }}. Timer disabled for past/future days.</span>
     <a href="/">Return to Today</a>
 </div>
 {% endif %}
@@ -771,58 +519,6 @@
         <span id="mic-status">Checking mic...</span>
     </div>
 </div>
-
-<div class="page-layout">
-
-<!-- Sidebar: Plan -->
-<aside class="sidebar">
-    <div class="sidebar-card">
-        <h3 class="sidebar-title">
-            {% if is_today %}Today's Plan{% else %}{{ selected_date.strftime('%b %d') }} Plan{% endif %}
-            <a href="/planning{% if not is_today %}?date={{ selected_date.strftime('%Y-%m-%d') }}{% endif %}">Edit</a>
-        </h3>
-        {% if tasks %}
-        <div class="plan-list">
-            {% for task in tasks %}
-            <div class="plan-item {{ 'done' if task.status == 'done' else '' }}" onclick="startTaskTimer('{{ task.matter.id if task.matter else '' }}', '{{ task.activity_type.id if task.activity_type else '' }}')">
-                <div class="plan-number">{{ loop.index }}</div>
-                <div class="plan-content">
-                    <div class="plan-matter">
-                        {% if task.matter %}{{ task.matter.display_name|truncate(25) }}{% else %}General{% endif %}
-                    </div>
-                    <div class="plan-task">{{ task.title|truncate(30) }}</div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="empty-sidebar">
-            <p>No plan yet</p>
-            <p style="margin-top: 8px;"><a href="/planning">Create your plan</a></p>
-        </div>
-        {% endif %}
-    </div>
-    
-    <!-- Quick Summary -->
-    {% if totals %}
-    <div class="sidebar-card">
-        <h3 class="sidebar-title">{% if is_today %}Today{% else %}{{ selected_date.strftime('%b %d') }}{% endif %}</h3>
-        {% for matter, hours in totals.items() %}
-        <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85em;">
-            <span style="color: var(--text-muted);">{{ matter|truncate(15) }}</span>
-            <span style="color: var(--primary); font-weight: 600;">{{ "%.1f"|format(hours) }}h</span>
-        </div>
-        {% endfor %}
-        <div style="display: flex; justify-content: space-between; padding-top: 8px; margin-top: 8px; border-top: 1px solid var(--border); font-weight: 600;">
-            <span>Total</span>
-            <span style="color: var(--primary);">{{ "%.1f"|format(total_hours) }}h</span>
-        </div>
-    </div>
-    {% endif %}
-</aside>
-
-<!-- Main Content -->
-<div class="main-content">
 
 <!-- Active Timer -->
 {% if active_timer %}
@@ -865,83 +561,71 @@
     </div>
 </div>
 {% else %}
-<!-- Start Timer Section -->
 <div class="start-timer-section">
-    <p style="color: var(--text-muted); margin-bottom: 16px;">No timer running</p>
+    <p style="color: var(--text-muted); margin-bottom: 12px;">No timer running</p>
     <button class="start-timer-btn" onclick="openStartTimerModal()">Start Timer</button>
 </div>
 {% endif %}
 
-<!-- Voice/Text Input for Timer -->
-<div class="card input-area">
-    <h2 style="font-size: 1.1em; margin-bottom: 8px; color: var(--text-main); font-weight: 600;">Start Timer by Voice</h2>
-    <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 16px;">Say "Working on [matter]" or "Done" to stop</p>
+<!-- Voice/Text Input -->
+<div class="input-area">
+    <h2 style="font-size: 1em; margin-bottom: 6px; color: var(--text-main); font-weight: 600;">Start Timer by Voice</h2>
+    <p style="color: var(--text-muted); font-size: 0.85em; margin-bottom: 12px;">Say "Working on [matter]" or "Done" to stop</p>
     
     <button id="voice-btn" class="voice-btn" onclick="toggleVoiceRecording()">
-        <span id="voice-text">Press to Talk (Ctrl+Space)</span>
+        <span id="voice-text">Click to Talk (Ctrl+Space)</span>
     </button>
     
-    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
         <input type="text" id="utterance-input" placeholder="Or type: 'Working on Smith' or 'Done'">
         <div style="display: flex; gap: 8px;">
-            <button class="btn" onclick="processInput()" style="flex: 1;">Submit</button>
-            <button class="btn" onclick="clearInput()" style="background: var(--bg-hover); color: var(--text-muted);">Clear</button>
+            <button class="btn" onclick="processInput()" style="flex: 1; padding: 10px;">Submit</button>
+            <button class="btn" onclick="clearInput()" style="background: var(--bg-hover); color: var(--text-muted); padding: 10px;">Clear</button>
         </div>
     </div>
     
-    <div id="recognized-text" style="display: none; margin-top: 16px; padding: 12px; background: var(--bg-sidebar); border-left: 3px solid var(--primary); border-radius: var(--radius-sm);">
-        <div style="color: var(--text-muted); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Recognized:</div>
+    <div id="recognized-text" style="display: none; margin-top: 12px; padding: 10px; background: var(--bg-sidebar); border-left: 3px solid var(--primary); border-radius: var(--radius-sm);">
+        <div style="color: var(--text-muted); font-size: 0.75em; text-transform: uppercase; margin-bottom: 4px;">Recognized:</div>
         <div id="recognized-text-content" style="color: var(--text-main); font-style: italic;"></div>
     </div>
     
-    <div id="processing-status" style="display: none; margin-top: 12px; padding: 12px; background: var(--purple-dim); border-radius: var(--radius-sm); text-align: center;">
+    <div id="processing-status" style="display: none; margin-top: 10px; padding: 10px; background: var(--purple-dim); border-radius: var(--radius-sm); text-align: center;">
         <span style="color: var(--purple);"><span id="processing-stage">Processing...</span></span>
     </div>
     
-    <div id="response-message" style="margin-top: 16px;"></div>
+    <div id="response-message" style="margin-top: 12px;"></div>
     
-    <div style="margin-top: 16px; padding: 12px; background: var(--bg-sidebar); border-radius: var(--radius-sm); font-size: 0.85em; color: var(--text-muted);">
-        <strong>Voice commands:</strong> "Working on Smith" | "Starting Thompson disclosure" | "Done" | "Finished"
+    <div style="margin-top: 12px; padding: 10px; background: var(--bg-sidebar); border-radius: var(--radius-sm); font-size: 0.8em; color: var(--text-muted);">
+        <strong>Voice:</strong> "Working on Smith" | "Starting Thompson" | "Done"
     </div>
 </div>
 
 <!-- Work Log -->
-<div class="card">
-    <h2>Work Log</h2>
+<div class="card" style="padding: 16px;">
+    <h2 style="font-size: 1.1em; margin-bottom: 12px;">Work Log</h2>
     {% if logs %}
     <div>
         {% for log in logs %}
-        <div class="log-entry" data-log-id="{{ log.id }}">
+        <div class="log-entry">
             <div class="log-time">
                 <div class="log-time-value">{{ "%.1f"|format(log.duration_hours) }}</div>
                 <div class="log-time-units">{{ (log.duration_hours / 0.1)|int }} units</div>
             </div>
             <div class="log-details">
-                <div class="log-matter">
-                    {% if log.matter %}{{ log.matter.display_name }}{% else %}General{% endif %}
-                </div>
-                <div class="log-activity">
-                    {{ log.activity_type.label if log.activity_type else 'Work' }}
-                </div>
+                <div class="log-matter">{% if log.matter %}{{ log.matter.display_name }}{% else %}General{% endif %}</div>
+                <div class="log-activity">{{ log.activity_type.label if log.activity_type else 'Work' }}</div>
                 {% if log.narrative %}
                 <div class="log-narrative">{{ log.narrative }}</div>
                 {% endif %}
             </div>
-            <div class="log-actions">
-                <button class="log-action-btn" onclick="resumeEntry('{{ log.id }}')" title="Continue this timer">Resume</button>
-            </div>
+            <button class="log-action-btn" onclick="resumeEntry('{{ log.id }}')">Resume</button>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <p style="color: var(--text-muted); text-align: center; padding: 24px;">
-        No work logged yet today
-    </p>
+    <p style="color: var(--text-muted); text-align: center; padding: 16px;">No work logged yet</p>
     {% endif %}
 </div>
-
-</div><!-- end main-content -->
-</div><!-- end page-layout -->
 
 <!-- Start Timer Modal -->
 <div id="start-timer-modal" class="modal-overlay">
@@ -979,25 +663,22 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
     let isRecording = false;
-    let mediaRecorder = null;
-    let audioChunks = [];
     let timerInterval = null;
     
-    // Initialize on page load
     window.addEventListener('DOMContentLoaded', function() {
         checkOllamaStatus();
         checkMicrophoneAccess();
         initTimer();
     });
     
-    // Timer functions
     function initTimer() {
         const timerDisplay = document.getElementById('timer-display');
         if (!timerDisplay) return;
-        
         updateTimerDisplay();
         timerInterval = setInterval(updateTimerDisplay, 1000);
     }
@@ -1008,240 +689,152 @@
         
         const accumulated = parseInt(timerDisplay.dataset.accumulated) || 0;
         const isRunning = timerDisplay.dataset.running === 'true';
-        
         let totalSeconds = accumulated;
         
         if (isRunning) {
             const started = new Date(timerDisplay.dataset.started);
             const now = new Date();
-            const runningSeconds = Math.floor((now - started) / 1000);
-            totalSeconds = accumulated + runningSeconds;
+            totalSeconds = accumulated + Math.floor((now - started) / 1000);
         }
         
-        // Format HH:MM:SS
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-        const clockStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         
-        // Calculate units (6-minute increments, rounded up)
+        document.getElementById('timer-clock').textContent = 
+            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        
         const units = Math.ceil(totalSeconds / 360);
-        const billableHours = (units * 0.1).toFixed(1);
-        
-        document.getElementById('timer-clock').textContent = clockStr;
         document.getElementById('timer-units').textContent = units;
-        document.getElementById('timer-hours').textContent = billableHours + 'h';
+        document.getElementById('timer-hours').textContent = (units * 0.1).toFixed(1) + 'h';
     }
     
-    function openStartTimerModal() {
-        document.getElementById('start-timer-modal').classList.add('active');
-    }
-    
-    function closeStartTimerModal() {
-        document.getElementById('start-timer-modal').classList.remove('active');
-    }
+    function openStartTimerModal() { document.getElementById('start-timer-modal').classList.add('active'); }
+    function closeStartTimerModal() { document.getElementById('start-timer-modal').classList.remove('active'); }
     
     async function startTimer() {
         const matterId = document.getElementById('timer-matter').value;
         const activityId = document.getElementById('timer-activity').value;
         const narrative = document.getElementById('timer-narrative').value;
         
-        if (!matterId) {
-            alert('Please select a matter');
-            return;
-        }
+        if (!matterId) { alert('Please select a matter'); return; }
         
         try {
             const response = await fetch('/api/timer/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    matter_id: matterId,
-                    activity_id: activityId || null,
-                    narrative: narrative
-                })
+                body: JSON.stringify({ matter_id: matterId, activity_id: activityId || null, narrative: narrative })
             });
-            
             const data = await response.json();
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message);
-            }
-        } catch (err) {
-            alert('Error starting timer: ' + err.message);
-        }
+            if (data.success) { window.location.reload(); } else { alert(data.message); }
+        } catch (err) { alert('Error: ' + err.message); }
     }
     
     async function pauseTimer() {
         try {
             const response = await fetch('/api/timer/pause', { method: 'POST' });
             const data = await response.json();
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message);
-            }
-        } catch (err) {
-            alert('Error pausing timer: ' + err.message);
-        }
+            if (data.success) { window.location.reload(); } else { alert(data.message); }
+        } catch (err) { alert('Error: ' + err.message); }
     }
     
     async function resumeTimer() {
         try {
             const response = await fetch('/api/timer/resume', { method: 'POST' });
             const data = await response.json();
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message);
-            }
-        } catch (err) {
-            alert('Error resuming timer: ' + err.message);
-        }
+            if (data.success) { window.location.reload(); } else { alert(data.message); }
+        } catch (err) { alert('Error: ' + err.message); }
     }
     
     async function stopTimer() {
         if (!confirm('Stop timer and save this time entry?')) return;
-        
         try {
-            const response = await fetch('/api/timer/stop', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
-            });
-            
+            const response = await fetch('/api/timer/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
             const data = await response.json();
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message);
-            }
-        } catch (err) {
-            alert('Error stopping timer: ' + err.message);
-        }
+            if (data.success) { window.location.reload(); } else { alert(data.message); }
+        } catch (err) { alert('Error: ' + err.message); }
     }
     
-    // Start timer from a planned task in sidebar
     async function startTaskTimer(matterId, activityId) {
-        if (!matterId) {
-            alert('This task has no matter assigned. Use the Start Timer button instead.');
-            return;
-        }
-        
+        if (!matterId) { alert('No matter assigned. Use Start Timer button.'); return; }
         try {
             const response = await fetch('/api/timer/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    matter_id: matterId,
-                    activity_id: activityId || null,
-                    narrative: ''
-                })
+                body: JSON.stringify({ matter_id: matterId, activity_id: activityId || null, narrative: '' })
             });
-            
             const data = await response.json();
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message);
-            }
-        } catch (err) {
-            alert('Error starting timer: ' + err.message);
-        }
+            if (data.success) { window.location.reload(); } else { alert(data.message); }
+        } catch (err) { alert('Error: ' + err.message); }
     }
     
     async function resumeEntry(logId) {
         try {
             const response = await fetch('/api/timer/resume-entry/' + logId, { method: 'POST' });
             const data = await response.json();
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message);
-            }
-        } catch (err) {
-            alert('Error resuming entry: ' + err.message);
-        }
+            if (data.success) { window.location.reload(); } else { alert(data.message); }
+        } catch (err) { alert('Error: ' + err.message); }
     }
     
-    // Status checks
     async function checkOllamaStatus() {
         const dot = document.getElementById('ollama-dot');
         const status = document.getElementById('ollama-status');
-        
         try {
             const response = await fetch('/check-ollama');
             const data = await response.json();
-            
-            if (data.status === 'ready') {
-                dot.style.background = '#22c55e';
-                status.textContent = 'AI ready';
-            } else {
-                dot.style.background = '#ef4444';
-                status.textContent = 'AI offline';
-            }
-        } catch (err) {
-            dot.style.background = '#ef4444';
-            status.textContent = 'AI error';
-        }
+            if (data.status === 'ready') { dot.style.background = '#22c55e'; status.textContent = 'AI ready'; }
+            else { dot.style.background = '#ef4444'; status.textContent = 'AI offline'; }
+        } catch (err) { dot.style.background = '#ef4444'; status.textContent = 'AI error'; }
     }
     
     async function checkMicrophoneAccess() {
         const dot = document.getElementById('mic-dot');
         const status = document.getElementById('mic-status');
-        
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(track => track.stop());
+        // Use global TimeBrief mic check
+        if (TimeBrief.micReady) {
             dot.style.background = '#22c55e';
             status.textContent = 'Mic ready';
-        } catch (err) {
-            dot.style.background = '#ef4444';
-            status.textContent = 'Mic denied';
-        }
-    }
-    
-    // Voice recording
-    async function toggleVoiceRecording() {
-        if (!isRecording) {
-            await startRecording();
         } else {
-            await stopRecording();
+            const ready = await TimeBrief.initMicrophone();
+            if (ready) {
+                dot.style.background = '#22c55e';
+                status.textContent = 'Mic ready';
+            } else {
+                dot.style.background = '#ef4444';
+                status.textContent = 'Mic denied';
+            }
         }
     }
     
-    async function startRecording() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, sampleRate: 16000 } });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            
-            mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                await processVoiceInput(audioBlob);
-                stream.getTracks().forEach(track => track.stop());
-            };
-            
-            mediaRecorder.start();
-            isRecording = true;
-            
-            document.getElementById('voice-btn').classList.add('recording');
-            document.getElementById('voice-text').textContent = 'Recording... Click to Stop';
-        } catch (err) {
-            alert('Could not access microphone');
-        }
-    }
-    
-    async function stopRecording() {
-        if (mediaRecorder && isRecording) {
-            mediaRecorder.stop();
+    async function toggleVoiceRecording() {
+        const btn = document.getElementById('voice-btn');
+        const textEl = document.getElementById('voice-text');
+        
+        if (TimeBrief.isRecording) {
+            // Stop recording
+            TimeBrief.stopRecording();
             isRecording = false;
-            document.getElementById('voice-btn').classList.remove('recording');
-            document.getElementById('voice-text').textContent = 'Press to Talk (Ctrl+Space)';
+            btn.classList.remove('recording');
+            textEl.textContent = 'Click to Talk (Ctrl+Space)';
+        } else {
+            // Start recording
+            const started = await TimeBrief.startRecording(async (audioBlob) => {
+                btn.classList.remove('recording');
+                textEl.textContent = 'Click to Talk (Ctrl+Space)';
+                isRecording = false;
+                await processVoiceInput(audioBlob);
+            });
+            
+            if (started) {
+                isRecording = true;
+                btn.classList.add('recording');
+                textEl.textContent = 'Recording... Click to Stop';
+            }
         }
     }
+    
+    // Listen for global keyboard shortcut
+    document.addEventListener('timeBriefToggleRecord', toggleVoiceRecording);
     
     async function processVoiceInput(audioBlob) {
         const formData = new FormData();
@@ -1266,39 +859,16 @@
                 processingStage.textContent = 'Processing...';
             }
             
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
+            await new Promise(r => setTimeout(r, 500));
             processingDiv.style.display = 'none';
             
             if (data.success && !data.needs_clarification) {
-                // Fully complete - reload
                 responseDiv.innerHTML = '<div class="message message-success">' + data.message + '</div>';
                 setTimeout(() => window.location.reload(), 1500);
-            } else if (data.success && data.needs_clarification) {
-                // Timer started but needs more info (activity type or description)
-                let html = '<div class="message message-success" style="border-left-color: var(--primary);">';
-                html += '<strong>' + data.message + '</strong>';
-                
-                if (data.suggestions && data.suggestions.length > 0) {
-                    html += '<div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">';
-                    data.suggestions.forEach(s => {
-                        html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 10px 16px; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-weight: 500;">' + s + '</button>';
-                    });
-                    html += '</div>';
-                }
-                html += '<p style="margin-top: 12px; font-size: 0.9em; color: var(--text-muted);">Or speak/type your answer</p>';
-                html += '</div>';
-                responseDiv.innerHTML = html;
-                
-                // If timer started, reload after delay to show the running timer
-                if (data.timer_started) {
-                    setTimeout(() => window.location.reload(), 3000);
-                }
             } else if (data.needs_clarification && data.suggestions) {
-                // Error but with suggestions
-                let html = '<div class="message message-info" style="border-left-color: var(--warning);"><strong>' + data.message + '</strong><div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">';
+                let html = '<div class="message message-info" style="border-left-color: var(--warning);"><strong>' + data.message + '</strong><div style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap;">';
                 data.suggestions.forEach(s => {
-                    html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 8px 16px; background: var(--primary); color: var(--bg-app); border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">' + s + '</button>';
+                    html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 8px 14px; background: var(--primary); color: var(--bg-app); border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">' + s + '</button>';
                 });
                 html += '</div></div>';
                 responseDiv.innerHTML = html;
@@ -1332,38 +902,17 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ utterance: utterance })
         })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             processingDiv.style.display = 'none';
             
             if (data.success && !data.needs_clarification) {
-                // Fully complete - reload
                 responseDiv.innerHTML = '<div class="message message-success">' + data.message + '</div>';
                 setTimeout(() => window.location.reload(), 1500);
-            } else if (data.success && data.needs_clarification) {
-                // Timer started but needs more info
-                let html = '<div class="message message-success" style="border-left-color: var(--primary);">';
-                html += '<strong>' + data.message + '</strong>';
-                
-                if (data.suggestions && data.suggestions.length > 0) {
-                    html += '<div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">';
-                    data.suggestions.forEach(s => {
-                        html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 10px 16px; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-weight: 500;">' + s + '</button>';
-                    });
-                    html += '</div>';
-                }
-                html += '<p style="margin-top: 12px; font-size: 0.9em; color: var(--text-muted);">Or type your answer</p>';
-                html += '</div>';
-                responseDiv.innerHTML = html;
-                
-                // If timer started, reload after delay
-                if (data.timer_started) {
-                    setTimeout(() => window.location.reload(), 3000);
-                }
             } else if (data.needs_clarification && data.suggestions) {
-                let html = '<div class="message message-info" style="border-left-color: var(--warning);"><strong>' + data.message + '</strong><div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">';
+                let html = '<div class="message message-info" style="border-left-color: var(--warning);"><strong>' + data.message + '</strong><div style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap;">';
                 data.suggestions.forEach(s => {
-                    html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 8px 16px; background: var(--primary); color: var(--bg-app); border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">' + s + '</button>';
+                    html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 8px 14px; background: var(--primary); color: var(--bg-app); border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">' + s + '</button>';
                 });
                 html += '</div></div>';
                 responseDiv.innerHTML = html;
@@ -1390,7 +939,6 @@
         processInput();
     }
     
-    // Keyboard shortcuts
     document.getElementById('utterance-input').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') processInput();
     });
@@ -1417,14 +965,7 @@
         }
     });
     
-    // Close modal on escape
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeStartTimerModal();
-    });
-    
-    // Close modal on backdrop click
-    document.getElementById('start-timer-modal').addEventListener('click', function(e) {
-        if (e.target === this) closeStartTimerModal();
-    });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeStartTimerModal(); });
+    document.getElementById('start-timer-modal').addEventListener('click', function(e) { if (e.target === this) closeStartTimerModal(); });
 </script>
 {% endblock %}

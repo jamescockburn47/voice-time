@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 
-from ..database.models import Matter, WorkLog, PlannedTask, DayPlan, ActivityType
+from ..database.models import Matter, WorkLog, PlannedTask, DayPlan, ActivityType, Memo, MemoAction
 from .client import OllamaClient
 
 
@@ -106,6 +106,41 @@ class GroundedAssistant:
         else:
             context['today_plan'] = []
         
+        # Voice Memos (recent)
+        recent_memos = self.session.query(Memo).order_by(Memo.created_at.desc()).limit(20).all()
+        context['memos'] = [
+            {
+                'id': m.id[:8],
+                'date': str(m.created_at.date()) if m.created_at else None,
+                'matter': m.matter.display_name if m.matter else 'General',
+                'thoughts': m.thoughts[:150] if m.thoughts else '',
+                'actions_count': len(m.actions) if m.actions else 0
+            }
+            for m in recent_memos
+        ]
+        
+        # Pending Actions from memos
+        pending_actions = self.session.query(MemoAction).filter(
+            MemoAction.is_completed == False
+        ).order_by(MemoAction.created_at.desc()).all()
+        context['pending_actions'] = [
+            {
+                'id': a.id[:8],
+                'matter': a.matter.display_name if a.matter else 'General',
+                'description': a.description,
+                'due_date': str(a.due_date) if a.due_date else None,
+                'created': str(a.created_at.date()) if a.created_at else None
+            }
+            for a in pending_actions
+        ]
+        
+        # Completed actions this week
+        completed_actions = self.session.query(MemoAction).filter(
+            MemoAction.is_completed == True,
+            MemoAction.completed_at >= week_start
+        ).all()
+        context['completed_actions_count'] = len(completed_actions)
+        
         return context
     
     def _build_grounded_prompt(self, query: str, context: Dict[str, Any]) -> str:
@@ -153,6 +188,25 @@ CURRENT TIME: {context['current_time']}
             for task in context['today_plan']:
                 prompt += f"- {task['task']} ({task['matter']}) - Status: {task['status']}\n"
         
+        # Voice Memos
+        if context.get('memos'):
+            prompt += f"""
+=== RECENT VOICE MEMOS ({len(context['memos'])} memos) ===
+"""
+            for memo in context['memos'][:10]:
+                prompt += f"- [{memo['id']}] {memo['date']}: {memo['matter']} - {memo['thoughts'][:80]}... ({memo['actions_count']} actions)\n"
+        
+        # Pending Actions
+        if context.get('pending_actions'):
+            prompt += f"""
+=== PENDING ACTION ITEMS ({len(context['pending_actions'])} pending) ===
+"""
+            for action in context['pending_actions'][:15]:
+                prompt += f"- [{action['id']}] {action['matter']}: {action['description']} (due: {action['due_date']})\n"
+        
+        if context.get('completed_actions_count', 0) > 0:
+            prompt += f"\nCompleted actions this week: {context['completed_actions_count']}\n"
+        
         prompt += f"""
 === USER QUESTION ===
 {query}
@@ -187,7 +241,9 @@ Remember: ONLY answer based on the data above. If the information isn't there, s
                     'week_entries_count': len(context['week_entries']),
                     'week_total_hours': context['week_total_hours'],
                     'today_entries_count': len(context['today_entries']),
-                    'today_total_hours': context['today_total_hours']
+                    'today_total_hours': context['today_total_hours'],
+                    'memos_count': len(context.get('memos', [])),
+                    'pending_actions_count': len(context.get('pending_actions', []))
                 }
             }
         except Exception as e:

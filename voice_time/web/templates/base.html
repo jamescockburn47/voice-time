@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Voice Time{% endblock %}</title>
+    <title>{% block title %}TimeBrief{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Solicitor Navy Palette (Humane Calendar inspired) */
-            --bg-app: #0a192f;
-            --bg-sidebar: #061221;
-            --bg-card: #112240;
-            --bg-hover: #233554;
+            /* Colors matched to logo.jpeg */
+            --bg-app: #0f1729;
+            --bg-sidebar: #0a1119;
+            --bg-card: #151f32;
+            --bg-hover: #1d2a42;
             
             --primary: #f59e0b;
             --primary-dim: rgba(245, 158, 11, 0.1);
@@ -27,7 +27,7 @@
             --text-muted: #8892b0;
             --text-accent: #f59e0b;
             
-            --border: #233554;
+            --border: #1d2a42;
             
             --success: #22c55e;
             --error: #ef4444;
@@ -47,6 +47,11 @@
             box-sizing: border-box;
         }
         
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+        
         body {
             font-family: var(--font-sans);
             background: var(--bg-app);
@@ -55,75 +60,217 @@
             -webkit-font-smoothing: antialiased;
         }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        /* App Layout */
+        .app-wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
         }
         
-        header {
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
             background: var(--bg-sidebar);
-            border-bottom: 1px solid var(--border);
-            padding: 20px 0;
-            margin-bottom: 30px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            flex-shrink: 0;
+            overflow-y: auto;
         }
         
-        header h1 {
-            text-align: center;
+        .brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            text-decoration: none;
+        }
+        
+        .brand img {
+            height: 80px;
+            width: 80px;
+            border-radius: 8px;
+        }
+        
+        .brand h1 {
             font-family: var(--font-serif);
-            font-size: 1.8em;
+            font-size: 1.4em;
             font-weight: 600;
             color: var(--text-main);
-            letter-spacing: 0.01em;
         }
         
-        nav {
+        .brand-tagline {
             text-align: center;
-            margin-top: 15px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 1.5rem;
         }
         
-        nav a {
+        /* Navigation */
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .nav-item {
+            display: block;
             color: var(--text-muted);
             text-decoration: none;
-            margin: 0 15px;
-            padding: 8px 16px;
+            padding: 10px 12px;
             border-radius: var(--radius-md);
             transition: all 0.2s;
-            font-size: 0.95em;
+            font-size: 0.9em;
             font-weight: 500;
         }
         
-        nav a:hover {
+        .nav-item:hover {
             background: var(--bg-hover);
             color: var(--primary);
         }
         
-        /* Live Clock */
-        .live-clock {
-            text-align: center;
-            margin-top: 12px;
-            padding-top: 12px;
+        .nav-item.active {
+            background: var(--primary-dim);
+            color: var(--primary);
+            border-left: 2px solid var(--primary);
+        }
+        
+        /* Sidebar Sections */
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .sidebar-section h3 {
+            font-family: var(--font-serif);
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .sidebar-section h3 a {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .plan-item {
+            display: flex;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 0.8em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .plan-item:last-child {
+            border-bottom: none;
+        }
+        
+        .plan-number {
+            background: var(--bg-hover);
+            color: var(--text-muted);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            flex-shrink: 0;
+        }
+        
+        .plan-text {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .plan-matter {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+        
+        .plan-desc {
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+        
+        /* Today Summary */
+        .today-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.8em;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .today-row:last-child {
+            border-bottom: none;
+        }
+        
+        .today-matter {
+            color: var(--text-muted);
+        }
+        
+        .today-hours {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .today-total {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.9em;
+            font-weight: 600;
             border-top: 1px solid var(--border);
+            margin-top: 4px;
+        }
+        
+        .today-total .today-matter {
+            color: var(--text-main);
+        }
+        
+        /* Live Clock in Sidebar */
+        .sidebar-clock {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
         }
         
         .clock-time {
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 1.8em;
-            font-weight: 300;
+            font-size: 1.5em;
+            font-weight: 400;
             color: var(--text-main);
-            letter-spacing: 0.05em;
-        }
-        
-        .clock-date {
-            font-size: 0.9em;
-            color: var(--text-muted);
-            margin-top: 4px;
         }
         
         .clock-seconds {
             color: var(--primary);
             font-size: 0.7em;
-            vertical-align: super;
+        }
+        
+        .clock-date {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        /* Main Content Area */
+        .main-area {
+            flex: 1;
+            background: var(--bg-app);
+            overflow-y: auto;
+            padding: 2rem 3rem;
         }
         
         .card {
@@ -195,40 +342,268 @@
             color: var(--purple);
             border-left-color: var(--purple);
         }
+        
+        /* Empty state */
+        .empty-state {
+            color: var(--text-muted);
+            font-size: 0.8em;
+            font-style: italic;
+            padding: 8px 0;
+        }
     </style>
     {% block styles %}{% endblock %}
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>TimeBrief</h1>
-            <nav>
-                <a href="/">Timer</a>
-                <a href="/planning">Planning</a>
-                <a href="/review">Review</a>
-                <a href="/chat">AI Chat</a>
-                <a href="/matters">Matters</a>
-                <a href="/settings">Settings</a>
+    <div class="app-wrapper">
+        <aside class="sidebar">
+            <a href="/" class="brand">
+                <img src="/static/logo.jpeg" alt="TimeBrief">
+                <h1>TimeBrief</h1>
+            </a>
+            <div class="brand-tagline">Voice-first legal time tracking</div>
+            
+            <nav class="nav-menu">
+                <a href="/" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">Timer</a>
+                <a href="/planning" class="nav-item {% if request.endpoint == 'planning' %}active{% endif %}">Planning</a>
+                <a href="/review" class="nav-item {% if request.endpoint == 'review' %}active{% endif %}">Review</a>
+                <a href="/memos" class="nav-item {% if request.endpoint == 'memos' %}active{% endif %}">Voice Memos</a>
+                <a href="/chat" class="nav-item {% if request.endpoint == 'chat' %}active{% endif %}">Chat</a>
+                <a href="/matters" class="nav-item {% if request.endpoint == 'matters' %}active{% endif %}">Matters</a>
+                <a href="/settings" class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">Settings</a>
+                <a href="/how-it-works" class="nav-item {% if request.endpoint == 'how_it_works' %}active{% endif %}">How It Works</a>
             </nav>
-            <div class="live-clock">
-                <div class="clock-time" id="live-time">--:--</div>
-                <div class="clock-date" id="live-date">Loading...</div>
+            
+            {% block sidebar %}
+            <!-- Default sidebar content - can be overridden -->
+            <div class="sidebar-section">
+                <h3>Today's Plan <a href="/planning">Edit</a></h3>
+                <div id="sidebar-plan">
+                    <div class="empty-state">No tasks planned</div>
+                </div>
             </div>
-        </div>
-    </header>
-    
-    <div class="container">
-        {% block content %}{% endblock %}
+            
+            <div class="sidebar-section">
+                <h3>Today's Time</h3>
+                <div id="sidebar-totals">
+                    <div class="empty-state">No time recorded</div>
+                </div>
+            </div>
+            {% endblock %}
+            
+            <div class="sidebar-clock">
+                <div class="clock-time" id="live-time">--:--</div>
+                <div class="clock-date" id="live-date"></div>
+            </div>
+        </aside>
+        
+        <main class="main-area">
+            {% block content %}{% endblock %}
+        </main>
     </div>
     
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     
+    <!-- Global Notification Toast -->
+    <div id="notification-container"></div>
+    <style>
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+        }
+        .notification-toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+        .notification-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .notification-toast.error { background: var(--error); color: white; border-color: var(--error); }
+        .notification-toast.warning { background: var(--primary); color: var(--bg-app); border-color: var(--primary); }
+        .notification-toast.success { background: var(--success); color: white; border-color: var(--success); }
+    </style>
+    
     <script>
+        // Global notification function
+        function showNotification(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = 'notification-toast ' + type;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+        
+        // Override alert to use notifications
+        window.originalAlert = window.alert;
+        window.alert = function(message) {
+            showNotification(message, 'warning');
+        };
+        
+        // ============================================
+        // GLOBAL MICROPHONE & RECORDING MANAGER
+        // ============================================
+        window.TimeBrief = window.TimeBrief || {};
+        
+        TimeBrief.micStream = null;
+        TimeBrief.micReady = false;
+        TimeBrief.mediaRecorder = null;
+        TimeBrief.audioChunks = [];
+        TimeBrief.isRecording = false;
+        TimeBrief.recordingCallback = null;
+        TimeBrief.recordingStartTime = null;
+        TimeBrief.timerInterval = null;
+        
+        // Request microphone access once at startup
+        TimeBrief.initMicrophone = async function() {
+            if (TimeBrief.micStream) return true;
+            
+            try {
+                TimeBrief.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                TimeBrief.micReady = true;
+                console.log('Microphone access granted');
+                
+                // Update any mic status indicators
+                document.querySelectorAll('.mic-status').forEach(el => {
+                    el.textContent = 'Mic ready';
+                    el.classList.add('ready');
+                });
+                
+                return true;
+            } catch (err) {
+                console.error('Microphone access denied:', err);
+                TimeBrief.micReady = false;
+                showNotification('Microphone access required. Please allow and refresh.', 'error');
+                return false;
+            }
+        };
+        
+        // Toggle recording (click to start, click again to stop)
+        TimeBrief.toggleRecording = async function(onComplete, onProgress) {
+            if (TimeBrief.isRecording) {
+                return TimeBrief.stopRecording();
+            } else {
+                return TimeBrief.startRecording(onComplete, onProgress);
+            }
+        };
+        
+        // Start recording
+        TimeBrief.startRecording = async function(onComplete, onProgress) {
+            if (TimeBrief.isRecording) return false;
+            
+            // Ensure mic is ready
+            if (!TimeBrief.micStream) {
+                const ready = await TimeBrief.initMicrophone();
+                if (!ready) return false;
+            }
+            
+            try {
+                TimeBrief.audioChunks = [];
+                TimeBrief.mediaRecorder = new MediaRecorder(TimeBrief.micStream);
+                TimeBrief.recordingCallback = onComplete;
+                
+                TimeBrief.mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) TimeBrief.audioChunks.push(e.data);
+                };
+                
+                TimeBrief.mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(TimeBrief.audioChunks, { type: 'audio/webm' });
+                    TimeBrief.isRecording = false;
+                    
+                    if (TimeBrief.timerInterval) {
+                        clearInterval(TimeBrief.timerInterval);
+                        TimeBrief.timerInterval = null;
+                    }
+                    
+                    if (TimeBrief.recordingCallback) {
+                        TimeBrief.recordingCallback(audioBlob);
+                    }
+                };
+                
+                TimeBrief.mediaRecorder.start();
+                TimeBrief.isRecording = true;
+                TimeBrief.recordingStartTime = Date.now();
+                
+                // Progress timer
+                if (onProgress) {
+                    TimeBrief.timerInterval = setInterval(() => {
+                        const elapsed = Math.floor((Date.now() - TimeBrief.recordingStartTime) / 1000);
+                        onProgress(elapsed);
+                    }, 100);
+                }
+                
+                return true;
+            } catch (err) {
+                console.error('Recording error:', err);
+                showNotification('Recording failed: ' + err.message, 'error');
+                return false;
+            }
+        };
+        
+        // Stop recording
+        TimeBrief.stopRecording = function() {
+            if (!TimeBrief.isRecording || !TimeBrief.mediaRecorder) return false;
+            
+            TimeBrief.mediaRecorder.stop();
+            return true;
+        };
+        
+        // Transcribe audio blob
+        TimeBrief.transcribe = async function(audioBlob) {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'audio.webm');
+            
+            try {
+                const response = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                return data.transcript || data.text || '';
+            } catch (err) {
+                console.error('Transcription error:', err);
+                showNotification('Transcription failed', 'error');
+                return '';
+            }
+        };
+        
+        // Initialize microphone on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Small delay to let page render first
+            setTimeout(() => TimeBrief.initMicrophone(), 500);
+        });
+        
+        // Global keyboard shortcut: Ctrl+Space toggles recording
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.code === 'Space') {
+                e.preventDefault();
+                // Dispatch custom event for pages to handle
+                document.dispatchEvent(new CustomEvent('timeBriefToggleRecord'));
+            }
+        });
+        
         // Live Clock
         function updateClock() {
             const now = new Date();
             
-            // Time with seconds highlight
             const hours = now.getHours().toString().padStart(2, '0');
             const minutes = now.getMinutes().toString().padStart(2, '0');
             const seconds = now.getSeconds().toString().padStart(2, '0');
@@ -238,7 +613,6 @@
                 timeEl.innerHTML = `${hours}:${minutes}<span class="clock-seconds">:${seconds}</span>`;
             }
             
-            // Date
             const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
             const dateStr = now.toLocaleDateString('en-GB', options);
             
@@ -248,7 +622,6 @@
             }
         }
         
-        // Update immediately and then every second
         updateClock();
         setInterval(updateClock, 1000);
     </script>

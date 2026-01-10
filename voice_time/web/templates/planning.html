@@ -4,114 +4,96 @@
 
 {% block styles %}
 <style>
-    .planning-hero {
-        text-align: center;
-        padding: 40px 24px;
-        background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+    .add-task-section {
+        background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: var(--radius-lg);
-        margin-bottom: 24px;
+        padding: 20px;
+        margin-bottom: 20px;
     }
     
-    .planning-hero h1 {
+    .add-task-section h2 {
         font-family: var(--font-serif);
-        font-size: 2em;
+        font-size: 1.2em;
         margin-bottom: 12px;
     }
     
-    .planning-hero p {
-        color: var(--text-muted);
-        font-size: 1.1em;
-        max-width: 500px;
-        margin: 0 auto 24px;
+    .input-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
     }
     
-    .voice-input-large {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-    
-    .voice-btn-large {
-        width: 100%;
-        padding: 24px;
-        background: var(--primary);
-        color: var(--bg-app);
-        border: none;
-        border-radius: var(--radius-md);
-        font-size: 1.2em;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin-bottom: 16px;
-    }
-    
-    .voice-btn-large:hover {
-        background: #d97706;
-        transform: translateY(-2px);
-    }
-    
-    .voice-btn-large.recording {
-        background: #ef4444;
-        animation: pulse 1.5s infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.8; }
-    }
-    
-    .text-input-area {
-        margin-top: 24px;
-        padding-top: 24px;
-        border-top: 1px solid var(--border);
-    }
-    
-    .text-input-area textarea {
-        width: 100%;
-        min-height: 100px;
-        padding: 16px;
-        font-size: 1em;
-        font-family: var(--font-sans);
+    .input-row select, .input-row input {
+        padding: 10px 12px;
         background: var(--bg-sidebar);
         border: 1px solid var(--border);
         border-radius: var(--radius-md);
         color: var(--text-main);
-        resize: vertical;
+        font-size: 0.95em;
     }
     
-    .text-input-area textarea:focus {
+    .input-row select:focus, .input-row input:focus {
         outline: none;
         border-color: var(--primary);
     }
     
-    .example-box {
-        background: var(--bg-sidebar);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-        padding: 20px;
-        margin-top: 24px;
-    }
+    .matter-select { width: 200px; }
+    .activity-select { width: 160px; }
+    .task-input { flex: 1; }
     
-    .example-box h3 {
-        font-size: 0.9em;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+    .voice-quick {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 12px;
+        background: var(--bg-sidebar);
+        border-radius: var(--radius-md);
         margin-bottom: 12px;
     }
     
-    .example-text {
-        font-style: italic;
-        color: var(--text-main);
-        line-height: 1.6;
+    .voice-btn-small {
+        padding: 10px 16px;
+        background: var(--primary);
+        color: var(--bg-app);
+        border: none;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
     }
     
-    /* Today's Plan */
+    .voice-btn-small:hover { background: #d97706; }
+    .voice-btn-small.recording { background: #ef4444; }
+    
+    .voice-hint {
+        color: var(--text-muted);
+        font-size: 0.85em;
+    }
+    
+    /* Task List */
     .plan-section {
         background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: var(--radius-lg);
-        padding: 24px;
+        padding: 20px;
+    }
+    
+    .plan-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    
+    .plan-header h2 {
+        font-family: var(--font-serif);
+        font-size: 1.2em;
+    }
+    
+    .task-count {
+        color: var(--text-muted);
+        font-size: 0.9em;
     }
     
     .task-list {
@@ -120,17 +102,21 @@
     
     .task-item {
         display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        padding: 16px;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
         background: var(--bg-hover);
         border-radius: var(--radius-md);
-        margin-bottom: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .task-item:hover {
+        background: var(--bg-sidebar);
     }
     
     .task-number {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         background: var(--primary);
         color: var(--bg-app);
         border-radius: 50%;
@@ -138,7 +124,7 @@
         align-items: center;
         justify-content: center;
         font-weight: 700;
-        font-size: 0.9em;
+        font-size: 0.85em;
         flex-shrink: 0;
     }
     
@@ -148,110 +134,425 @@
     
     .task-content {
         flex: 1;
+        min-width: 0;
     }
     
     .task-matter {
         font-weight: 600;
         color: var(--text-main);
+        font-size: 0.95em;
     }
     
     .task-title {
         color: var(--text-muted);
-        font-size: 0.95em;
-        margin-top: 4px;
+        font-size: 0.85em;
+        margin-top: 2px;
     }
     
-    .task-estimate {
-        font-size: 0.85em;
+    .task-actions {
+        display: flex;
+        gap: 6px;
+    }
+    
+    .task-btn {
+        padding: 6px 10px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+        font-size: 0.8em;
+        cursor: pointer;
+    }
+    
+    .task-btn:hover {
+        background: var(--primary);
+        color: var(--bg-app);
+        border-color: var(--primary);
+    }
+    
+    .task-btn.delete:hover {
+        background: #ef4444;
+        border-color: #ef4444;
+    }
+    
+    /* Task Checkbox */
+    .task-checkbox {
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    .task-checkbox input {
+        opacity: 0;
+        position: absolute;
+    }
+    
+    .task-checkbox .checkmark {
+        width: 24px;
+        height: 24px;
+        border: 2px solid var(--border);
+        border-radius: 50%;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .task-checkbox:hover .checkmark {
+        border-color: var(--success);
+    }
+    
+    .task-checkbox input:checked + .checkmark {
+        background: var(--success);
+        border-color: var(--success);
+    }
+    
+    .task-checkbox input:checked + .checkmark::after {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 10px;
+        border: solid var(--bg-app);
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        margin-top: -2px;
+    }
+    
+    .task-item.done {
+        opacity: 0.6;
+    }
+    
+    .task-item.done .task-title {
+        text-decoration: line-through;
+    }
+    
+    .task-item.done .task-matter {
+        text-decoration: line-through;
+    }
+    
+    /* Carried Over Section */
+    .carryover-section {
+        margin-bottom: 20px;
+        border-color: var(--primary);
+        background: rgba(245, 158, 11, 0.05);
+    }
+    
+    .carryover-section .plan-header h2 {
         color: var(--primary);
-        margin-top: 4px;
+    }
+    
+    .carryover-item {
+        background: rgba(245, 158, 11, 0.1);
+    }
+    
+    .carryover-label {
+        font-size: 0.7em;
+        background: var(--primary);
+        color: var(--bg-app);
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 8px;
     }
     
     .empty-state {
         text-align: center;
-        padding: 40px;
+        padding: 32px;
         color: var(--text-muted);
     }
     
     #response-message {
-        margin-top: 16px;
+        margin-top: 12px;
     }
     
-    #processing-status {
-        margin-top: 12px;
+    .quick-add-examples {
+        margin-top: 16px;
+        padding: 12px;
+        background: var(--bg-sidebar);
+        border-radius: var(--radius-md);
+    }
+    
+    .quick-add-examples h4 {
+        font-size: 0.8em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+    
+    .example-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .example-chip {
+        padding: 6px 10px;
+        background: var(--bg-hover);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text-muted);
+        font-size: 0.8em;
+        cursor: pointer;
+    }
+    
+    .example-chip:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    
+    /* Action Items from Memos */
+    .action-item-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
         padding: 12px;
         background: var(--purple-dim);
-        border-radius: var(--radius-sm);
-        text-align: center;
-        color: var(--purple);
+        border-radius: var(--radius-md);
+        margin-bottom: 8px;
+    }
+    
+    .action-checkbox {
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    
+    .action-checkbox input {
+        opacity: 0;
+        position: absolute;
+    }
+    
+    .action-checkbox .checkmark {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--purple);
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    
+    .action-checkbox input:checked + .checkmark {
+        background: var(--purple);
+    }
+    
+    .action-checkbox input:checked + .checkmark::after {
+        content: '';
+        display: block;
+        width: 5px;
+        height: 10px;
+        border: solid var(--bg-app);
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        margin: 2px 0 0 6px;
+    }
+    
+    .action-item-row.completed {
+        opacity: 0.5;
+    }
+    
+    .action-item-row.completed .task-title {
+        text-decoration: line-through;
     }
 </style>
 {% endblock %}
 
-{% block content %}
-
-<div class="planning-hero">
-    <h1>Plan Your Day</h1>
-    <p>Describe your tasks for today. TimeBrief will create your plan and you can start timers from it.</p>
-    
-    <div class="voice-input-large">
-        <button id="voice-btn" class="voice-btn-large" onclick="toggleRecording()">
-            Press to Talk (Ctrl+Space)
-        </button>
-        
-        <div class="text-input-area">
-            <textarea id="plan-input" placeholder="Or type your plan here..."></textarea>
-            <div style="display: flex; gap: 12px; margin-top: 12px;">
-                <button class="btn" onclick="submitPlan()" style="flex: 1;">Create Plan</button>
-                <button class="btn" onclick="clearInput()" style="background: var(--bg-hover); color: var(--text-muted);">Clear</button>
+{% block sidebar %}
+<!-- Today's Plan in sidebar -->
+<div class="sidebar-section">
+    <h3>{% if is_today %}Today's Plan{% else %}{{ selected_date.strftime('%b %d') }} Plan{% endif %}</h3>
+    {% if tasks %}
+    <div id="sidebar-plan">
+        {% for task in tasks %}
+        <div class="plan-item">
+            <div class="plan-number">{{ loop.index }}</div>
+            <div class="plan-text">
+                <div class="plan-matter">{% if task.matter %}{{ task.matter.display_name|truncate(20) }}{% else %}General{% endif %}</div>
+                <div class="plan-desc">{{ task.title|truncate(25) }}</div>
             </div>
         </div>
-        
-        <div id="processing-status" style="display: none;">
-            <span id="processing-stage">Processing...</span>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding: 12px; font-size: 0.85em;">No tasks yet</div>
+    {% endif %}
+</div>
+
+<div class="sidebar-section">
+    <h3>Today's Time</h3>
+    {% if totals %}
+    <div id="sidebar-totals">
+        {% for matter, hours in totals.items() %}
+        <div class="today-row">
+            <span class="today-matter">{{ matter|truncate(15) }}</span>
+            <span class="today-hours">{{ "%.1f"|format(hours) }}h</span>
         </div>
-        
-        <div id="response-message"></div>
-        
-        <div class="example-box">
-            <h3>Example</h3>
-            <p class="example-text">
-                "Today I need to finish the Thompson disclosure, draft the Brown skeleton argument, 
-                call opposing counsel at 2pm, and review the Acme contracts."
-            </p>
+        {% endfor %}
+        <div class="today-total">
+            <span class="today-matter">Total</span>
+            <span class="today-hours">{{ "%.1f"|format(total_hours) }}h</span>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding: 12px; font-size: 0.85em;">No time recorded</div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Add Task Section -->
+<div class="add-task-section">
+    <h2>Add Task</h2>
+    
+    <!-- Voice Quick Add -->
+    <div class="voice-quick">
+        <button id="voice-btn" class="voice-btn-small" onclick="toggleRecording()">
+            <span id="voice-text">Voice</span>
+        </button>
+        <span class="voice-hint">Say: "Write letter on Smith" or "Call opposing counsel on Brown"</span>
+    </div>
+    
+    <!-- Manual Add -->
+    <div class="input-row">
+        <select id="task-matter" class="matter-select">
+            <option value="">Select matter...</option>
+            {% for matter in matters %}
+            <option value="{{ matter.id }}">{{ matter.display_name }}</option>
+            {% endfor %}
+        </select>
+        <select id="task-activity" class="activity-select">
+            <option value="">Activity...</option>
+            {% for activity in activities %}
+            <option value="{{ activity.id }}">{{ activity.label }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" id="task-description" class="task-input" placeholder="What do you need to do?">
+    </div>
+    
+    <div style="display: flex; gap: 10px;">
+        <button class="btn" onclick="addTask()" style="flex: 1;">Add Task</button>
+        <button class="btn" onclick="clearForm()" style="background: var(--bg-hover); color: var(--text-muted);">Clear</button>
+    </div>
+    
+    <div id="response-message"></div>
+    
+    <!-- Quick Examples -->
+    <div class="quick-add-examples">
+        <h4>Quick Add (click to add)</h4>
+        <div class="example-chips">
+            <span class="example-chip" onclick="quickAdd('Review documents')">Review documents</span>
+            <span class="example-chip" onclick="quickAdd('Draft letter')">Draft letter</span>
+            <span class="example-chip" onclick="quickAdd('Client call')">Client call</span>
+            <span class="example-chip" onclick="quickAdd('Court prep')">Court prep</span>
+            <span class="example-chip" onclick="quickAdd('Research')">Research</span>
         </div>
     </div>
 </div>
 
+{% if carryover_tasks %}
+<!-- Carried Over from Previous Days -->
+<div class="plan-section carryover-section">
+    <div class="plan-header">
+        <h2>Incomplete from Previous Days</h2>
+        <span class="task-count">{{ carryover_tasks|length }} task{{ 's' if carryover_tasks|length != 1 else '' }}</span>
+    </div>
+    
+    <ul class="task-list">
+        {% for task in carryover_tasks %}
+        <li class="task-item carryover-item" data-id="{{ task.id }}">
+            <label class="task-checkbox">
+                <input type="checkbox" onchange="toggleTaskComplete('{{ task.id }}', this.checked)">
+                <span class="checkmark"></span>
+            </label>
+            <div class="task-content">
+                <div class="task-matter">
+                    {% if task.matter %}{{ task.matter.display_name }}{% else %}General{% endif %}
+                    <span class="carryover-label">{{ task.day_plan.date.strftime('%b %d') }}</span>
+                </div>
+                <div class="task-title">{{ task.title }}</div>
+            </div>
+            <div class="task-actions">
+                <button class="task-btn" onclick="carryToToday('{{ task.id }}')">Move to Today</button>
+                <button class="task-btn" onclick="startTaskTimer('{{ task.matter.id if task.matter else '' }}', '{{ task.activity_type.id if task.activity_type else '' }}', '{{ task.title|replace("'", "\\'") }}')">Start</button>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if pending_actions %}
+<!-- Pending Actions from Voice Memos -->
+<div class="plan-section" style="margin-bottom: 20px; border-color: var(--purple-border);">
+    <div class="plan-header">
+        <h2 style="color: var(--purple);">Action Items from Memos</h2>
+        <span class="task-count">{{ pending_actions|length }} pending</span>
+    </div>
+    
+    <ul class="task-list">
+        {% for action in pending_actions %}
+        <li class="action-item-row" data-id="{{ action.id }}">
+            <label class="action-checkbox">
+                <input type="checkbox" onchange="toggleMemoAction('{{ action.id }}', this.checked)">
+                <span class="checkmark"></span>
+            </label>
+            <div class="task-content">
+                <div class="task-matter" style="color: var(--purple);">{{ action.matter.display_name if action.matter else 'General' }}</div>
+                <div class="task-title">{{ action.description }}</div>
+            </div>
+            <div class="task-actions">
+                <button class="task-btn" onclick="convertToTask('{{ action.id }}', '{{ action.matter_id }}', '{{ action.description|replace("'", "\\'") }}')">Add to Plan</button>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    <p style="font-size: 0.8em; color: var(--text-muted); margin-top: 12px; text-align: center;">
+        These actions were captured from Voice Memos
+    </p>
+</div>
+{% endif %}
+
+<!-- Today's Plan -->
 <div class="plan-section">
-    <h2 style="margin-bottom: 20px;">Today's Plan</h2>
+    <div class="plan-header">
+        <h2>{% if is_today %}Today's Plan{% else %}{{ selected_date.strftime('%B %d') }} Plan{% endif %}</h2>
+        <span class="task-count">{{ tasks|length }} task{{ 's' if tasks|length != 1 else '' }}</span>
+    </div>
     
     {% if tasks %}
-    <ul class="task-list">
+    <ul class="task-list" id="task-list">
         {% for task in tasks %}
-        <li class="task-item {{ 'done' if task.status == 'done' else '' }}">
-            <div class="task-number">{{ loop.index }}</div>
+        <li class="task-item {{ 'done' if task.status == 'done' else '' }}" data-id="{{ task.id }}">
+            <label class="task-checkbox">
+                <input type="checkbox" {{ 'checked' if task.status == 'done' else '' }} onchange="toggleTaskComplete('{{ task.id }}', this.checked)">
+                <span class="checkmark"></span>
+            </label>
             <div class="task-content">
                 <div class="task-matter">
                     {% if task.matter %}{{ task.matter.display_name }}{% else %}General{% endif %}
                     {% if task.activity_type %} - {{ task.activity_type.label }}{% endif %}
                 </div>
                 <div class="task-title">{{ task.title }}</div>
-                {% if task.estimated_hours %}
-                <div class="task-estimate">Est: {{ task.estimated_hours }}h</div>
+            </div>
+            <div class="task-actions">
+                {% if task.status != 'done' %}
+                <button class="task-btn" onclick="startTaskTimer('{{ task.matter.id if task.matter else '' }}', '{{ task.activity_type.id if task.activity_type else '' }}', '{{ task.title|replace("'", "\\'") }}')">Start</button>
                 {% endif %}
+                <button class="task-btn delete" onclick="deleteTask('{{ task.id }}')">Delete</button>
             </div>
         </li>
         {% endfor %}
     </ul>
     {% else %}
     <div class="empty-state">
-        <p>No plan for today yet.</p>
-        <p style="font-size: 0.9em; margin-top: 8px;">Use voice or text above to describe your tasks.</p>
+        <p>No tasks planned yet.</p>
+        <p style="font-size: 0.9em; margin-top: 8px;">Add tasks above using voice or the form.</p>
     </div>
     {% endif %}
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
     let isRecording = false;
     let mediaRecorder = null;
@@ -271,7 +572,7 @@
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
             
-            mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
+            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 await processVoice(audioBlob);
@@ -281,7 +582,7 @@
             mediaRecorder.start();
             isRecording = true;
             document.getElementById('voice-btn').classList.add('recording');
-            document.getElementById('voice-btn').textContent = 'Recording... Click to Stop';
+            document.getElementById('voice-text').textContent = 'Stop';
         } catch (err) {
             alert('Could not access microphone');
         }
@@ -292,7 +593,7 @@
             mediaRecorder.stop();
             isRecording = false;
             document.getElementById('voice-btn').classList.remove('recording');
-            document.getElementById('voice-btn').textContent = 'Press to Talk (Ctrl+Space)';
+            document.getElementById('voice-text').textContent = 'Voice';
         }
     }
     
@@ -300,83 +601,142 @@
         const formData = new FormData();
         formData.append('audio', audioBlob, 'recording.webm');
         
-        showProcessing('Transcribing...');
+        showMessage('info', 'Processing...');
         
         try {
-            const response = await fetch('/process-voice', { method: 'POST', body: formData });
-            const data = await response.json();
+            // First transcribe
+            const transcribeResponse = await fetch('/api/transcribe', { method: 'POST', body: formData });
+            const transcribeData = await transcribeResponse.json();
             
-            if (data.transcript) {
-                document.getElementById('plan-input').value = data.transcript;
-                showProcessing('Creating plan...');
-                
-                // Auto-submit if it looks like a plan
-                if (data.transcript.toLowerCase().includes('today') || 
-                    data.transcript.toLowerCase().includes('need to')) {
-                    await submitPlanText(data.transcript);
-                } else {
-                    hideProcessing();
-                    showResponse(data.success, data.message);
-                    if (data.success) {
-                        setTimeout(() => window.location.reload(), 1500);
-                    }
-                }
-            } else {
-                hideProcessing();
-                showResponse(false, 'No speech detected');
+            if (!transcribeData.transcript) {
+                showMessage('error', 'No speech detected');
+                return;
             }
-        } catch (err) {
-            hideProcessing();
-            showResponse(false, 'Error: ' + err.message);
-        }
-    }
-    
-    async function submitPlan() {
-        const text = document.getElementById('plan-input').value.trim();
-        if (!text) return;
-        await submitPlanText(text);
-    }
-    
-    async function submitPlanText(text) {
-        showProcessing('Creating plan...');
-        
-        try {
-            const response = await fetch('/process', {
+            
+            // Fill in description field
+            document.getElementById('task-description').value = transcribeData.transcript;
+            
+            // Try to detect matter from speech
+            const response = await fetch('/api/plan/add-task', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ utterance: text })
+                body: JSON.stringify({ description: transcribeData.transcript })
             });
+            
             const data = await response.json();
             
-            hideProcessing();
-            showResponse(data.success, data.message);
-            
             if (data.success) {
-                setTimeout(() => window.location.reload(), 1500);
+                showMessage('success', 'Task added: ' + data.task_title);
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showMessage('error', data.message || 'Could not add task');
             }
         } catch (err) {
-            hideProcessing();
-            showResponse(false, 'Error: ' + err.message);
+            showMessage('error', 'Error: ' + err.message);
         }
     }
     
-    function showProcessing(stage) {
-        document.getElementById('processing-status').style.display = 'block';
-        document.getElementById('processing-stage').textContent = stage;
+    async function addTask() {
+        const matterId = document.getElementById('task-matter').value;
+        const activityId = document.getElementById('task-activity').value;
+        const description = document.getElementById('task-description').value.trim();
+        
+        if (!description) {
+            showMessage('error', 'Please enter a task description');
+            return;
+        }
+        
+        showMessage('info', 'Adding task...');
+        
+        try {
+            const response = await fetch('/api/plan/add-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    matter_id: matterId || null,
+                    activity_id: activityId || null,
+                    description: description
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('success', 'Task added!');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showMessage('error', data.message || 'Could not add task');
+            }
+        } catch (err) {
+            showMessage('error', 'Error: ' + err.message);
+        }
     }
     
-    function hideProcessing() {
-        document.getElementById('processing-status').style.display = 'none';
+    async function deleteTask(taskId) {
+        if (!confirm('Delete this task?')) return;
+        
+        try {
+            const response = await fetch('/api/plan/delete-task/' + taskId, { method: 'DELETE' });
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.reload();
+            } else {
+                showMessage('error', data.message);
+            }
+        } catch (err) {
+            showMessage('error', 'Error: ' + err.message);
+        }
     }
     
-    function showResponse(success, message) {
-        const div = document.getElementById('response-message');
-        div.innerHTML = `<div class="message ${success ? 'message-success' : 'message-error'}">${message}</div>`;
+    async function startTaskTimer(matterId, activityId, taskTitle) {
+        if (!matterId) {
+            alert('This task has no matter assigned. Please assign a matter first.');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/timer/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    matter_id: matterId, 
+                    activity_id: activityId || null, 
+                    narrative: taskTitle || '' 
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                window.location.href = '/';
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
     }
     
-    function clearInput() {
-        document.getElementById('plan-input').value = '';
+    function quickAdd(text) {
+        document.getElementById('task-description').value = text;
+        document.getElementById('task-description').focus();
+    }
+    
+    function clearForm() {
+        document.getElementById('task-matter').value = '';
+        document.getElementById('task-activity').value = '';
+        document.getElementById('task-description').value = '';
         document.getElementById('response-message').innerHTML = '';
+    }
+    
+    function showMessage(type, text) {
+        const colors = {
+            success: 'message-success',
+            error: 'message-error',
+            info: 'message-info'
+        };
+        document.getElementById('response-message').innerHTML = 
+            `<div class="message ${colors[type] || 'message-info'}">${text}</div>`;
     }
     
     // Keyboard shortcuts
@@ -396,10 +756,127 @@
             recordingStartedByKeyboard = false;
             stopRecording();
         }
-        if ((e.key === 'Control') && recordingStartedByKeyboard) {
+        if (e.key === 'Control' && recordingStartedByKeyboard) {
             recordingStartedByKeyboard = false;
             if (isRecording) stopRecording();
         }
     });
+    
+    // Enter to submit
+    document.getElementById('task-description').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') addTask();
+    });
+    
+    // Task Completion Functions
+    async function toggleTaskComplete(taskId, completed) {
+        try {
+            const response = await fetch('/api/plan/task/' + taskId + '/complete', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed: completed })
+            });
+            
+            const data = await response.json();
+            const item = event.target.closest('.task-item');
+            
+            if (completed) {
+                item.classList.add('done');
+                // Hide the Start button
+                const startBtn = item.querySelector('.task-btn:not(.delete)');
+                if (startBtn && startBtn.textContent.includes('Start')) {
+                    startBtn.style.display = 'none';
+                }
+            } else {
+                item.classList.remove('done');
+                // Show the Start button
+                const startBtn = item.querySelector('.task-btn:not(.delete)');
+                if (startBtn) {
+                    startBtn.style.display = '';
+                }
+            }
+        } catch (err) {
+            console.error('Error updating task:', err);
+            // Revert checkbox
+            event.target.checked = !completed;
+        }
+    }
+    
+    async function carryToToday(taskId) {
+        try {
+            const response = await fetch('/api/plan/task/' + taskId + '/carry-over', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('success', 'Task moved to today!');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showMessage('error', data.message || 'Could not move task');
+            }
+        } catch (err) {
+            showMessage('error', 'Error: ' + err.message);
+        }
+    }
+    
+    // Memo Action Functions
+    async function toggleMemoAction(actionId, completed) {
+        try {
+            const response = await fetch('/api/memo-actions/' + actionId, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_completed: completed })
+            });
+            
+            const item = event.target.closest('.action-item-row');
+            if (completed) {
+                item.classList.add('completed');
+                // Fade out and remove after animation
+                setTimeout(() => {
+                    item.style.opacity = '0';
+                    setTimeout(() => item.remove(), 300);
+                }, 500);
+            } else {
+                item.classList.remove('completed');
+            }
+        } catch (err) {
+            console.error('Error updating action:', err);
+        }
+    }
+    
+    async function convertToTask(actionId, matterId, description) {
+        // Add to today's plan
+        try {
+            const response = await fetch('/api/plan/add-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    matter_id: matterId || null,
+                    activity_id: null,
+                    description: description
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Mark the action as completed
+                await fetch('/api/memo-actions/' + actionId, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_completed: true })
+                });
+                
+                showMessage('success', 'Added to plan!');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showMessage('error', data.message || 'Could not add task');
+            }
+        } catch (err) {
+            showMessage('error', 'Error: ' + err.message);
+        }
+    }
 </script>
 {% endblock %}

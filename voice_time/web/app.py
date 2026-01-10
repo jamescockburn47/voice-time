@@ -14,6 +14,7 @@ def create_app(config: Config = None) -> Flask:
     
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
+    app.config['TEMPLATES_AUTO_RELOAD'] = True  # Auto-reload templates during development
     
     # Initialize database
     db_path = config.data_dir / "voice_time.db"

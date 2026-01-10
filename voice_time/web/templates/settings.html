@@ -1,938 +1,491 @@
 {% extends "base.html" %}
 
-{% block title %}Settings & Diagnostics - Voice Time{% endblock %}
+{% block title %}Settings - TimeBrief{% endblock %}
 
 {% block styles %}
 <style>
-    .settings-hero {
-        background: linear-gradient(135deg, var(--purple-dim), var(--primary-dim));
-        border: 1px solid var(--purple-border);
-        padding: 32px;
-        border-radius: var(--radius-lg);
-        text-align: center;
-        margin-bottom: 32px;
+    .settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
     }
     
-    .settings-hero h1 {
-        font-family: var(--font-serif);
-        font-size: 2em;
-        color: var(--text-main);
-        margin-bottom: 12px;
-    }
-    
-    .diagnostic-section {
-        margin-bottom: 24px;
-    }
-    
-    .test-card {
+    .card {
         background: var(--bg-card);
         border: 1px solid var(--border);
-        padding: 24px;
         border-radius: var(--radius-lg);
-        margin-bottom: 16px;
+        padding: 12px;
     }
     
-    .test-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-    }
-    
-    .test-title {
+    .card h3 {
         font-family: var(--font-serif);
-        font-size: 1.2em;
+        font-size: 0.95em;
+        margin-bottom: 8px;
         color: var(--text-main);
     }
     
-    .test-status {
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-size: 0.85em;
-        font-weight: 600;
-    }
-    
-    .status-pending {
-        background: rgba(245, 158, 11, 0.2);
-        color: var(--warning);
-    }
-    
-    .status-testing {
-        background: rgba(139, 92, 246, 0.2);
-        color: var(--purple);
-    }
-    
-    .status-success {
-        background: rgba(34, 197, 94, 0.2);
-        color: var(--success);
-    }
-    
-    .status-error {
-        background: rgba(239, 68, 68, 0.2);
-        color: var(--error);
-    }
-    
-    .test-result {
-        padding: 16px;
+    .status-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
         background: var(--bg-hover);
         border-radius: var(--radius-md);
-        margin-top: 12px;
-        font-family: monospace;
-        font-size: 0.9em;
-        color: var(--text-muted);
+        margin-bottom: 8px;
+        font-size: 0.85em;
     }
     
-    .test-btn {
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        flex-shrink: 0;
+    }
+    .dot.ok { background: var(--success); }
+    .dot.err { background: var(--error); }
+    .dot.load { background: var(--primary); animation: pulse 1s infinite; }
+    
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    .btn-sm {
         background: var(--primary);
         color: var(--bg-app);
         border: none;
-        padding: 12px 24px;
+        padding: 6px 12px;
         border-radius: var(--radius-md);
         cursor: pointer;
         font-weight: 600;
-        transition: all 0.2s;
+        font-size: 0.8em;
+    }
+    .btn-sm:hover { background: #d97706; }
+    .btn-sm:disabled { opacity: 0.5; cursor: wait; }
+    
+    .model-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 160px;
+        overflow-y: auto;
     }
     
-    .test-btn:hover {
-        background: #d97706;
-        transform: translateY(-1px);
+    .model-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 10px;
+        background: var(--bg-hover);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 0.8em;
+    }
+    .model-item:hover { border-color: var(--primary); }
+    .model-item.active { border-color: var(--primary); background: var(--primary-dim); }
+    .model-item.recommended { border-color: var(--success); }
+    .model-item.recommended::before {
+        content: '*';
+        color: var(--success);
+        margin-right: 4px;
+        font-weight: bold;
     }
     
-    .test-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+    .result-box {
+        margin-top: 8px;
+        padding: 8px;
+        background: var(--bg-hover);
+        border-radius: var(--radius-sm);
+        font-size: 0.8em;
+        display: none;
+    }
+    .result-box.show { display: block; }
+    
+    .progress-bar {
+        width: 100%;
+        height: 6px;
+        background: var(--bg-hover);
+        border-radius: 3px;
+        overflow: hidden;
+        margin: 8px 0;
+    }
+    .progress-bar .progress {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--success));
+        animation: progress-anim 2s ease-in-out infinite;
+        width: 30%;
+    }
+    @keyframes progress-anim {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(400%); }
+    }
+    .download-status {
+        text-align: center;
+        padding: 12px;
+        background: var(--primary-dim);
+        border: 1px solid var(--primary);
+        border-radius: var(--radius-md);
+        margin-bottom: 8px;
     }
     
-    .test-btn.recording {
-        background: #ef4444;
+    audio { width: 100%; height: 32px; margin-top: 8px; }
+    
+    .info-table { font-size: 0.8em; width: 100%; }
+    .info-table td { padding: 3px 0; }
+    .info-table td:first-child { color: var(--text-muted); width: 60px; }
+    
+    .hw-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.7em;
+        font-weight: 600;
+        text-transform: uppercase;
     }
+    .hw-badge.high { background: var(--success); color: #000; }
+    .hw-badge.medium { background: var(--primary); color: #000; }
+    .hw-badge.standard { background: var(--purple); color: #000; }
+    .hw-badge.basic { background: var(--text-muted); color: #000; }
 </style>
 {% endblock %}
 
 {% block content %}
-
-<div class="settings-hero">
-    <h1>Settings & Voice Diagnostics</h1>
-    <p style="color: var(--text-muted);">Test your microphone and voice recognition settings</p>
+<div style="margin-bottom: 8px;">
+    <h1 style="font-family: var(--font-serif); font-size: 1.2em; display: inline;">Settings</h1>
+    <span class="hw-badge" id="hw-tier">detecting...</span>
 </div>
 
-<!-- Microphone Permission Test -->
-<div class="card">
-    <h2>Microphone Access</h2>
-    
-    <div id="mic-permission-status" class="test-card">
-        <div class="test-header">
-            <span class="test-title">Permission Status</span>
-            <span id="perm-status" class="test-status status-pending">Checking...</span>
-        </div>
-        <div id="perm-result" class="test-result">
-            Checking microphone permissions...
-        </div>
-        <button id="grant-mic-btn" class="test-btn" style="margin-top: 16px; display: none;" onclick="requestMicPermission()">
-            Grant Microphone Access
-        </button>
-    </div>
-</div>
-
-<!-- Microphone Test -->
-<div class="card">
-    <h2>Microphone Test</h2>
-    
-    <div class="test-card">
-        <div class="test-header">
-            <span class="test-title">Record & Playback Test</span>
-            <span id="mic-test-status" class="test-status status-pending">Not Started</span>
-        </div>
-        <p style="color: var(--text-muted); margin-bottom: 16px;">
-            Test your microphone by recording and playing back audio.
-        </p>
-        <button id="mic-test-btn" class="test-btn" onclick="testMicrophone()">
-            Start Microphone Test
-        </button>
-        <div id="mic-test-result" class="test-result" style="display: none; margin-top: 16px;">
-        </div>
-        <audio id="playback-audio" controls style="width: 100%; margin-top: 16px; display: none;"></audio>
-    </div>
-</div>
-
-<!-- Voice Recognition Test -->
-<div class="card">
-    <h2>Voice Recognition Test (Detailed)</h2>
-    
-    <div class="test-card">
-        <div class="test-header">
-            <span class="test-title">Speech-to-Text Diagnostic</span>
-            <span id="transcribe-status" class="test-status status-pending">Not Started</span>
-        </div>
-        <p style="color: var(--text-muted); margin-bottom: 16px;">
-            Test AI speech recognition with detailed diagnostics at each stage.
-        </p>
-        <button id="transcribe-test-btn" class="test-btn" onclick="testTranscription()">
-            Start Detailed Test
-        </button>
-        
-        <!-- Detailed progress log -->
-        <div id="test-log" style="display: none; margin-top: 16px; padding: 16px; background: var(--bg-sidebar); border-radius: var(--radius-md); font-family: monospace; font-size: 0.85em;">
-            <div style="color: var(--text-main); margin-bottom: 8px; font-weight: 600;">Diagnostic Log:</div>
-            <div id="log-content" style="color: var(--text-muted);"></div>
-        </div>
-        
-        <div id="transcribe-result" class="test-result" style="display: none; margin-top: 16px;"></div>
-        
-        <!-- Audio playback for debugging -->
-        <div id="audio-debug" style="display: none; margin-top: 16px;">
-            <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 8px;">
-                Recorded audio (play to verify quality):
-            </p>
-            <audio id="debug-audio" controls style="width: 100%;"></audio>
-        </div>
-    </div>
-</div>
-
-<!-- Whisper Model Status -->
-<div class="card">
-    <h2>AI Model & Hardware Status</h2>
-    
-    <div class="test-card">
-        <div class="test-header">
-            <span class="test-title">Whisper Speech Recognition</span>
-            <span id="whisper-status" class="test-status status-pending">Checking...</span>
-        </div>
-        <div id="whisper-result" class="test-result">
-            Checking Whisper model and hardware...
-        </div>
-        <div id="hardware-info" class="test-result" style="display: none; margin-top: 16px;">
-        </div>
-        <button id="reload-whisper-btn" class="test-btn" style="margin-top: 16px;" onclick="checkWhisperStatus()">
-            Recheck Model & Hardware
-        </button>
-    </div>
-</div>
-
-<!-- Speech Recognition Model -->
-<div class="card">
-    <h2>Speech Recognition Model</h2>
-    <p style="color: var(--text-muted); margin-bottom: 16px;">
-        Choose a larger model for better accuracy with names and technical terms.
-        Models will be downloaded on first use.
-    </p>
-    
-    <div id="model-selector" class="test-card">
-        <div style="display: grid; gap: 12px;" id="model-list">
-            <!-- Models will be loaded here -->
-            <div style="color: var(--text-muted);">Loading models...</div>
-        </div>
-        <div id="model-change-status" style="margin-top: 16px; display: none;" class="test-result"></div>
-    </div>
-</div>
-
-<!-- LLM Model (Ollama) -->
-<div class="card">
-    <h2>LLM Model (AI Brain)</h2>
-    <p style="color: var(--text-muted); margin-bottom: 16px;">
-        The LLM handles planning, matter matching for ambiguous cases, and narrative generation.
-        Larger models = better understanding but slower.
-    </p>
-    
-    <div id="llm-selector" class="test-card">
-        <div style="display: grid; gap: 12px;" id="llm-model-list">
-            <div style="color: var(--text-muted);">Loading models...</div>
-        </div>
-        <div id="llm-change-status" style="margin-top: 16px; display: none;" class="test-result"></div>
-        
-        <!-- Test LLM button -->
-        <button id="test-llm-btn" class="test-btn" style="margin-top: 16px;" onclick="testLLM()">
-            Test LLM Response
-        </button>
-        <div id="llm-test-result" style="display: none; margin-top: 12px;" class="test-result"></div>
-    </div>
-</div>
-
-<!-- Vocabulary Status -->
-<div class="card">
-    <h2>Vocabulary Hints</h2>
-    <p style="color: var(--text-muted); margin-bottom: 16px;">
-        Your matter names and aliases are loaded into the speech model to improve recognition.
-    </p>
-    
-    <div id="vocab-status" class="test-card">
-        <div id="vocab-loading" style="color: var(--text-muted);">Loading vocabulary...</div>
-        <div id="vocab-list" style="display: none;">
-            <table style="width: 100%; color: var(--text-muted);">
-                <tr>
-                    <td style="padding: 8px 0; font-weight: 600;">Matters loaded:</td>
-                    <td style="padding: 8px 0;" id="matter-count">-</td>
-                </tr>
-                <tr>
-                    <td style="padding: 8px 0; font-weight: 600;">Aliases loaded:</td>
-                    <td style="padding: 8px 0;" id="alias-count">-</td>
-                </tr>
-                <tr>
-                    <td style="padding: 8px 0; font-weight: 600;">Sample terms:</td>
-                    <td style="padding: 8px 0;" id="sample-terms" style="font-size: 0.9em;">-</td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- System Info -->
-<div class="card">
-    <h2>System Information</h2>
-    
-    <div class="test-card">
-        <table style="width: 100%; color: var(--text-muted);">
-            <tr>
-                <td style="padding: 8px 0; font-weight: 600;">Current Model:</td>
-                <td style="padding: 8px 0;" id="current-model">Loading...</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 0; font-weight: 600;">LLM Model:</td>
-                <td style="padding: 8px 0;" id="current-llm">Loading...</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 0; font-weight: 600;">Hotkey:</td>
-                <td style="padding: 8px 0;"><span style="background: var(--bg-hover); padding: 4px 8px; border-radius: var(--radius-sm); font-family: monospace; color: var(--primary);">Ctrl+Space</span></td>
-            </tr>
+<div class="settings-grid">
+    <!-- Hardware & System -->
+    <div class="card">
+        <h3>System</h3>
+        <table class="info-table">
+            <tr><td>GPU</td><td id="hw-gpu">Detecting...</td></tr>
+            <tr><td>VRAM</td><td id="hw-vram">-</td></tr>
+            <tr><td>RAM</td><td id="hw-ram">-</td></tr>
+            <tr><td>Hotkey</td><td>Ctrl+Space</td></tr>
         </table>
+        <div style="font-size:0.75em; color:var(--text-muted); margin-top:6px;" id="vocab-info">Loading...</div>
     </div>
-</div>
-
-<!-- Troubleshooting -->
-<div class="card">
-    <h2>Troubleshooting</h2>
     
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-        <div class="test-card">
-            <h4 style="color: var(--text-main); margin-bottom: 12px;">Common Issues</h4>
-            <ul style="color: var(--text-muted); line-height: 2; padding-left: 20px; font-size: 0.95em;">
-                <li>Microphone blocked by browser</li>
-                <li>Wrong microphone selected</li>
-                <li>Background noise too loud</li>
-                <li>Speaking too quietly</li>
-            </ul>
+    <!-- Microphone -->
+    <div class="card">
+        <h3>Microphone</h3>
+        <div class="status-row">
+            <div class="dot" id="mic-dot"></div>
+            <span id="mic-text">Click to test</span>
         </div>
-        
-        <div class="test-card">
-            <h4 style="color: var(--text-main); margin-bottom: 12px;">Quick Fixes</h4>
-            <ul style="color: var(--text-muted); line-height: 2; padding-left: 20px; font-size: 0.95em;">
-                <li>Click "Grant Access" above</li>
-                <li>Check browser settings</li>
-                <li>Move to quieter location</li>
-                <li>Speak clearly and closer</li>
-            </ul>
+        <button class="btn-sm" id="mic-btn" onclick="testMic()">Test Mic</button>
+        <audio id="mic-audio" controls style="display:none;"></audio>
+    </div>
+    
+    <!-- Voice Recognition -->
+    <div class="card">
+        <h3>Voice Recognition</h3>
+        <div class="status-row">
+            <div class="dot" id="voice-dot"></div>
+            <span id="voice-text">Click to test</span>
+        </div>
+        <button class="btn-sm" id="voice-btn" onclick="testVoice()">Test STT</button>
+        <div class="result-box" id="voice-result"></div>
+    </div>
+    
+    <!-- Whisper Models -->
+    <div class="card">
+        <h3>Speech Model (Whisper)</h3>
+        <div class="status-row">
+            <div class="dot ok" id="whisper-dot"></div>
+            <span id="whisper-text">Loading...</span>
+        </div>
+        <div class="model-list" id="whisper-models"></div>
+    </div>
+    
+    <!-- LLM Models -->
+    <div class="card">
+        <h3>AI Model (Ollama)</h3>
+        <div class="status-row">
+            <div class="dot" id="llm-dot"></div>
+            <span id="llm-text">Loading...</span>
+        </div>
+        <div class="model-list" id="llm-models"></div>
+        <div style="display:flex; gap:6px; margin-top:8px;">
+            <button class="btn-sm" id="llm-test-btn" onclick="testLLM()">Test</button>
+        </div>
+        <div class="result-box" id="llm-result"></div>
+    </div>
+    
+    <!-- Tips -->
+    <div class="card">
+        <h3>Tips</h3>
+        <div style="font-size:0.8em; color:var(--text-muted); line-height:1.4;">
+            <div><b>*</b> = Recommended for your hardware</div>
+            <div style="margin-top:4px;">Larger models = better accuracy but slower</div>
+            <div style="margin-top:4px;">Models auto-download when selected</div>
+            <div style="margin-top:4px;">Use <b>Ctrl+Space</b> to record voice</div>
         </div>
     </div>
 </div>
 
 <script>
-    // Auto-check everything on page load
-    window.addEventListener('DOMContentLoaded', () => {
-        checkMicrophonePermission();
-        checkWhisperStatus();
-        loadModels();
-        loadLLMModels();
-        loadVocabulary();
-    });
-    
-    async function checkMicrophonePermission() {
-        const statusEl = document.getElementById('perm-status');
-        const resultEl = document.getElementById('perm-result');
-        const btnEl = document.getElementById('grant-mic-btn');
-        
-        try {
-            const result = await navigator.permissions.query({ name: 'microphone' });
-            
-            if (result.state === 'granted') {
-                statusEl.className = 'test-status status-success';
-                statusEl.textContent = 'Granted';
-                resultEl.innerHTML = 'Microphone access is granted.<br>You can use voice commands!';
-                btnEl.style.display = 'none';
-                
-                // Also test if mic actually works
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    stream.getTracks().forEach(track => track.stop());
-                    resultEl.innerHTML += '<br><br>Microphone hardware detected and working!';
-                } catch {
-                    resultEl.innerHTML += '<br><br>Permission granted but microphone not found.';
-                }
-            } else if (result.state === 'prompt') {
-                statusEl.className = 'test-status status-pending';
-                statusEl.textContent = 'Need Permission';
-                resultEl.textContent = 'Click the button below to grant microphone access.';
-                btnEl.style.display = 'block';
-            } else {
-                statusEl.className = 'test-status status-error';
-                statusEl.textContent = 'Denied';
-                resultEl.textContent = 'Microphone access was denied. Click the button to try again or check browser settings.';
-                btnEl.style.display = 'block';
-            }
-        } catch {
-            // Permissions API not supported, try direct access
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                stream.getTracks().forEach(track => track.stop());
-                statusEl.className = 'test-status status-success';
-                statusEl.textContent = 'Granted';
-                resultEl.textContent = 'Microphone access is working!';
-                btnEl.style.display = 'none';
-            } catch {
-                statusEl.className = 'test-status status-error';
-                statusEl.textContent = 'Blocked';
-                resultEl.textContent = 'Click the button below to grant access.';
-                btnEl.style.display = 'block';
-            }
-        }
-    }
-    
-    async function requestMicPermission() {
-        const statusEl = document.getElementById('perm-status');
-        const resultEl = document.getElementById('perm-result');
-        const btnEl = document.getElementById('grant-mic-btn');
-        
-        statusEl.className = 'test-status status-testing';
-        statusEl.textContent = 'Requesting...';
-        resultEl.textContent = 'Please allow microphone access in the browser popup...';
-        
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(track => track.stop());
-            
-            statusEl.className = 'test-status status-success';
-            statusEl.textContent = 'Granted';
-            resultEl.textContent = 'Microphone access granted! Voice commands are now available.';
-            btnEl.style.display = 'none';
-        } catch (err) {
-            statusEl.className = 'test-status status-error';
-            statusEl.textContent = 'Denied';
-            resultEl.innerHTML = `
-                <strong style="color: var(--error);">Access denied or no microphone found.</strong><br><br>
-                Please check:<br>
-                - Browser settings (click lock icon in address bar)<br>
-                - Microphone is plugged in<br>
-                - No other apps are using the microphone
-            `;
-        }
-    }
-    
-    let testRecorder = null;
-    let testChunks = [];
-    
-    async function testMicrophone() {
-        const btnEl = document.getElementById('mic-test-btn');
-        const statusEl = document.getElementById('mic-test-status');
-        const resultEl = document.getElementById('mic-test-result');
-        const audioEl = document.getElementById('playback-audio');
-        
-        if (!testRecorder) {
-            // Start recording
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                testRecorder = new MediaRecorder(stream);
-                testChunks = [];
-                
-                testRecorder.ondataavailable = (e) => testChunks.push(e.data);
-                testRecorder.onstop = () => {
-                    const blob = new Blob(testChunks, { type: 'audio/webm' });
-                    audioEl.src = URL.createObjectURL(blob);
-                    audioEl.style.display = 'block';
-                    stream.getTracks().forEach(track => track.stop());
-                };
-                
-                testRecorder.start();
-                btnEl.textContent = 'Stop Recording';
-                btnEl.classList.add('recording');
-                statusEl.className = 'test-status status-testing';
-                statusEl.textContent = 'Recording...';
-                resultEl.style.display = 'block';
-                resultEl.innerHTML = '<strong>Recording now...</strong><br>Say: "Testing microphone one two three"<br>Then click Stop to hear playback.';
-                
-            } catch (err) {
-                statusEl.className = 'test-status status-error';
-                statusEl.textContent = 'Error';
-                resultEl.style.display = 'block';
-                resultEl.textContent = 'Could not access microphone: ' + err.message;
-            }
-        } else {
-            // Stop recording
-            testRecorder.stop();
-            testRecorder = null;
-            btnEl.textContent = 'Start Microphone Test';
-            btnEl.classList.remove('recording');
-            statusEl.className = 'test-status status-success';
-            statusEl.textContent = 'Complete';
-            resultEl.innerHTML = 'Recording saved!<br>Play it back below to verify your microphone is working.';
-        }
-    }
-    
-    let transcribeRecorder = null;
-    let transcribeChunks = [];
-    
-    function addLog(message, isError = false) {
-        const logContent = document.getElementById('log-content');
-        const timestamp = new Date().toLocaleTimeString();
-        const color = isError ? 'var(--error)' : 'var(--text-muted)';
-        logContent.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
-    }
-    
-    async function testTranscription() {
-        const btnEl = document.getElementById('transcribe-test-btn');
-        const statusEl = document.getElementById('transcribe-status');
-        const resultEl = document.getElementById('transcribe-result');
-        const logEl = document.getElementById('test-log');
-        const logContent = document.getElementById('log-content');
-        const audioDebug = document.getElementById('audio-debug');
-        const debugAudio = document.getElementById('debug-audio');
-        
-        if (!transcribeRecorder) {
-            // Start recording for transcription
-            logEl.style.display = 'block';
-            logContent.innerHTML = '';
-            addLog('Starting detailed voice recognition test...');
-            
-            try {
-                addLog('Requesting microphone access...');
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: {
-                        channelCount: 1,
-                        sampleRate: 16000,
-                        echoCancellation: true,
-                        noiseSuppression: true
-                    }
-                });
-                addLog('Microphone access granted');
-                
-                transcribeRecorder = new MediaRecorder(stream);
-                transcribeChunks = [];
-                
-                transcribeRecorder.ondataavailable = (e) => {
-                    transcribeChunks.push(e.data);
-                    addLog(`Audio chunk received: ${e.data.size} bytes`);
-                };
-                
-                transcribeRecorder.onstop = async () => {
-                    stream.getTracks().forEach(track => track.stop());
-                    addLog('Recording stopped');
-                    
-                    const blob = new Blob(transcribeChunks, { type: 'audio/webm' });
-                    addLog(`Total audio size: ${blob.size} bytes`);
-                    
-                    // Show playback for debugging
-                    debugAudio.src = URL.createObjectURL(blob);
-                    audioDebug.style.display = 'block';
-                    addLog('Audio available for playback (check quality)');
-                    
-                    statusEl.className = 'test-status status-testing';
-                    statusEl.textContent = 'Transcribing...';
-                    resultEl.style.display = 'block';
-                    resultEl.textContent = 'Sending to AI for transcription...';
-                    
-                    addLog('Sending audio to server...');
-                    
-                    // Send to detailed test endpoint
-                    const formData = new FormData();
-                    formData.append('audio', blob, 'test.webm');
-                    
-                    try {
-                        const response = await fetch('/test-whisper', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        const data = await response.json();
-                        addLog(`Server response stage: ${data.stage}`);
-                        
-                        if (data.success && data.transcript) {
-                            addLog(`Transcription successful: "${data.transcript}"`);
-                            
-                            statusEl.className = 'test-status status-success';
-                            statusEl.textContent = 'Working!';
-                            resultEl.innerHTML = `
-                                <strong style="color: var(--success);">Voice recognition is working perfectly!</strong><br><br>
-                                <strong>You said:</strong><br>
-                                <div style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); margin-top: 12px; border-left: 3px solid var(--success);">
-                                    <span style="color: var(--text-main); font-size: 1.2em; font-weight: 600;">"${data.transcript}"</span>
-                                </div>
-                                <div style="margin-top: 16px; color: var(--text-muted); font-size: 0.9em;">
-                                    Transcript length: ${data.transcript_length} characters<br>
-                                    Audio file: ${data.file_size} bytes<br>
-                                    Model: ${data.model} on ${data.device}
-                                </div>
-                            `;
-                        } else if (data.transcript === '') {
-                            addLog('No speech detected in audio', true);
-                            
-                            statusEl.className = 'test-status status-error';
-                            statusEl.textContent = 'No Speech';
-                            resultEl.innerHTML = `
-                                <strong style="color: var(--error);">No speech detected</strong><br><br>
-                                Possible causes:<br>
-                                - Speaking too quietly<br>
-                                - Microphone too far away<br>
-                                - Background noise masking speech<br>
-                                - Audio too short<br><br>
-                                <strong>Try:</strong><br>
-                                - Speak louder and clearer<br>
-                                - Move microphone closer<br>
-                                - Reduce background noise<br>
-                                - Record for at least 2-3 seconds
-                            `;
-                        } else {
-                            addLog(`Error at stage: ${data.stage}`, true);
-                            addLog(`Error: ${data.error}`, true);
-                            
-                            statusEl.className = 'test-status status-error';
-                            statusEl.textContent = 'Failed';
-                            resultEl.innerHTML = `
-                                <strong style="color: var(--error);">Transcription failed</strong><br><br>
-                                <strong>Stage:</strong> ${data.stage}<br>
-                                <strong>Error:</strong> ${data.error}<br>
-                                ${data.fix ? '<br><strong>Fix:</strong> ' + data.fix : ''}
-                                <br><br>
-                                <div style="background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: var(--radius-sm); margin-top: 12px;">
-                                    <strong>Debug Info:</strong><br>
-                                    Audio size: ${data.file_size || 'unknown'} bytes<br>
-                                    Model: ${data.model || 'not loaded'}<br>
-                                    Device: ${data.device || 'unknown'}
-                                </div>
-                            `;
-                        }
-                    } catch (err) {
-                        addLog('Network/server error: ' + err.message, true);
-                        
-                        statusEl.className = 'test-status status-error';
-                        statusEl.textContent = 'Error';
-                        resultEl.innerHTML = `
-                            <strong style="color: var(--error);">Server error</strong><br><br>
-                            ${err.message}<br><br>
-                            Make sure the Flask server is running and Whisper model is installed.
-                        `;
-                    }
-                };
-                
-                transcribeRecorder.start();
-                addLog('Recording started - speak now!');
-                
-                btnEl.textContent = 'Stop & Transcribe';
-                btnEl.classList.add('recording');
-                statusEl.className = 'test-status status-testing';
-                statusEl.textContent = 'Recording...';
-                resultEl.style.display = 'block';
-                resultEl.innerHTML = `
-                    <strong style="color: var(--error);">Recording now - SPEAK CLEARLY!</strong><br><br>
-                    <div style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); margin: 12px 0;">
-                        Say this test phrase:<br>
-                        <strong style="color: var(--primary); font-size: 1.1em;">"Today I need to work on the Thompson case"</strong>
-                    </div>
-                    Speak for at least 3-4 seconds, then click Stop.
-                `;
-                
-            } catch (err) {
-                addLog('Microphone access error: ' + err.message, true);
-                
-                statusEl.className = 'test-status status-error';
-                statusEl.textContent = 'Error';
-                resultEl.style.display = 'block';
-                resultEl.textContent = 'Could not access microphone: ' + err.message;
-            }
-        } else {
-            // Stop and transcribe
-            addLog('Stopping recording...');
-            transcribeRecorder.stop();
-            transcribeRecorder = null;
-            btnEl.textContent = 'Start Detailed Test';
-            btnEl.classList.remove('recording');
-        }
-    }
-    
-    
-    async function checkWhisperStatus() {
-        const statusEl = document.getElementById('whisper-status');
-        const resultEl = document.getElementById('whisper-result');
-        const hwEl = document.getElementById('hardware-info');
-        
-        statusEl.className = 'test-status status-testing';
-        statusEl.textContent = 'Checking...';
-        resultEl.textContent = 'Checking Whisper model and hardware...';
-        
-        try {
-            const response = await fetch('/whisper-status');
-            const data = await response.json();
-            
-            if (data.status === 'ready') {
-                statusEl.className = 'test-status status-success';
-                statusEl.textContent = 'Ready';
-                
-                const modelStatusColor = data.model_status === 'loaded' ? 'var(--success)' : 'var(--warning)';
-                
-                resultEl.innerHTML = `
-                    <strong style="color: ${modelStatusColor};">
-                        ${data.model_status === 'loaded' ? '' : ''}${data.message}
-                    </strong><br><br>
-                    <strong>Configuration:</strong><br>
-                    Model: ${data.model}<br>
-                    Device: ${data.device}<br>
-                    Compute Type: ${data.compute_type}
-                `;
-                
-                // Show hardware info
-                if (data.hardware) {
-                    hwEl.style.display = 'block';
-                    let hwHtml = '<strong style="color: var(--text-main);">Hardware Detected:</strong><br><br>';
-                    hwHtml += `CPU: ${data.hardware.cpu}<br>`;
-                    
-                    if (data.hardware.has_cuda) {
-                        hwHtml += 'NVIDIA GPU (CUDA) - Using GPU acceleration<br>';
-                    }
-                    if (data.hardware.has_amd) {
-                        hwHtml += 'AMD GPU detected<br>';
-                    }
-                    if (data.hardware.has_npu) {
-                        hwHtml += 'AMD Ryzen AI with NPU (Evo x2)<br>';
-                        hwHtml += '<span style="color: var(--warning);">Note: NPU not yet supported, using optimized CPU</span><br>';
-                    }
-                    
-                    if (data.hardware.notes && data.hardware.notes.length > 0) {
-                        hwHtml += '<br><strong>Optimizations:</strong><br>';
-                        data.hardware.notes.forEach(note => {
-                            hwHtml += `- ${note}<br>`;
-                        });
-                    }
-                    
-                    hwEl.innerHTML = hwHtml;
-                }
-            } else {
-                statusEl.className = 'test-status status-error';
-                statusEl.textContent = 'Error';
-                resultEl.innerHTML = `
-                    <strong style="color: var(--error);">Whisper error</strong><br><br>
-                    ${data.error}<br><br>
-                    ${data.message}
-                `;
-                hwEl.style.display = 'none';
-            }
-        } catch (err) {
-            statusEl.className = 'test-status status-error';
-            statusEl.textContent = 'Error';
-            resultEl.textContent = 'Could not check model status: ' + err.message;
-            hwEl.style.display = 'none';
-        }
-    }
-    
-    // Load available models
-    async function loadModels() {
-        try {
-            const response = await fetch('/api/whisper-models');
-            const data = await response.json();
-            
-            const modelList = document.getElementById('model-list');
-            const currentModelEl = document.getElementById('current-model');
-            
-            currentModelEl.textContent = data.current;
-            
-            let html = '';
-            data.models.forEach(model => {
-                const isActive = model.id === data.current;
-                html += `
-                    <div class="model-option ${isActive ? 'active' : ''}" 
-                         style="display: flex; justify-content: space-between; align-items: center; padding: 16px; 
-                                background: ${isActive ? 'var(--primary-dim)' : 'var(--bg-hover)'}; 
-                                border: 1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; 
-                                border-radius: var(--radius-md); cursor: pointer;
-                                transition: all 0.2s;"
-                         onclick="selectModel('${model.id}')"
-                         onmouseover="this.style.borderColor='var(--primary)'"
-                         onmouseout="this.style.borderColor='${isActive ? 'var(--primary)' : 'var(--border)}'">
-                        <div>
-                            <div style="font-weight: 600; color: var(--text-main);">${model.name}</div>
-                            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 4px;">
-                                ${model.size} · ${model.speed} · ${model.accuracy} accuracy
-                            </div>
-                            <div style="font-size: 0.8em; color: var(--text-muted); margin-top: 4px;">
-                                ${model.description}
-                            </div>
-                        </div>
-                        ${isActive ? '<span style="color: var(--primary); font-weight: 600;">Active</span>' : 
-                          '<button class="test-btn" style="padding: 8px 16px; font-size: 0.85em;" onclick="event.stopPropagation(); selectModel(\'' + model.id + '\')">Select</button>'}
-                    </div>
-                `;
-            });
-            
-            modelList.innerHTML = html;
-        } catch (err) {
-            document.getElementById('model-list').innerHTML = `
-                <div style="color: var(--error);">Could not load models: ${err.message}</div>
-            `;
-        }
-    }
-    
-    async function selectModel(modelId) {
-        const statusEl = document.getElementById('model-change-status');
-        statusEl.style.display = 'block';
-        statusEl.innerHTML = `<span style="color: var(--warning);">Switching to ${modelId}...</span>`;
-        
-        try {
-            const response = await fetch('/api/whisper-model', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: modelId })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                statusEl.innerHTML = `<span style="color: var(--success);">${data.message}</span>`;
-                // Reload the model list to show new selection
-                loadModels();
-            } else {
-                statusEl.innerHTML = `<span style="color: var(--error);">${data.message}</span>`;
-            }
-        } catch (err) {
-            statusEl.innerHTML = `<span style="color: var(--error);">Error: ${err.message}</span>`;
-        }
-    }
-    
-    // Load LLM models
-    async function loadLLMModels() {
-        try {
-            const response = await fetch('/api/llm-models');
-            const data = await response.json();
-            
-            const modelList = document.getElementById('llm-model-list');
-            const currentLLMEl = document.getElementById('current-llm');
-            
-            if (currentLLMEl) currentLLMEl.textContent = data.current;
-            
-            let html = '';
-            data.models.forEach(model => {
-                const isActive = model.id === data.current;
-                html += `
-                    <div class="llm-option ${isActive ? 'active' : ''}" 
-                         style="display: flex; justify-content: space-between; align-items: center; padding: 16px; 
-                                background: ${isActive ? 'var(--primary-dim)' : 'var(--bg-hover)'}; 
-                                border: 1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; 
-                                border-radius: var(--radius-md); cursor: pointer;
-                                transition: all 0.2s;"
-                         onclick="selectLLM('${model.id}')"
-                         onmouseover="this.style.borderColor='var(--primary)'"
-                         onmouseout="this.style.borderColor='${isActive ? 'var(--primary)' : 'var(--border)}'">
-                        <div>
-                            <div style="font-weight: 600; color: var(--text-main);">${model.name}</div>
-                            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 4px;">
-                                ${model.size} · ${model.speed} · ${model.quality} quality
-                            </div>
-                            <div style="font-size: 0.8em; color: var(--text-muted); margin-top: 4px;">
-                                ${model.description}
-                            </div>
-                        </div>
-                        ${isActive ? '<span style="color: var(--primary); font-weight: 600;">Active</span>' : 
-                          '<button class="test-btn" style="padding: 8px 16px; font-size: 0.85em;" onclick="event.stopPropagation(); selectLLM(\'' + model.id + '\')">Select</button>'}
-                    </div>
-                `;
-            });
-            
-            modelList.innerHTML = html;
-        } catch (err) {
-            document.getElementById('llm-model-list').innerHTML = `
-                <div style="color: var(--error);">Could not load LLM models: ${err.message}</div>
-            `;
-        }
-    }
-    
-    async function selectLLM(modelId) {
-        const statusEl = document.getElementById('llm-change-status');
-        statusEl.style.display = 'block';
-        statusEl.innerHTML = `<span style="color: var(--warning);">Switching to ${modelId}... (downloading if needed)</span>`;
-        
-        try {
-            const response = await fetch('/api/llm-model', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: modelId })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                statusEl.innerHTML = `<span style="color: var(--success);">${data.message}</span>`;
-                loadLLMModels();
-            } else {
-                statusEl.innerHTML = `<span style="color: var(--error);">${data.message}</span>`;
-            }
-        } catch (err) {
-            statusEl.innerHTML = `<span style="color: var(--error);">Error: ${err.message}</span>`;
-        }
-    }
-    
-    async function testLLM() {
-        const btn = document.getElementById('test-llm-btn');
-        const resultEl = document.getElementById('llm-test-result');
-        
-        btn.disabled = true;
-        btn.textContent = 'Testing...';
-        resultEl.style.display = 'block';
-        resultEl.innerHTML = '<span style="color: var(--text-muted);">Sending test prompt...</span>';
-        
-        try {
-            const response = await fetch('/api/llm-test', { method: 'POST' });
-            const data = await response.json();
-            
-            if (data.success) {
-                resultEl.innerHTML = `
-                    <span style="color: var(--success);">LLM responding!</span><br><br>
-                    <strong>Model:</strong> ${data.model}<br>
-                    <strong>Test prompt:</strong> "Extract matter name from 'working on Acme case'"<br>
-                    <strong>Response:</strong> ${data.response}
-                `;
-            } else {
-                resultEl.innerHTML = `
-                    <span style="color: var(--error);">LLM test failed</span><br><br>
-                    <strong>Model:</strong> ${data.model}<br>
-                    <strong>Error:</strong> ${data.error}<br><br>
-                    Make sure Ollama is running and the model is downloaded.
-                `;
-            }
-        } catch (err) {
-            resultEl.innerHTML = `<span style="color: var(--error);">Error: ${err.message}</span>`;
-        }
-        
-        btn.disabled = false;
-        btn.textContent = 'Test LLM Response';
-    }
-    
-    // Load vocabulary status
-    async function loadVocabulary() {
-        try {
-            const response = await fetch('/api/matters');
-            const data = await response.json();
-            
-            document.getElementById('vocab-loading').style.display = 'none';
-            document.getElementById('vocab-list').style.display = 'block';
-            
-            const matters = data.matters || [];
-            let aliasCount = 0;
-            let sampleTerms = [];
-            
-            matters.forEach(m => {
-                if (m.aliases) aliasCount += m.aliases.length;
-                sampleTerms.push(m.display_name.split(' ')[0]); // First word of each
-                if (m.aliases && m.aliases.length > 0) {
-                    sampleTerms.push(m.aliases[0]);
-                }
-            });
-            
-            document.getElementById('matter-count').textContent = matters.length;
-            document.getElementById('alias-count').textContent = aliasCount;
-            document.getElementById('sample-terms').textContent = sampleTerms.slice(0, 8).join(', ') + '...';
-            
-        } catch (err) {
-            document.getElementById('vocab-loading').innerHTML = `
-                <span style="color: var(--error);">Could not load vocabulary: ${err.message}</span>
-            `;
-        }
-    }
-    
-</script>
+let mediaRec = null, audioChunks = [];
+let hwInfo = {};
 
+async function loadHardware() {
+    try {
+        const res = await fetch('/api/hardware');
+        hwInfo = await res.json();
+        
+        document.getElementById('hw-gpu').textContent = hwInfo.gpu || 'No GPU detected';
+        document.getElementById('hw-vram').textContent = hwInfo.vram_gb ? hwInfo.vram_gb + ' GB' : '-';
+        document.getElementById('hw-ram').textContent = hwInfo.ram_gb ? hwInfo.ram_gb + ' GB' : '-';
+        
+        const tier = document.getElementById('hw-tier');
+        tier.textContent = hwInfo.tier || 'unknown';
+        tier.className = 'hw-badge ' + (hwInfo.tier || 'basic');
+    } catch(e) {
+        document.getElementById('hw-gpu').textContent = 'Detection failed';
+    }
+}
+
+async function testMic() {
+    const dot = document.getElementById('mic-dot');
+    const text = document.getElementById('mic-text');
+    const audio = document.getElementById('mic-audio');
+    const btn = document.getElementById('mic-btn');
+    
+    if (mediaRec && mediaRec.state === 'recording') {
+        mediaRec.stop();
+        btn.textContent = 'Test Mic';
+        return;
+    }
+    
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        mediaRec = new MediaRecorder(stream);
+        audioChunks = [];
+        
+        mediaRec.ondataavailable = e => audioChunks.push(e.data);
+        mediaRec.onstop = () => {
+            const blob = new Blob(audioChunks, {type: 'audio/webm'});
+            audio.src = URL.createObjectURL(blob);
+            audio.style.display = 'block';
+            stream.getTracks().forEach(t => t.stop());
+            dot.className = 'dot ok';
+            text.textContent = 'OK - play below';
+        };
+        
+        mediaRec.start();
+        btn.textContent = 'Stop';
+        dot.className = 'dot load';
+        text.textContent = 'Recording...';
+    } catch(e) {
+        dot.className = 'dot err';
+        text.textContent = 'Access denied';
+    }
+}
+
+let voiceRec = null, voiceChunks = [];
+
+async function testVoice() {
+    const dot = document.getElementById('voice-dot');
+    const text = document.getElementById('voice-text');
+    const result = document.getElementById('voice-result');
+    const btn = document.getElementById('voice-btn');
+    
+    if (voiceRec && voiceRec.state === 'recording') {
+        voiceRec.stop();
+        btn.textContent = 'Test STT';
+        return;
+    }
+    
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        voiceRec = new MediaRecorder(stream);
+        voiceChunks = [];
+        
+        voiceRec.ondataavailable = e => voiceChunks.push(e.data);
+        voiceRec.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop());
+            dot.className = 'dot load';
+            text.textContent = 'Processing...';
+            
+            const blob = new Blob(voiceChunks, {type: 'audio/webm'});
+            const fd = new FormData();
+            fd.append('audio', blob, 'test.webm');
+            
+            try {
+                const res = await fetch('/test-whisper', {method: 'POST', body: fd});
+                const data = await res.json();
+                if (data.transcript) {
+                    dot.className = 'dot ok';
+                    text.textContent = 'Working';
+                    result.className = 'result-box show';
+                    result.innerHTML = '"' + data.transcript + '"';
+                } else {
+                    dot.className = 'dot err';
+                    text.textContent = data.error || 'No speech';
+                }
+            } catch(e) {
+                dot.className = 'dot err';
+                text.textContent = 'Error';
+            }
+        };
+        
+        voiceRec.start();
+        btn.textContent = 'Stop';
+        dot.className = 'dot load';
+        text.textContent = 'Recording...';
+    } catch(e) {
+        dot.className = 'dot err';
+        text.textContent = 'Access denied';
+    }
+}
+
+async function loadWhisper() {
+    try {
+        const res = await fetch('/api/whisper-models');
+        const data = await res.json();
+        
+        document.getElementById('whisper-text').textContent = data.current;
+        document.getElementById('whisper-dot').className = 'dot ok';
+        
+        let html = '';
+        data.models.forEach(m => {
+            const active = m.id === data.current;
+            const rec = hwInfo.recommended_whisper === m.id;
+            let cls = 'model-item';
+            if (active) cls += ' active';
+            if (rec && !active) cls += ' recommended';
+            
+            html += '<div class="' + cls + '" onclick="setWhisper(\'' + m.id + '\')">';
+            html += '<span><b>' + m.name + '</b> - ' + m.size + '</span>';
+            html += '<span style="color:' + (active ? 'var(--primary)' : 'var(--text-muted)') + '">' + (active ? 'Active' : 'Select') + '</span>';
+            html += '</div>';
+        });
+        document.getElementById('whisper-models').innerHTML = html;
+    } catch(e) {
+        document.getElementById('whisper-dot').className = 'dot err';
+        document.getElementById('whisper-text').textContent = 'Error';
+    }
+}
+
+async function setWhisper(id) {
+    document.getElementById('whisper-text').textContent = 'Switching...';
+    document.getElementById('whisper-dot').className = 'dot load';
+    try {
+        await fetch('/api/whisper-model', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({model: id})
+        });
+        loadWhisper();
+    } catch(e) {}
+}
+
+async function loadLLM() {
+    try {
+        const res = await fetch('/api/llm-models');
+        const data = await res.json();
+        
+        document.getElementById('llm-text').textContent = data.current;
+        document.getElementById('llm-dot').className = 'dot ok';
+        
+        let html = '';
+        data.models.forEach(m => {
+            const active = m.id === data.current;
+            const rec = hwInfo.recommended_llm === m.id;
+            let cls = 'model-item';
+            if (active) cls += ' active';
+            if (rec && !active) cls += ' recommended';
+            
+            html += '<div class="' + cls + '" onclick="setLLM(\'' + m.id + '\')">';
+            html += '<span><b>' + m.name + '</b> - ' + m.size + '</span>';
+            html += '<span style="color:' + (active ? 'var(--primary)' : 'var(--text-muted)') + '">' + (active ? 'Active' : 'Select') + '</span>';
+            html += '</div>';
+        });
+        document.getElementById('llm-models').innerHTML = html;
+    } catch(e) {
+        document.getElementById('llm-dot').className = 'dot err';
+        document.getElementById('llm-text').textContent = 'Ollama not running';
+    }
+}
+
+async function setLLM(id) {
+    const text = document.getElementById('llm-text');
+    const dot = document.getElementById('llm-dot');
+    const result = document.getElementById('llm-result');
+    const modelList = document.getElementById('llm-models');
+    
+    // Show prominent download indicator
+    text.textContent = 'DOWNLOADING...';
+    dot.className = 'dot load';
+    result.className = 'result-box show';
+    result.innerHTML = '<div class="download-status"><b>Downloading: ' + id + '</b><div class="progress-bar"><div class="progress"></div></div><small>This may take several minutes for larger models</small></div>';
+    
+    // Disable model selection during download
+    modelList.style.pointerEvents = 'none';
+    modelList.style.opacity = '0.5';
+    
+    try {
+        const res = await fetch('/api/llm-model', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({model: id})
+        });
+        const data = await res.json();
+        
+        if (data.downloaded) {
+            result.innerHTML = '<div style="color:var(--success);font-weight:bold;">DOWNLOAD COMPLETE!</div>' + data.message;
+            dot.className = 'dot ok';
+        } else {
+            result.innerHTML = '<div style="color:var(--warning);font-weight:bold;">Download issue</div>' + data.message;
+        }
+        loadLLM();
+    } catch(e) {
+        result.innerHTML = '<div style="color:var(--error);font-weight:bold;">ERROR</div>' + e.message;
+        dot.className = 'dot err';
+    } finally {
+        modelList.style.pointerEvents = '';
+        modelList.style.opacity = '';
+    }
+}
+
+async function testLLM() {
+    const result = document.getElementById('llm-result');
+    const btn = document.getElementById('llm-test-btn');
+    
+    result.className = 'result-box show';
+    result.innerHTML = 'Testing...';
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch('/api/llm-test', {method: 'POST'});
+        const data = await res.json();
+        if (data.success) {
+            result.innerHTML = '<span style="color:var(--success)">OK:</span> ' + data.response;
+        } else if (data.needs_download) {
+            result.innerHTML = '<span style="color:var(--warning)">Not downloaded.</span> Click a model to download it.';
+        } else {
+            result.innerHTML = '<span style="color:var(--error)">Error:</span> ' + data.error;
+        }
+    } catch(e) {
+        result.innerHTML = '<span style="color:var(--error)">Connection failed</span>';
+    }
+    btn.disabled = false;
+}
+
+async function loadVocab() {
+    try {
+        const res = await fetch('/matters/list');
+        const data = await res.json();
+        document.getElementById('vocab-info').textContent = (data.matters || []).length + ' matters loaded';
+    } catch(e) {}
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadHardware();
+    loadWhisper();
+    loadLLM();
+    loadVocab();
+});
+</script>
 {% endblock %}

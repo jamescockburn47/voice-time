@@ -24,6 +24,7 @@ wheels/
 *.egg
 pip-log.txt
 pip-delete-this-directory.txt
+.mypy_cache/
 
 # Database
 *.db
@@ -52,10 +53,11 @@ desktop.ini
 htmlcov/
 .pytest_cache/
 
-# Audio files (if saving recordings)
+# Audio files
 *.wav
 *.mp3
 *.ogg
+*.webm
 
 # Environment variables
 .env
@@ -63,3 +65,10 @@ htmlcov/
 
 # User-specific files
 config.local.yaml
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# PyInstaller
+*.spec

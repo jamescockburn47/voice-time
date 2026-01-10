@@ -1,4 +1,4 @@
-"""State machine - the runtime brain of the voice time system."""
+"""State machine - the runtime brain of TimeBrief."""
 from typing import Optional, Dict, Any
 from datetime import datetime, date, timedelta
 from dataclasses import dataclass
@@ -647,9 +647,184 @@ class DayState:
             data={"tasks": created_tasks, "plan_id": plan.id}
         )
     
+    def _extract_description_from_utterance(self, utterance: str, matter: Matter, activity: ActivityType) -> str:
+        """
+        Extract the meaningful description from an utterance after removing
+        the matter name and activity keywords.
+        
+        Example: "Working on visa application, drafting a memo to the court"
+        -> Returns: "drafting a memo to the court"
+        """
+        import re
+        
+        text = utterance.lower()
+        
+        # Remove common filler phrases
+        filler_patterns = [
+            r'^(i\'m |im |i am |gonna |going to |want to |need to |starting |working on |begin |)',
+            r'(today|now|currently|right now)\s*',
+        ]
+        for pattern in filler_patterns:
+            text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+        
+        # Remove matter name and its variations
+        if matter:
+            matter_words = [
+                matter.display_name.lower(),
+                matter.matter_ref.lower() if matter.matter_ref else '',
+            ]
+            # Add aliases
+            for alias in (matter.aliases or []):
+                matter_words.append(alias.alias.lower())
+            
+            for word in matter_words:
+                if word:
+                    # Remove the matter name (whole phrase)
+                    text = text.replace(word, ' ')
+                    # Also remove partial matches (just first word)
+                    first_word = word.split()[0] if word else ''
+                    if first_word and len(first_word) > 3:
+                        text = re.sub(rf'\b{re.escape(first_word)}\b', ' ', text)
+        
+        # Remove activity keywords (but keep action verbs like "drafting")
+        if activity:
+            # Only remove the activity label itself, not related words
+            text = re.sub(rf'\b{re.escape(activity.label.lower())}\b', ' ', text)
+            text = re.sub(rf'\b{re.escape(activity.code.lower())}\b', ' ', text)
+        
+        # Clean up extra whitespace and punctuation
+        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r'^[\s,\-\.]+', '', text)
+        text = re.sub(r'[\s,\-\.]+$', '', text)
+        
+        return text.strip()
+    
+    def _match_planned_task(self, utterance: str):
+        """
+        Check if utterance matches a planned task for today.
+        Returns (PlannedTask, confidence) or (None, 0).
+        """
+        from difflib import SequenceMatcher
+        
+        today = date.today()
+        plan = self.session.query(DayPlan).filter(DayPlan.date == today).first()
+        if not plan:
+            return None, 0
+        
+        tasks = self.session.query(PlannedTask).filter(
+            PlannedTask.day_plan_id == plan.id,
+            PlannedTask.status != 'done'
+        ).all()
+        
+        if not tasks:
+            return None, 0
+        
+        utterance_lower = utterance.lower()
+        best_task = None
+        best_score = 0
+        
+        for task in tasks:
+            # Check task title match
+            title_lower = task.title.lower() if task.title else ""
+            
+            # Direct substring match in either direction
+            if title_lower in utterance_lower or utterance_lower in title_lower:
+                score = 0.9
+            else:
+                # Fuzzy match on key words
+                title_words = set(title_lower.split())
+                utterance_words = set(utterance_lower.split())
+                
+                # How many title words appear in utterance?
+                common_words = title_words & utterance_words
+                if title_words:
+                    word_overlap = len(common_words) / len(title_words)
+                else:
+                    word_overlap = 0
+                
+                # Sequence similarity
+                seq_score = SequenceMatcher(None, title_lower, utterance_lower).ratio()
+                
+                score = max(word_overlap, seq_score)
+            
+            # Boost score if matter name also matches
+            if task.matter:
+                matter_name = task.matter.display_name.lower() if task.matter.display_name else ""
+                matter_ref = task.matter.matter_ref.lower() if task.matter.matter_ref else ""
+                
+                if matter_name.split()[0] in utterance_lower or matter_ref in utterance_lower:
+                    score += 0.3
+                    
+                # Check aliases
+                for alias in (task.matter.aliases or []):
+                    if alias.alias.lower() in utterance_lower:
+                        score += 0.3
+                        break
+            
+            if score > best_score:
+                best_score = score
+                best_task = task
+        
+        # Require reasonable confidence
+        if best_score >= 0.5:
+            return best_task, best_score
+        
+        return None, 0
+    
     def _handle_start(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
         """Handle starting work on a task - CREATES AN ACTUAL TIMER with follow-up questions."""
-        # Extract matter and activity
+        
+        # FIRST: Check if this matches a planned task
+        planned_task, task_confidence = self._match_planned_task(utterance)
+        
+        if planned_task and task_confidence >= 0.5:
+            # Found a matching planned task - use its matter and activity!
+            # Stop any existing timer first
+            existing_timer = self.session.query(ActiveTimer).first()
+            if existing_timer:
+                self._save_timer_to_log(existing_timer)
+                self.session.delete(existing_timer)
+            
+            # Create timer from planned task
+            new_timer = ActiveTimer(
+                matter_id=planned_task.matter_id,
+                activity_type_id=planned_task.activity_type_id,
+                started_at=datetime.now(),
+                is_active=True,
+                narrative_draft=planned_task.title  # Use task title as starting description
+            )
+            self.session.add(new_timer)
+            
+            # Update internal state
+            self.active_matter_id = planned_task.matter_id
+            self.active_activity_type_id = planned_task.activity_type_id
+            self.active_planned_task_id = planned_task.id
+            self.current_work_started_at = datetime.now()
+            
+            # Touch the matter
+            if planned_task.matter:
+                planned_task.matter.touch()
+            
+            self.session.commit()
+            
+            matter_name = planned_task.matter.display_name if planned_task.matter else "General"
+            activity_name = planned_task.activity_type.label if planned_task.activity_type else "Work"
+            
+            # Task has matter and activity - timer is ready!
+            return ProcessingResult(
+                success=True,
+                message=f"Timer started: {matter_name} - {activity_name}",
+                data={
+                    'timer_started': True,
+                    'from_plan': True,
+                    'matter': matter_name,
+                    'activity': activity_name,
+                    'description': planned_task.title,
+                    'complete': True
+                }
+            )
+        
+        # No planned task match - fall back to normal matter/activity matching
         matter_match = self.matter_matcher.find_matter(utterance)
         activity_match = self.activity_matcher.find_activity_type(utterance)
         
@@ -736,8 +911,33 @@ class DayState:
                 }
             )
         
-        # Activity was detected - now ask for description
+        # Activity was detected - check if utterance already contains a description
         activity_name = activity_match.match.label
+        
+        # Extract potential description from utterance
+        # Remove matter name and activity keywords to see what's left
+        description = self._extract_description_from_utterance(
+            utterance, matter_match.match, activity_match.match
+        )
+        
+        if description and len(description.split()) >= 3:
+            # User already provided enough description - timer is complete!
+            new_timer.narrative_draft = description
+            self.session.commit()
+            
+            return ProcessingResult(
+                success=True,
+                message=f"Timer started: {matter_name} - {activity_name}",
+                data={
+                    'timer_started': True,
+                    'matter': matter_name,
+                    'activity': activity_name,
+                    'description': description,
+                    'complete': True
+                }
+            )
+        
+        # Description too short or missing - ask for more detail
         self.pending_clarification = {
             'type': 'description',
             'timer_id': new_timer.id,

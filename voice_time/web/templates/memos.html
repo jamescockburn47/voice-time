@@ -1,0 +1,922 @@
+{% extends "base.html" %}
+
+{% block title %}Voice Memos - TimeBrief{% endblock %}
+
+{% block content %}
+<div class="memos-page">
+    <!-- Matter Selection -->
+    <div class="matter-select-section" id="matterSection">
+        <h2>Which matter are you working on?</h2>
+        <p class="subtitle">Select a matter or say its name</p>
+        
+        <div class="matter-grid">
+            {% for matter in matters %}
+            <button class="matter-card" onclick="selectMatter('{{ matter.id }}', '{{ matter.display_name }}')">
+                <span class="matter-name">{{ matter.display_name }}</span>
+                {% if matter.client %}
+                <span class="matter-client">{{ matter.client }}</span>
+                {% endif %}
+            </button>
+            {% endfor %}
+        </div>
+        
+        <div class="voice-select">
+            <button class="voice-btn" id="voiceSelectBtn" onclick="toggleMatterVoice()">
+                Click to speak matter name
+            </button>
+        </div>
+    </div>
+    
+    <!-- Dictation Area -->
+    <div class="dictation-section" id="dictationSection" style="display: none;">
+        <div class="dictation-header">
+            <div class="current-matter">
+                <span class="label">Recording memo for</span>
+                <span class="matter-name" id="selectedMatterName">-</span>
+            </div>
+            <button class="change-btn" onclick="changeMatter()">Change</button>
+        </div>
+        
+        <div class="two-column">
+            <!-- Thoughts Column -->
+            <div class="memo-column">
+                <h3>Thoughts</h3>
+                <p class="column-hint">General notes, observations, case updates</p>
+                
+                <div class="transcript-box" id="thoughtsBox">
+                    <p class="placeholder">Dictate your thoughts...</p>
+                </div>
+                
+                <div class="record-row">
+                    <button class="record-btn" onclick="toggleRecording('thoughts')">
+                        <div class="record-icon"></div>
+                        <span>Click to record</span>
+                    </button>
+                    <span class="timer" id="thoughtsTimer">00:00</span>
+                </div>
+            </div>
+            
+            <!-- Actions Column -->
+            <div class="memo-column">
+                <h3>Actions</h3>
+                <p class="column-hint">Follow-ups, to-dos, next steps</p>
+                
+                <div class="transcript-box" id="actionsBox">
+                    <p class="placeholder">Dictate action items...</p>
+                </div>
+                
+                <div class="record-row">
+                    <button class="record-btn actions-btn" onclick="toggleRecording('actions')">
+                        <div class="record-icon"></div>
+                        <span>Click to record</span>
+                    </button>
+                    <span class="timer" id="actionsTimer">00:00</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="recording-status" id="recordingStatus">
+            <div class="status-indicator"></div>
+            <span>Ready</span>
+        </div>
+        
+        <div class="memo-actions">
+            <button class="action-btn secondary" onclick="clearMemo()">Clear All</button>
+            <button class="action-btn primary" onclick="saveMemo()" id="saveBtn" disabled>Save Memo</button>
+        </div>
+        
+        <p class="save-hint">Actions will appear in tomorrow's Planning page</p>
+    </div>
+    
+    <!-- Pending Actions -->
+    {% if pending_actions %}
+    <div class="pending-section">
+        <h3>Pending Actions</h3>
+        <div class="actions-list">
+            {% for action in pending_actions %}
+            <div class="action-item {% if action.is_completed %}completed{% endif %}">
+                <label class="action-check">
+                    <input type="checkbox" {% if action.is_completed %}checked{% endif %} 
+                           onchange="toggleAction('{{ action.id }}', this.checked)">
+                    <span class="checkmark"></span>
+                </label>
+                <div class="action-content">
+                    <span class="action-matter">{{ action.matter.display_name }}</span>
+                    <span class="action-text">{{ action.description }}</span>
+                </div>
+                <span class="action-date">{{ action.created_at.strftime('%b %d') }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Recent Memos -->
+    <div class="recent-memos">
+        <h3>Recent Memos</h3>
+        <div class="memos-list" id="memosList">
+            {% if memos %}
+                {% for memo in memos %}
+                <div class="memo-item">
+                    <div class="memo-header">
+                        <span class="memo-matter">{{ memo.matter.display_name }}</span>
+                        <span class="memo-time">{{ memo.created_at.strftime('%b %d, %H:%M') }}</span>
+                    </div>
+                    {% if memo.thoughts %}
+                    <div class="memo-thoughts">{{ memo.thoughts[:200] }}{% if memo.thoughts|length > 200 %}...{% endif %}</div>
+                    {% endif %}
+                    {% if memo.actions %}
+                    <div class="memo-actions-list">
+                        {% for action in memo.actions %}
+                        <div class="memo-action-item {% if action.is_completed %}done{% endif %}">
+                            {{ action.description }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-memos">No memos yet. Start dictating above.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .memos-page {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 1rem 2rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    
+    /* Matter Selection */
+    .matter-select-section {
+        text-align: center;
+        padding: 1.5rem 0;
+    }
+    
+    .matter-select-section h2 {
+        font-family: var(--font-serif);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .matter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .matter-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 0.75rem;
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+    
+    .matter-card:hover {
+        background: var(--bg-hover);
+        border-color: var(--primary);
+    }
+    
+    .matter-card .matter-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: var(--text-main);
+    }
+    
+    .matter-card .matter-client {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    
+    .voice-select {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .voice-btn {
+        background: var(--purple-dim);
+        border: 1px solid var(--purple-border);
+        color: var(--purple);
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+    
+    .voice-btn:hover, .voice-btn.recording {
+        background: var(--purple);
+        color: var(--bg-app);
+    }
+    
+    /* Dictation Section */
+    .dictation-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .dictation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 1rem;
+    }
+    
+    .current-matter .label {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        display: block;
+    }
+    
+    .current-matter .matter-name {
+        font-family: var(--font-serif);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary);
+    }
+    
+    .change-btn {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        padding: 0.4rem 0.8rem;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+    
+    .change-btn:hover {
+        color: var(--text-main);
+        border-color: var(--text-muted);
+    }
+    
+    /* Two Column Layout */
+    .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .memo-column h3 {
+        font-family: var(--font-serif);
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+        color: var(--text-main);
+    }
+    
+    .column-hint {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+    }
+    
+    .transcript-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        min-height: 120px;
+        max-height: 200px;
+        overflow-y: auto;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    
+    .transcript-box .placeholder {
+        color: var(--text-muted);
+        font-style: italic;
+    }
+    
+    .transcript-box .segment {
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px dashed var(--border);
+    }
+    
+    .transcript-box .segment:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .record-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .record-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--primary-dim);
+        border: 1px solid var(--primary);
+        color: var(--primary);
+        padding: 0.6rem 1rem;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .record-btn:hover {
+        background: var(--primary);
+        color: var(--bg-app);
+    }
+    
+    .record-btn.recording {
+        background: var(--error);
+        border-color: var(--error);
+        color: white;
+    }
+    
+    .actions-btn {
+        background: var(--purple-dim);
+        border-color: var(--purple);
+        color: var(--purple);
+    }
+    
+    .actions-btn:hover {
+        background: var(--purple);
+        color: var(--bg-app);
+    }
+    
+    .record-icon {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+    
+    .timer {
+        font-family: monospace;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+    
+    .timer.active {
+        color: var(--error);
+    }
+    
+    .recording-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+    }
+    
+    .recording-status.recording .status-indicator {
+        background: var(--error);
+        animation: pulse 1s infinite;
+    }
+    
+    .recording-status.recording span {
+        color: var(--error);
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .memo-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .action-btn {
+        padding: 0.6rem 1.25rem;
+        border-radius: var(--radius-md);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .action-btn.secondary {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+    }
+    
+    .action-btn.secondary:hover {
+        color: var(--text-main);
+        border-color: var(--text-muted);
+    }
+    
+    .action-btn.primary {
+        background: var(--primary);
+        border: none;
+        color: var(--bg-app);
+    }
+    
+    .action-btn.primary:hover:not(:disabled) {
+        filter: brightness(1.1);
+    }
+    
+    .action-btn.primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .save-hint {
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+    
+    /* Pending Actions */
+    .pending-section {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .pending-section h3 {
+        font-family: var(--font-serif);
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        color: var(--purple);
+    }
+    
+    .actions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .action-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 0.75rem;
+    }
+    
+    .action-item.completed {
+        opacity: 0.6;
+    }
+    
+    .action-item.completed .action-text {
+        text-decoration: line-through;
+    }
+    
+    .action-check {
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .action-check input {
+        opacity: 0;
+        position: absolute;
+    }
+    
+    .checkmark {
+        display: block;
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--purple);
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    
+    .action-check input:checked + .checkmark {
+        background: var(--purple);
+    }
+    
+    .action-check input:checked + .checkmark::after {
+        content: '';
+        display: block;
+        width: 5px;
+        height: 9px;
+        border: solid var(--bg-app);
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        margin: 1px 0 0 5px;
+    }
+    
+    .action-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+    
+    .action-matter {
+        font-size: 0.75rem;
+        color: var(--primary);
+        font-weight: 500;
+    }
+    
+    .action-text {
+        font-size: 0.9rem;
+        color: var(--text-main);
+    }
+    
+    .action-date {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    
+    /* Recent Memos */
+    .recent-memos {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .recent-memos h3 {
+        font-family: var(--font-serif);
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        color: var(--text-muted);
+    }
+    
+    .memos-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .memo-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 0.75rem;
+    }
+    
+    .memo-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+    
+    .memo-matter {
+        font-weight: 500;
+        font-size: 0.85rem;
+        color: var(--primary);
+    }
+    
+    .memo-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    
+    .memo-thoughts {
+        color: var(--text-main);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 0.5rem;
+    }
+    
+    .memo-actions-list {
+        border-top: 1px dashed var(--border);
+        padding-top: 0.5rem;
+    }
+    
+    .memo-action-item {
+        font-size: 0.85rem;
+        color: var(--purple);
+        padding: 0.25rem 0;
+        padding-left: 1rem;
+        position: relative;
+    }
+    
+    .memo-action-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6px;
+        height: 6px;
+        background: var(--purple);
+        border-radius: 50%;
+    }
+    
+    .memo-action-item.done {
+        text-decoration: line-through;
+        opacity: 0.6;
+    }
+    
+    .no-memos {
+        color: var(--text-muted);
+        text-align: center;
+        padding: 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+</style>
+
+<script>
+    let selectedMatterId = null;
+    let selectedMatterName = null;
+    let currentRecordingType = null; // 'thoughts' or 'actions'
+    let recordingStartTime = null;
+    let localTimerInterval = null;
+    
+    let thoughtsSegments = [];
+    let actionsSegments = [];
+    
+    // Matter selection via voice - TOGGLE based
+    let matterVoiceRecording = false;
+    
+    async function toggleMatterVoice() {
+        const btn = document.getElementById('voiceSelectBtn');
+        
+        if (matterVoiceRecording) {
+            // Stop recording
+            TimeBrief.stopRecording();
+            matterVoiceRecording = false;
+            btn.classList.remove('recording');
+            btn.textContent = 'Processing...';
+        } else {
+            // Start recording
+            const started = await TimeBrief.startRecording(async (audioBlob) => {
+                // On complete - transcribe and match
+                btn.textContent = 'Processing...';
+                
+                try {
+                    const transcript = await TimeBrief.transcribe(audioBlob);
+                    
+                    if (transcript) {
+                        const matchResponse = await fetch('/api/match-matter', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text: transcript })
+                        });
+                        const matchData = await matchResponse.json();
+                        
+                        if (matchData.matter_id) {
+                            selectMatter(matchData.matter_id, matchData.matter_name);
+                        } else {
+                            showNotification('Could not match "' + transcript + '" to a matter. Please select manually.', 'warning');
+                        }
+                    }
+                } catch (err) {
+                    showNotification('Error: ' + err.message, 'error');
+                }
+                
+                btn.textContent = 'Click to speak matter name';
+                matterVoiceRecording = false;
+            });
+            
+            if (started) {
+                matterVoiceRecording = true;
+                btn.classList.add('recording');
+                btn.textContent = 'Recording... Click to Stop';
+            }
+        }
+    }
+    
+    function selectMatter(id, name) {
+        selectedMatterId = id;
+        selectedMatterName = name;
+        
+        document.getElementById('matterSection').style.display = 'none';
+        document.getElementById('dictationSection').style.display = 'flex';
+        document.getElementById('selectedMatterName').textContent = name;
+        
+        thoughtsSegments = [];
+        actionsSegments = [];
+        updateDisplay();
+    }
+    
+    function changeMatter() {
+        document.getElementById('dictationSection').style.display = 'none';
+        document.getElementById('matterSection').style.display = 'block';
+        selectedMatterId = null;
+        selectedMatterName = null;
+    }
+    
+    // Recording - TOGGLE based
+    async function toggleRecording(type) {
+        const status = document.getElementById('recordingStatus');
+        const timer = document.getElementById(type + 'Timer');
+        const btn = document.querySelector(type === 'thoughts' ? '.record-btn:not(.actions-btn)' : '.record-btn.actions-btn');
+        
+        if (TimeBrief.isRecording && currentRecordingType === type) {
+            // Stop recording this type
+            TimeBrief.stopRecording();
+        } else if (TimeBrief.isRecording) {
+            // Already recording different type - stop that first
+            showNotification('Please stop the current recording first', 'warning');
+        } else {
+            // Start recording
+            currentRecordingType = type;
+            recordingStartTime = Date.now();
+            
+            const started = await TimeBrief.startRecording(
+                // On complete
+                async (audioBlob) => {
+                    const duration = Math.round((Date.now() - recordingStartTime) / 1000);
+                    
+                    status.classList.remove('recording');
+                    status.querySelector('span').textContent = 'Processing...';
+                    btn.classList.remove('recording');
+                    btn.querySelector('span') && (btn.querySelector('span').textContent = 'Click to record');
+                    
+                    try {
+                        const transcript = await TimeBrief.transcribe(audioBlob);
+                        
+                        if (transcript.trim()) {
+                            if (type === 'thoughts') {
+                                thoughtsSegments.push({ text: transcript.trim(), duration });
+                            } else {
+                                actionsSegments.push({ text: transcript.trim(), duration });
+                            }
+                            updateDisplay();
+                        }
+                    } catch (err) {
+                        console.error('Transcription error:', err);
+                    }
+                    
+                    status.querySelector('span').textContent = 'Ready';
+                    currentRecordingType = null;
+                    if (localTimerInterval) {
+                        clearInterval(localTimerInterval);
+                        localTimerInterval = null;
+                    }
+                },
+                // On progress
+                (elapsed) => {
+                    const mins = Math.floor(elapsed / 60);
+                    const secs = elapsed % 60;
+                    timer.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+                }
+            );
+            
+            if (started) {
+                status.classList.add('recording');
+                status.querySelector('span').textContent = 'Recording ' + type + '... Click to stop';
+                timer.classList.add('active');
+                btn.classList.add('recording');
+            }
+        }
+    }
+    
+    
+    function updateDisplay() {
+        // Update thoughts box
+        const thoughtsBox = document.getElementById('thoughtsBox');
+        if (thoughtsSegments.length === 0) {
+            thoughtsBox.innerHTML = '<p class="placeholder">Dictate your thoughts...</p>';
+        } else {
+            thoughtsBox.innerHTML = thoughtsSegments.map(s => 
+                `<div class="segment">${s.text}</div>`
+            ).join('');
+        }
+        
+        // Update actions box
+        const actionsBox = document.getElementById('actionsBox');
+        if (actionsSegments.length === 0) {
+            actionsBox.innerHTML = '<p class="placeholder">Dictate action items...</p>';
+        } else {
+            actionsBox.innerHTML = actionsSegments.map(s => 
+                `<div class="segment">${s.text}</div>`
+            ).join('');
+        }
+        
+        // Update save button
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.disabled = (thoughtsSegments.length === 0 && actionsSegments.length === 0);
+    }
+    
+    function clearMemo() {
+        if ((thoughtsSegments.length > 0 || actionsSegments.length > 0) && 
+            !confirm('Clear all dictation?')) return;
+        
+        thoughtsSegments = [];
+        actionsSegments = [];
+        updateDisplay();
+        
+        document.getElementById('thoughtsTimer').textContent = '00:00';
+        document.getElementById('actionsTimer').textContent = '00:00';
+    }
+    
+    async function saveMemo() {
+        if (!selectedMatterId) return;
+        if (thoughtsSegments.length === 0 && actionsSegments.length === 0) return;
+        
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+        
+        const thoughts = thoughtsSegments.map(s => s.text).join('\n\n');
+        const actions = actionsSegments.map(s => s.text).join('\n');
+        const totalDuration = [...thoughtsSegments, ...actionsSegments]
+            .reduce((sum, s) => sum + s.duration, 0);
+        
+        try {
+            const response = await fetch('/api/memos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    matter_id: selectedMatterId,
+                    thoughts: thoughts,
+                    actions: actions,
+                    duration_seconds: totalDuration
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                thoughtsSegments = [];
+                actionsSegments = [];
+                updateDisplay();
+                
+                document.getElementById('thoughtsTimer').textContent = '00:00';
+                document.getElementById('actionsTimer').textContent = '00:00';
+                
+                saveBtn.textContent = 'Saved!';
+                setTimeout(() => {
+                    saveBtn.textContent = 'Save Memo';
+                    saveBtn.disabled = true;
+                }, 2000);
+                
+                // Reload page to show new memo
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                throw new Error(data.message || 'Save failed');
+            }
+        } catch (err) {
+            showNotification('Error saving memo: ' + err.message, 'error');
+            saveBtn.textContent = 'Save Memo';
+            saveBtn.disabled = false;
+        }
+    }
+    
+    async function toggleAction(actionId, completed) {
+        try {
+            await fetch('/api/memo-actions/' + actionId, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_completed: completed })
+            });
+            
+            const item = event.target.closest('.action-item');
+            if (completed) {
+                item.classList.add('completed');
+            } else {
+                item.classList.remove('completed');
+            }
+        } catch (err) {
+            console.error('Error updating action:', err);
+        }
+    }
+    
+    // Keyboard shortcut: Ctrl+Space toggles thoughts recording
+    document.addEventListener('timeBriefToggleRecord', () => {
+        if (selectedMatterId) {
+            toggleRecording('thoughts');
+        } else {
+            toggleMatterVoice();
+        }
+    });
+</script>
+{% endblock %}

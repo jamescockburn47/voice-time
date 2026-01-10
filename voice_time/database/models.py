@@ -1,4 +1,4 @@
-"""SQLAlchemy models for the voice time system."""
+"""SQLAlchemy models for TimeBrief."""
 import uuid
 from datetime import datetime, date, time
 from typing import Optional, List
@@ -189,9 +189,50 @@ class ActiveTimer(Base):
         return self.elapsed_units * 0.1  # Each unit = 0.1 hour
 
 
+class Memo(Base):
+    """
+    Voice memos/notes for a matter.
+    Separates thoughts (notes) from actions (follow-ups).
+    """
+    __tablename__ = "memos"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    matter_id = Column(String, ForeignKey("matters.id"), nullable=False)
+    thoughts = Column(Text, nullable=False)  # General notes/observations
+    created_at = Column(DateTime, default=func.now())
+    duration_seconds = Column(Integer)  # How long they spoke
+    
+    matter = relationship("Matter")
+    actions = relationship("MemoAction", back_populates="memo", cascade="all, delete-orphan")
+
+
+class MemoAction(Base):
+    """
+    Individual action items extracted from voice memos.
+    These appear in Planning the next day.
+    """
+    __tablename__ = "memo_actions"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    memo_id = Column(String, ForeignKey("memos.id"), nullable=False)
+    matter_id = Column(String, ForeignKey("matters.id"), nullable=False)
+    description = Column(Text, nullable=False)
+    is_completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime)
+    due_date = Column(Date)  # When it should appear in planning
+    created_at = Column(DateTime, default=func.now())
+    
+    memo = relationship("Memo", back_populates="actions")
+    matter = relationship("Matter")
+
+
 # Indexes
 Index("idx_matters_active", Matter.is_active)
 Index("idx_matters_last_used", Matter.last_used_at.desc())
 Index("idx_work_logs_date", WorkLog.started_at)
 Index("idx_planned_tasks_date", PlannedTask.day_plan_id)
 Index("idx_voice_events_timestamp", VoiceEvent.timestamp)
+Index("idx_memos_matter", Memo.matter_id)
+Index("idx_memos_created", Memo.created_at.desc())
+Index("idx_memo_actions_pending", MemoAction.is_completed, MemoAction.due_date)
+Index("idx_memo_actions_matter", MemoAction.matter_id)

@@ -1,12 +1,56 @@
 {% extends "base.html" %}
 
-{% block title %}Review - Voice Time{% endblock %}
+{% block title %}Review - TimeBrief{% endblock %}
 
 {% block styles %}
 <style>
     .export-section {
         text-align: center;
         padding: 24px;
+    }
+    
+    .edit-select, .edit-input {
+        width: 100%;
+        padding: 8px;
+        background: var(--bg-sidebar);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--text-main);
+        font-size: 0.9em;
+        transition: border-color 0.3s;
+    }
+    
+    .edit-select:focus, .edit-input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    
+    .duration-input {
+        width: 70px;
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    .narrative-input {
+        min-width: 200px;
+    }
+    
+    .delete-btn {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+    }
+    
+    .delete-btn:hover {
+        background: var(--error);
+        border-color: var(--error);
+        color: white;
     }
 </style>
 {% endblock %}
@@ -69,36 +113,87 @@
                 <th>Activity</th>
                 <th>Duration</th>
                 <th>Narrative</th>
+                <th style="width: 80px;">Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for log in logs %}
-            <tr class="log-row">
+            <tr class="log-row" data-id="{{ log.id }}">
                 <td style="color: var(--primary); font-weight: 700; font-family: var(--font-serif); font-size: 1.1em; text-align: center;">{{ loop.index }}</td>
-                <td style="color: var(--text-main); font-weight: 500;">
-                    {% if log.matter %}
-                        {{ log.matter.display_name }}
-                    {% else %}
-                        General
-                    {% endif %}
+                <td>
+                    <select class="edit-select" data-field="matter" data-id="{{ log.id }}" onchange="updateEntry(this, 'matter_id')">
+                        <option value="">General</option>
+                        {% for matter in matters %}
+                        <option value="{{ matter.id }}" {{ 'selected' if log.matter and log.matter.id == matter.id else '' }}>{{ matter.display_name }}</option>
+                        {% endfor %}
+                    </select>
                 </td>
-                <td style="color: var(--text-muted);">
-                    {% if log.activity_type %}
-                        {{ log.activity_type.label }}
-                    {% else %}
-                        <span style="color: var(--text-muted); opacity: 0.6;">Unspecified</span>
-                    {% endif %}
+                <td>
+                    <select class="edit-select" data-field="activity" data-id="{{ log.id }}" onchange="updateEntry(this, 'activity_id')">
+                        <option value="">Unspecified</option>
+                        {% for activity in activities %}
+                        <option value="{{ activity.id }}" {{ 'selected' if log.activity_type and log.activity_type.id == activity.id else '' }}>{{ activity.label }}</option>
+                        {% endfor %}
+                    </select>
                 </td>
-                <td style="color: var(--text-main); font-weight: 600; font-family: var(--font-serif);">
-                    {{ "%.1f"|format(log.duration_hours) }}h
+                <td>
+                    <input type="number" class="edit-input duration-input" value="{{ '%.1f'|format(log.duration_hours) }}" step="0.1" min="0.1" data-id="{{ log.id }}" onchange="updateEntry(this, 'duration')">
                 </td>
-                <td style="color: var(--text-muted); font-size: 0.95em;">
-                    {{ log.narrative or '—' }}
+                <td>
+                    <input type="text" class="edit-input narrative-input" value="{{ log.narrative or '' }}" placeholder="Add narrative..." data-id="{{ log.id }}" onchange="updateEntry(this, 'narrative')">
+                </td>
+                <td style="text-align: center;">
+                    <button class="delete-btn" onclick="deleteEntry('{{ log.id }}')" title="Delete entry">X</button>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    
+    <script>
+    async function updateEntry(element, field) {
+        const logId = element.dataset.id;
+        const value = element.value;
+        
+        const data = {};
+        data[field] = value;
+        
+        try {
+            const response = await fetch('/update-entry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ log_id: logId, ...data })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                element.style.borderColor = 'var(--success)';
+                setTimeout(() => element.style.borderColor = '', 1000);
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+    
+    async function deleteEntry(logId) {
+        if (!confirm('Delete this entry?')) return;
+        
+        try {
+            const response = await fetch('/delete-entry/' + logId, { method: 'POST' });
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+    </script>
     
     <div style="margin-top: 32px; padding: 24px; background: linear-gradient(135deg, var(--purple-dim), var(--primary-dim)); border-radius: var(--radius-lg); border: 1px solid var(--purple-border);">
         <h3 style="color: var(--text-main); margin-bottom: 20px; font-family: var(--font-serif); text-align: center;">

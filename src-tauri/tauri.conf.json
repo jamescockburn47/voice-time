@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TimeBrief",
+  "version": "0.1.0",
+  "identifier": "com.timebrief.app",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5000",
+    "beforeBuildCommand": "python -m PyInstaller --onefile --noconsole --name timebrief-server ../run.py",
+    "beforeDevCommand": ""
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "TimeBrief",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 1000,
+        "minHeight": 700,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": false
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [],
+    "shortDescription": "Voice-first legal time recording",
+    "longDescription": "TimeBrief is a voice-controlled time recording system for lawyers. It uses cutting-edge local AI to understand your voice commands and automatically track time across matters. 100% local - your data never leaves your machine.",
+    "copyright": "2026 TimeBrief",
+    "category": "Productivity",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false,
+        "languages": ["English"],
+        "installerIcon": "icons/icon.ico"
+      }
+    }
+  }
+}

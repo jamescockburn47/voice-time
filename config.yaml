@@ -1,36 +1,25 @@
-# config.yaml
 app:
-  name: "Voice Time"
-  data_dir: "~/.voice_time"
-  
-ollama:
-  host: "http://localhost:11434"
-  # Options: qwen2.5:0.5b-instruct, qwen2.5:1.5b-instruct, qwen2.5:3b-instruct, qwen2.5:7b-instruct
-  # Also: llama3.2:3b, mistral:7b (larger = better understanding but slower)
-  model: "qwen2.5:1.5b-instruct"
-  timeout: 30
-  
-whisper:
-  # Options: tiny.en (39MB), base.en (74MB), small.en (244MB), medium.en (769MB), large-v2 (1.5GB)
-  # Larger models = better accuracy for names/legal terms, but slower
-  model: "base.en"
-  device: "cpu"  # or "cuda" for NVIDIA GPU
-  
+  data_dir: ~/.voice_time
+  name: TimeBrief
 audio:
-  sample_rate: 16000
   channels: 1
-  
-matching:
-  confidence_threshold: 0.7
-  ambiguity_threshold: 0.9  # Top 2 within 90% = ambiguous
-  
-temporal:
-  working_day_start: "09:00"
-  working_day_end: "18:00"
-  lunch_start: "12:30"
-  lunch_end: "13:30"
-  
+  sample_rate: 16000
 export:
-  format: "csv"
-  date_format: "%Y-%m-%d"
-  time_format: "%H:%M"
+  date_format: '%Y-%m-%d'
+  format: csv
+  time_format: '%H:%M'
+matching:
+  ambiguity_threshold: 0.9
+  confidence_threshold: 0.7
+ollama:
+  host: http://localhost:11434
+  model: qwen2.5:1.5b-instruct
+  timeout: 30
+temporal:
+  lunch_end: '13:30'
+  lunch_start: '12:30'
+  working_day_end: '18:00'
+  working_day_start: 09:00
+whisper:
+  device: cpu
+  model: small.en

@@ -1,6 +1,7 @@
 """Flask routes for web UI."""
 from flask import render_template, request, jsonify, current_app
 from datetime import date, datetime
+from pathlib import Path
 import math
 from ..database.models import Matter, PlannedTask, WorkLog, DayPlan, ActiveTimer, ActivityType
 
@@ -24,10 +25,16 @@ def register_routes(app):
         from ..database.sample_data import TUTORIAL_SCENARIOS
         return render_template('tutorial.html', scenarios=TUTORIAL_SCENARIOS)
     
+    @app.route('/how-it-works')
+    def how_it_works():
+        """How It Works page - explains the technology and approach."""
+        return render_template('how-it-works.html')
+    
     @app.route('/planning')
     def planning():
         """Day planning page - separate from time recording."""
         from datetime import timedelta
+        from ..database.models import MemoAction
         session = app.session
         
         # Get selected date from query param, default to today
@@ -57,19 +64,58 @@ def register_routes(app):
         prev_date = selected_date - timedelta(days=1)
         next_date = selected_date + timedelta(days=1)
         
+        # Get matters and activities for dropdowns
+        matters = session.query(Matter).filter(Matter.is_active == True).all()
+        activities = session.query(ActivityType).all()
+        
+        # Get today's work summary
+        next_day = selected_date + timedelta(days=1)
+        logs = session.query(WorkLog).filter(
+            WorkLog.created_at >= selected_date,
+            WorkLog.created_at < next_day
+        ).all()
+        
+        totals = {}
+        total_hours = 0.0
+        for log in logs:
+            matter_name = log.matter.display_name if log.matter else 'General'
+            totals[matter_name] = totals.get(matter_name, 0) + log.duration_hours
+            total_hours += log.duration_hours
+        
+        # Get pending actions from Voice Memos (due today or earlier, not completed)
+        pending_actions = session.query(MemoAction).filter(
+            MemoAction.is_completed == False,
+            MemoAction.due_date <= selected_date
+        ).order_by(MemoAction.created_at.desc()).all()
+        
+        # Get incomplete tasks from previous days (carryover)
+        carryover_tasks = []
+        if is_today:
+            # Find all incomplete tasks from plans before today
+            carryover_tasks = session.query(PlannedTask).join(DayPlan).filter(
+                DayPlan.date < today,
+                PlannedTask.status.in_(['pending', 'planned', 'in_progress'])
+            ).order_by(DayPlan.date.desc()).all()
+        
         return render_template(
             'planning.html', 
             tasks=tasks,
+            matters=matters,
+            activities=activities,
+            totals=totals,
+            total_hours=total_hours,
             selected_date=selected_date,
             is_today=is_today,
             today=today,
             prev_date=prev_date,
-            next_date=next_date
+            next_date=next_date,
+            pending_actions=pending_actions,
+            carryover_tasks=carryover_tasks
         )
     
     @app.route('/why')
     def why():
-        """Why Voice Time? - Comparison page."""
+        """Why TimeBrief? - Comparison page."""
         return render_template('why.html')
     
     @app.route('/review')
@@ -316,15 +362,29 @@ def register_routes(app):
             matter_vocab = []
             for m in matters:
                 matter_vocab.append(m.display_name)
-                matter_vocab.append(m.client)
-                if m.aliases:
-                    matter_vocab.extend(m.aliases)
+                if m.client:
+                    matter_vocab.append(m.client)
+                for alias in (m.aliases or []):
+                    matter_vocab.append(alias.alias)
             
             activities = session.query(ActivityType).all()
-            activity_vocab = [a.name for a in activities]
+            activity_vocab = [a.label for a in activities]
             
-            transcriber.set_vocabulary(matter_vocab, activity_vocab)
-            result['vocabulary_loaded'] = len(matter_vocab)
+            # Add today's planned tasks to vocabulary
+            today = date.today()
+            plan = session.query(DayPlan).filter(DayPlan.date == today).first()
+            task_vocab = []
+            if plan:
+                tasks = session.query(PlannedTask).filter(PlannedTask.day_plan_id == plan.id).all()
+                for task in tasks:
+                    if task.title:
+                        task_vocab.append(task.title)
+                        task_vocab.extend(task.title.split())
+            
+            full_vocab = matter_vocab + task_vocab
+            transcriber.set_vocabulary(full_vocab, activity_vocab)
+            result['vocabulary_loaded'] = len(full_vocab)
+            result['planned_tasks_loaded'] = len(task_vocab)
             
             result['stage'] = 'transcriber_created'
             
@@ -526,7 +586,7 @@ def register_routes(app):
     
     @app.route('/api/llm-model', methods=['POST'])
     def set_llm_model():
-        """Switch Ollama LLM model."""
+        """Switch Ollama LLM model - pulls if needed."""
         import yaml
         import subprocess
         
@@ -553,22 +613,102 @@ def register_routes(app):
             with open(config_path, 'w') as f:
                 yaml.dump(config_data, f, default_flow_style=False)
         
-        # Try to pull the model in background (don't block)
+        # Pull the model synchronously so user knows when it's ready
         try:
-            subprocess.Popen(
+            result = subprocess.run(
                 ['ollama', 'pull', new_model],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 min timeout
             )
-        except:
-            pass  # Model will be pulled on first use anyway
+            if result.returncode == 0:
+                return jsonify({
+                    'success': True,
+                    'message': f'Model {new_model} ready!',
+                    'model': new_model,
+                    'downloaded': True
+                })
+            else:
+                return jsonify({
+                    'success': True,
+                    'message': f'Config saved but download failed: {result.stderr[:100]}',
+                    'model': new_model,
+                    'downloaded': False
+                })
+        except subprocess.TimeoutExpired:
+            return jsonify({
+                'success': True,
+                'message': 'Download taking too long - continuing in background',
+                'model': new_model,
+                'downloaded': False
+            })
+        except Exception as e:
+            return jsonify({
+                'success': True,
+                'message': f'Config saved. Run "ollama pull {new_model}" manually.',
+                'model': new_model,
+                'downloaded': False,
+                'error': str(e)
+            })
+    
+    @app.route('/api/hardware')
+    def get_hardware():
+        """Detect hardware for model recommendations."""
+        import platform
+        import os
         
-        return jsonify({
-            'success': True,
-            'message': f'LLM changed from {old_model} to {new_model}. Model will download if needed.',
-            'model': new_model
-        })
+        hw = {
+            'cpu': platform.processor() or 'Unknown',
+            'ram_gb': 0,
+            'gpu': None,
+            'vram_gb': 0,
+            'recommended_llm': 'qwen2.5:1.5b-instruct',
+            'recommended_whisper': 'base.en'
+        }
+        
+        # Get RAM
+        try:
+            import psutil
+            hw['ram_gb'] = round(psutil.virtual_memory().total / (1024**3))
+        except:
+            pass
+        
+        # Check for NVIDIA GPU
+        try:
+            import subprocess
+            result = subprocess.run(
+                ['nvidia-smi', '--query-gpu=name,memory.total', '--format=csv,noheader,nounits'],
+                capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                parts = result.stdout.strip().split(',')
+                hw['gpu'] = parts[0].strip()
+                hw['vram_gb'] = round(int(parts[1].strip()) / 1024) if len(parts) > 1 else 0
+        except:
+            pass
+        
+        # Recommendations based on hardware
+        vram = hw['vram_gb']
+        ram = hw['ram_gb']
+        
+        if vram >= 8:
+            hw['recommended_llm'] = 'qwen2.5:7b-instruct'
+            hw['recommended_whisper'] = 'medium.en'
+            hw['tier'] = 'high'
+        elif vram >= 4 or ram >= 32:
+            hw['recommended_llm'] = 'qwen2.5:3b-instruct'
+            hw['recommended_whisper'] = 'small.en'
+            hw['tier'] = 'medium'
+        elif ram >= 16:
+            hw['recommended_llm'] = 'qwen2.5:1.5b-instruct'
+            hw['recommended_whisper'] = 'base.en'
+            hw['tier'] = 'standard'
+        else:
+            hw['recommended_llm'] = 'qwen2.5:0.5b-instruct'
+            hw['recommended_whisper'] = 'tiny.en'
+            hw['tier'] = 'basic'
+        
+        return jsonify(hw)
     
     @app.route('/api/llm-test', methods=['POST'])
     def test_llm():
@@ -592,6 +732,16 @@ def register_routes(app):
                 'message': 'LLM is responding'
             })
         except Exception as e:
+            error_str = str(e)
+            # Check if model needs downloading
+            if '404' in error_str or 'not found' in error_str.lower():
+                return jsonify({
+                    'success': False,
+                    'model': app.config_obj.ollama.model,
+                    'error': f'Model not downloaded yet. Run: ollama pull {app.config_obj.ollama.model}',
+                    'needs_download': True,
+                    'message': 'Model needs to be downloaded first'
+                })
             return jsonify({
                 'success': False,
                 'model': app.config_obj.ollama.model,
@@ -888,12 +1038,27 @@ def register_routes(app):
                 matter_vocab.append(m.display_name)
                 matter_vocab.append(m.client)
                 if m.aliases:
-                    matter_vocab.extend(m.aliases)
+                    matter_vocab.extend([alias.alias for alias in m.aliases])
             
             activities = session.query(ActivityType).all()
-            activity_vocab = [a.name for a in activities]
+            activity_vocab = [a.label for a in activities]
             
-            transcriber.set_vocabulary(matter_vocab, activity_vocab)
+            # Add today's planned tasks to vocabulary for better recognition
+            today = date.today()
+            plan = session.query(DayPlan).filter(DayPlan.date == today).first()
+            task_vocab = []
+            if plan:
+                tasks = session.query(PlannedTask).filter(PlannedTask.day_plan_id == plan.id).all()
+                for task in tasks:
+                    # Add task titles (e.g., "write letter to opposing counsel")
+                    if task.title:
+                        task_vocab.append(task.title)
+                        # Also add individual words from task
+                        task_vocab.extend(task.title.split())
+            
+            # Combine all vocabulary
+            full_vocab = matter_vocab + task_vocab
+            transcriber.set_vocabulary(full_vocab, activity_vocab)
             
             transcript = transcriber.transcribe_file(tmp_path)
             
@@ -1043,6 +1208,8 @@ def register_routes(app):
         log_id = data.get('log_id')
         duration = data.get('duration')
         narrative = data.get('narrative')
+        matter_id = data.get('matter_id')
+        activity_id = data.get('activity_id')
         
         session = app.session
         log = session.query(WorkLog).get(log_id)
@@ -1055,6 +1222,12 @@ def register_routes(app):
         
         if narrative is not None:
             log.narrative = narrative
+        
+        if matter_id is not None:
+            log.matter_id = matter_id if matter_id else None
+        
+        if activity_id is not None:
+            log.activity_type_id = activity_id if activity_id else None
         
         session.commit()
         
@@ -1336,3 +1509,375 @@ def register_routes(app):
             allocation_status='allocated'
         )
         session.add(log)
+    
+    # ========== Planning API ==========
+    
+    @app.route('/api/transcribe', methods=['POST'])
+    def transcribe_audio():
+        """Transcribe audio only (no processing) - used by Planning page."""
+        import tempfile
+        import os
+        
+        if 'audio' not in request.files:
+            return jsonify({'success': False, 'transcript': '', 'message': 'No audio file'})
+        
+        audio_file = request.files['audio']
+        
+        try:
+            # Save to temp file
+            with tempfile.NamedTemporaryFile(suffix='.webm', delete=False) as tmp:
+                tmp_path = tmp.name
+            
+            audio_file.save(tmp_path)
+            
+            # Get or create transcriber
+            transcriber = app.transcriber
+            if transcriber is None:
+                from ..voice.transcribe import Transcriber
+                transcriber = Transcriber(
+                    model_size=app.config_obj.whisper.model,
+                    device=app.config_obj.whisper.device
+                )
+                app.transcriber = transcriber
+            
+            # Load vocabulary from database for better recognition
+            session = app.session
+            matters = session.query(Matter).filter(Matter.is_active == True).all()
+            matter_vocab = []
+            for m in matters:
+                matter_vocab.append(m.display_name)
+                if m.client:
+                    matter_vocab.append(m.client)
+                if m.aliases:
+                    matter_vocab.extend([alias.alias for alias in m.aliases])
+            
+            activities = session.query(ActivityType).all()
+            activity_vocab = [a.label for a in activities]
+            
+            # Add today's planned tasks to vocabulary
+            today = date.today()
+            plan = session.query(DayPlan).filter(DayPlan.date == today).first()
+            task_vocab = []
+            if plan:
+                tasks = session.query(PlannedTask).filter(PlannedTask.day_plan_id == plan.id).all()
+                for task in tasks:
+                    if task.title:
+                        task_vocab.append(task.title)
+                        task_vocab.extend(task.title.split())
+            
+            full_vocab = matter_vocab + task_vocab
+            transcriber.set_vocabulary(full_vocab, activity_vocab)
+            
+            # Transcribe
+            transcript = transcriber.transcribe_file(tmp_path)
+            
+            # Cleanup
+            try:
+                os.unlink(tmp_path)
+            except:
+                pass
+            
+            return jsonify({
+                'success': True,
+                'transcript': transcript or ''
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'transcript': '',
+                'message': str(e)
+            })
+    
+    @app.route('/api/plan/add-task', methods=['POST'])
+    def add_plan_task():
+        """Add a single task to today's plan."""
+        session = app.session
+        data = request.json
+        
+        description = data.get('description', '').strip()
+        matter_id = data.get('matter_id')
+        activity_id = data.get('activity_id')
+        
+        if not description:
+            return jsonify({'success': False, 'message': 'Description required'})
+        
+        today = date.today()
+        
+        # Get or create today's plan
+        plan = session.query(DayPlan).filter(DayPlan.date == today).first()
+        if not plan:
+            plan = DayPlan(date=today)
+            session.add(plan)
+            session.commit()
+        
+        # If no matter specified, try to detect from description
+        detected_matter = None
+        detected_activity = None
+        
+        if not matter_id:
+            # Try fuzzy matching
+            from ..core.matcher import Matcher
+            matcher = Matcher(session)
+            
+            match = matcher.find_matter(description)
+            if match.confidence > 0.6:
+                detected_matter = match.matter
+                matter_id = detected_matter.id
+            
+            activity_match = matcher.find_activity_type(description)
+            if activity_match:
+                detected_activity = activity_match
+                activity_id = detected_activity.id
+        
+        # Get next sort order
+        max_order = session.query(PlannedTask).filter(
+            PlannedTask.day_plan_id == plan.id
+        ).count()
+        
+        # Create task
+        task = PlannedTask(
+            day_plan_id=plan.id,
+            matter_id=matter_id if matter_id else None,
+            activity_type_id=activity_id if activity_id else None,
+            title=description,
+            sort_order=max_order + 1,
+            status='pending'
+        )
+        session.add(task)
+        session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Task added',
+            'task_id': task.id,
+            'task_title': description,
+            'matter_detected': detected_matter.display_name if detected_matter else None,
+            'activity_detected': detected_activity.label if detected_activity else None
+        })
+    
+    @app.route('/api/plan/delete-task/<task_id>', methods=['DELETE'])
+    def delete_plan_task(task_id):
+        """Delete a task from the plan."""
+        session = app.session
+        
+        task = session.query(PlannedTask).filter(PlannedTask.id == task_id).first()
+        if not task:
+            return jsonify({'success': False, 'message': 'Task not found'})
+        
+        session.delete(task)
+        session.commit()
+        
+        return jsonify({'success': True, 'message': 'Task deleted'})
+    
+    @app.route('/api/plan/task/<task_id>/complete', methods=['PATCH'])
+    def complete_plan_task(task_id):
+        """Mark a task as complete or incomplete."""
+        session = app.session
+        data = request.json
+        
+        task = session.query(PlannedTask).filter(PlannedTask.id == task_id).first()
+        if not task:
+            return jsonify({'success': False, 'message': 'Task not found'})
+        
+        completed = data.get('completed', False)
+        task.status = 'done' if completed else 'pending'
+        session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Task marked as ' + ('complete' if completed else 'incomplete'),
+            'status': task.status
+        })
+    
+    @app.route('/api/plan/task/<task_id>/carry-over', methods=['POST'])
+    def carry_over_task(task_id):
+        """Move an incomplete task from a previous day to today's plan."""
+        session = app.session
+        
+        # Find the original task
+        original_task = session.query(PlannedTask).filter(PlannedTask.id == task_id).first()
+        if not original_task:
+            return jsonify({'success': False, 'message': 'Task not found'})
+        
+        today = date.today()
+        
+        # Get or create today's plan
+        today_plan = session.query(DayPlan).filter(DayPlan.date == today).first()
+        if not today_plan:
+            today_plan = DayPlan(date=today)
+            session.add(today_plan)
+            session.commit()
+        
+        # Get next sort order for today
+        max_order = session.query(PlannedTask).filter(
+            PlannedTask.day_plan_id == today_plan.id
+        ).count()
+        
+        # Create new task in today's plan
+        new_task = PlannedTask(
+            day_plan_id=today_plan.id,
+            matter_id=original_task.matter_id,
+            activity_type_id=original_task.activity_type_id,
+            title=original_task.title,
+            estimated_hours=original_task.estimated_hours,
+            sort_order=max_order + 1,
+            status='pending'
+        )
+        session.add(new_task)
+        
+        # Delete the original task
+        session.delete(original_task)
+        session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Task moved to today',
+            'new_task_id': new_task.id
+        })
+    
+    # =========================================================================
+    # Voice Memos
+    # =========================================================================
+    
+    @app.route('/memos')
+    def memos():
+        """Voice Memos page - free-form dictation for case notes."""
+        from ..database.models import Memo, MemoAction
+        session = app.session
+        
+        # Get active matters
+        matters = session.query(Matter).filter(Matter.is_active == True).order_by(Matter.last_used_at.desc()).all()
+        
+        # Get recent memos
+        recent_memos = session.query(Memo).order_by(Memo.created_at.desc()).limit(20).all()
+        
+        # Get pending actions (not completed)
+        pending_actions = session.query(MemoAction).filter(
+            MemoAction.is_completed == False
+        ).order_by(MemoAction.created_at.desc()).all()
+        
+        return render_template('memos.html', matters=matters, memos=recent_memos, pending_actions=pending_actions)
+    
+    @app.route('/api/memos', methods=['POST'])
+    def save_memo():
+        """Save a voice memo with separate thoughts and actions."""
+        from ..database.models import Memo, MemoAction
+        from datetime import timedelta
+        session = app.session
+        
+        data = request.get_json()
+        matter_id = data.get('matter_id')
+        thoughts = data.get('thoughts', '').strip()
+        actions_text = data.get('actions', '').strip()
+        duration = data.get('duration_seconds', 0)
+        
+        if not matter_id:
+            return jsonify({'success': False, 'message': 'Matter required'})
+        
+        if not thoughts and not actions_text:
+            return jsonify({'success': False, 'message': 'Please dictate thoughts or actions'})
+        
+        # Create memo
+        memo = Memo(
+            matter_id=matter_id,
+            thoughts=thoughts or '',
+            duration_seconds=duration
+        )
+        session.add(memo)
+        session.flush()  # Get memo.id
+        
+        # Parse and create action items
+        action_items = []
+        if actions_text:
+            # Split by newlines and common separators
+            lines = actions_text.replace('. ', '.\n').split('\n')
+            for line in lines:
+                line = line.strip()
+                # Remove bullet points, numbers, dashes
+                line = line.lstrip('•-*0123456789.) ')
+                if line and len(line) > 3:
+                    action = MemoAction(
+                        memo_id=memo.id,
+                        matter_id=matter_id,
+                        description=line,
+                        due_date=date.today() + timedelta(days=1)  # Show in tomorrow's planning
+                    )
+                    session.add(action)
+                    action_items.append(line)
+        
+        # Touch the matter (update recency)
+        matter = session.query(Matter).filter(Matter.id == matter_id).first()
+        if matter:
+            matter.touch()
+        
+        session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Memo saved with {len(action_items)} action(s)',
+            'memo_id': memo.id,
+            'actions_count': len(action_items)
+        })
+    
+    @app.route('/api/memo-actions/<action_id>', methods=['PATCH'])
+    def update_memo_action(action_id):
+        """Toggle action completion status."""
+        from ..database.models import MemoAction
+        session = app.session
+        
+        data = request.get_json()
+        is_completed = data.get('is_completed', False)
+        
+        action = session.query(MemoAction).filter(MemoAction.id == action_id).first()
+        if not action:
+            return jsonify({'success': False, 'message': 'Action not found'})
+        
+        action.is_completed = is_completed
+        action.completed_at = datetime.now() if is_completed else None
+        session.commit()
+        
+        return jsonify({'success': True})
+    
+    @app.route('/api/memos/<matter_id>')
+    def get_memos_for_matter(matter_id):
+        """Get all memos for a specific matter."""
+        from ..database.models import Memo
+        session = app.session
+        
+        memos = session.query(Memo).filter(
+            Memo.matter_id == matter_id
+        ).order_by(Memo.created_at.desc()).all()
+        
+        return jsonify({
+            'memos': [{
+                'id': m.id,
+                'thoughts': m.thoughts,
+                'actions': [{'id': a.id, 'description': a.description, 'is_completed': a.is_completed} for a in m.actions],
+                'created_at': m.created_at.isoformat(),
+                'duration_seconds': m.duration_seconds
+            } for m in memos]
+        })
+    
+    @app.route('/api/match-matter', methods=['POST'])
+    def match_matter():
+        """Match spoken text to a matter."""
+        from ..core.matcher import Matcher
+        session = app.session
+        
+        data = request.get_json()
+        text = data.get('text', '').strip()
+        
+        if not text:
+            return jsonify({'matter_id': None, 'matter_name': None})
+        
+        matcher = Matcher(session)
+        match = matcher.find_matter(text)
+        
+        if match.confidence > 0.5:
+            return jsonify({
+                'matter_id': match.matter.id,
+                'matter_name': match.matter.display_name,
+                'confidence': match.confidence
+            })
+        
+        return jsonify({'matter_id': None, 'matter_name': None})
