@@ -5,11 +5,20 @@ REM Check if Ollama is installed
 ollama --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo.
-    echo ERROR: Ollama is not installed!
+    echo Ollama is not installed yet.
+    echo Installing automatically...
     echo.
-    echo Please install Ollama from: https://ollama.ai
+    
+    call install_ollama.bat
+    if %errorlevel% neq 0 (
+        echo.
+        echo ERROR: Could not install Ollama automatically
+        exit /b 1
+    )
+    
     echo.
-    exit /b 1
+    echo Ollama installed! Continuing...
+    echo.
 )
 
 REM Check if Ollama is already running
