@@ -243,12 +243,11 @@
 </div>
 
 <div class="card input-area">
-    <h2>🎙️ What are you working on?</h2>
+    <h2>What are you working on?</h2>
     
     <!-- Voice Input (Primary) -->
     <div class="voice-primary">
         <button id="voice-btn" class="voice-btn" onclick="toggleVoiceRecording()">
-            <span id="voice-icon" style="font-size: 1.2em;">🎤</span>
             <span id="voice-text">Press to Talk (or Ctrl+Space)</span>
         </button>
         <div id="mic-status" style="margin-top: 16px; text-align: center; color: var(--text-muted); font-size: 0.95em;">
@@ -509,7 +508,6 @@
             // Update UI
             const voiceBtn = document.getElementById('voice-btn');
             voiceBtn.classList.add('recording');
-            document.getElementById('voice-icon').textContent = '⏹️';
             document.getElementById('voice-text').textContent = 'Recording... Click to Stop';
             updateMicStatus('recording', 'Recording... speak now!');
             
@@ -531,7 +529,6 @@
             // Update UI
             const voiceBtn = document.getElementById('voice-btn');
             voiceBtn.classList.remove('recording');
-            document.getElementById('voice-icon').textContent = '🎤';
             document.getElementById('voice-text').textContent = 'Press to Talk (or Ctrl+Space)';
             updateMicStatus('processing', 'Processing speech...');
         }

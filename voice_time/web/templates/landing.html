@@ -124,13 +124,12 @@
             text-align: center;
         }
         
-        .feature-icon {
-            font-size: 3em;
-            margin-bottom: 24px;
-            background: linear-gradient(135deg, var(--purple), var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .feature-number {
+            font-size: 1.2em;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-family: var(--font-serif);
         }
         
         .feature-title {
@@ -247,56 +246,31 @@
     <!-- Hero -->
     <section class="hero">
         <div class="container">
-            <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap;">
-                <div style="padding: 10px 24px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 24px; font-size: 0.85em; color: var(--primary); font-weight: 600; letter-spacing: 0.05em;">
-                    🎙️ VOICE-CONTROLLED
-                </div>
-                <div style="padding: 10px 24px; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 24px; font-size: 0.85em; color: var(--purple); font-weight: 600; letter-spacing: 0.05em;">
-                    🔒 100% PRIVATE
-                </div>
-                <div style="padding: 10px 24px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 24px; font-size: 0.85em; color: var(--success); font-weight: 600; letter-spacing: 0.05em;">
-                    🧠 LOCAL AI
-                </div>
+            <div style="margin-bottom: 16px; font-size: 0.9em; color: var(--primary); font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;">
+                Voice-Controlled · Private · Local AI
             </div>
             
             <h1 class="brand">Voice Time</h1>
             
             <p class="tagline">
-                Press <span style="display: inline-block; background: var(--bg-card); padding: 8px 20px; border-radius: 4px; font-family: monospace; color: var(--primary); font-weight: 700; border: 1px solid var(--border);">Ctrl+Space</span>. 
-                Speak. Done.<br>
-                Cutting-edge local AI. Absolute privacy. Zero cloud dependency.
+                Press Ctrl+Space. Speak. Done.<br>
+                Time recording that actually works.
             </p>
             
-            <div style="margin: 48px 0; padding: 32px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(245, 158, 11, 0.1)); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <div style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.1em;">
-                    Example Voice Commands
-                </div>
-                <div style="text-align: left; color: var(--text-main); line-height: 2.2; font-size: 1.05em;">
-                    🎙️ <em style="color: var(--primary);">"Working on Thompson disclosure"</em><br>
-                    🎙️ <em style="color: var(--purple);">"Done with that"</em><br>
-                    🎙️ <em style="color: var(--primary);">"Quick call about Brown"</em><br>
-                    🎙️ <em style="color: var(--purple);">"Back to what I was doing"</em>
-                </div>
-                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.9em;">
-                    → System logs time, generates narratives, tracks context automatically
-                </div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 800px; margin: 48px auto;">
-                <div style="text-align: center; padding: 24px; background: var(--bg-card); border-radius: 8px; border-top: 3px solid var(--primary);">
-                    <div style="font-size: 2em; margin-bottom: 8px;">🎙️</div>
-                    <div style="color: var(--text-main); font-weight: 600; margin-bottom: 4px;">Voice First</div>
-                    <div style="color: var(--text-muted); font-size: 0.9em;">Speak naturally</div>
-                </div>
-                <div style="text-align: center; padding: 24px; background: var(--bg-card); border-radius: 8px; border-top: 3px solid var(--purple);">
-                    <div style="font-size: 2em; margin-bottom: 8px;">🔒</div>
-                    <div style="color: var(--text-main); font-weight: 600; margin-bottom: 4px;">Fully Private</div>
-                    <div style="color: var(--text-muted); font-size: 0.9em;">Never leaves machine</div>
-                </div>
-                <div style="text-align: center; padding: 24px; background: var(--bg-card); border-radius: 8px; border-top: 3px solid var(--success);">
-                    <div style="font-size: 2em; margin-bottom: 8px;">🧠</div>
-                    <div style="color: var(--text-main); font-weight: 600; margin-bottom: 4px;">Local AI</div>
-                    <div style="color: var(--text-muted); font-size: 0.9em;">Cutting-edge models</div>
+            <div style="max-width: 600px; margin: 48px auto; padding-left: 32px; border-left: 3px solid var(--primary);">
+                <div style="color: var(--text-muted); line-height: 1.9; font-size: 1.1em;">
+                    <p style="margin-bottom: 20px;">
+                        <em>"Working on Thompson disclosure"</em>
+                    </p>
+                    <p style="margin-bottom: 20px;">
+                        <em>"Done with that"</em>
+                    </p>
+                    <p style="margin-bottom: 20px;">
+                        <em>"Quick call about Brown"</em>
+                    </p>
+                    <p>
+                        <em>"Back to what I was doing"</em>
+                    </p>
                 </div>
             </div>
             
@@ -393,57 +367,56 @@
             
             <div class="features-grid">
                 <div class="feature">
-                    <div class="feature-icon">🔒</div>
+                    <div class="feature-number">01</div>
                     <h3 class="feature-title">Absolute Privacy</h3>
                     <p class="feature-desc">
-                        Everything runs locally. Voice processing, AI inference, all data - stays on your machine. 
+                        Everything runs locally. Voice processing, AI inference, all data stays on your machine. 
                         No cloud, no third parties, no data breaches. Client confidentiality guaranteed.
                     </p>
                 </div>
                 
                 <div class="feature">
-                    <div class="feature-icon">⚡</div>
+                    <div class="feature-number">02</div>
                     <h3 class="feature-title">GPU Acceleration</h3>
                     <p class="feature-desc">
-                        Auto-detects your hardware. NVIDIA CUDA for RTX GPUs, optimized int8 for AMD Ryzen, 
-                        intelligent fallback to CPU. Sub-200ms transcription on modern laptops.
+                        Auto-detects your hardware. NVIDIA CUDA for RTX GPUs, optimized int8 for AMD Ryzen. 
+                        Sub-200ms transcription on modern laptops.
                     </p>
                 </div>
                 
                 <div class="feature">
-                    <div class="feature-icon">🎯</div>
+                    <div class="feature-number">03</div>
                     <h3 class="feature-title">Fast Path Architecture</h3>
                     <p class="feature-desc">
-                        80% of during-day commands process without LLM using heuristics and fuzzy matching. 
-                        Sub-second response. LLM only for complex planning and narrative generation.
+                        80% of commands process without LLM using heuristics and fuzzy matching. 
+                        Sub-second response. LLM only for complex planning.
                     </p>
                 </div>
                 
                 <div class="feature">
-                    <div class="feature-icon">🧠</div>
+                    <div class="feature-number">04</div>
                     <h3 class="feature-title">Small, Fast LLM</h3>
                     <p class="feature-desc">
-                        Qwen 1.5B runs locally on CPU. Excellent JSON parsing for plans, professional narrative 
-                        generation. 200-400ms inference. No OpenAI API, no internet required.
+                        Qwen 1.5B runs locally on CPU. Professional narrative generation. 
+                        200-400ms inference. No OpenAI API, no internet required.
                     </p>
                 </div>
                 
                 <div class="feature">
-                    <div class="feature-icon">📊</div>
+                    <div class="feature-number">05</div>
                     <h3 class="feature-title">Recency Weighting</h3>
                     <p class="feature-desc">
-                        Matters used today score 2x higher in matching. "Smith" resolves to the Smith you're 
-                        actually working on, not the Smith from last month. Context-aware intelligence.
+                        Matters used today score higher in matching. Context-aware intelligence 
+                        that understands what you're actually working on.
                     </p>
                 </div>
                 
                 <div class="feature">
-                    <div class="feature-icon">🎙️</div>
-                    <h3 class="feature-title">Voice-First Design</h3>
+                    <div class="feature-number">06</div>
+                    <h3 class="feature-title">Voice First</h3>
                     <p class="feature-desc">
-                        Press Ctrl+Space, speak naturally, release. That's it. No wake words, no constant listening. 
-                        "Working on Thompson" → logs time. "Done with that" → generates narrative. 
-                        Voice is the primary interface, typing is backup.
+                        Press Ctrl+Space, speak naturally, release. No wake words, no constant listening. 
+                        Voice is primary, typing is backup.
                     </p>
                 </div>
             </div>
@@ -461,7 +434,7 @@
                         Traditional Systems
                     </div>
                     <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 32px; border-radius: 8px; min-height: 300px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="font-size: 2.5em; margin-bottom: 16px;">🖱️</div>
+                        <div style="font-size: 1.5em; margin-bottom: 16px; color: var(--text-muted); font-family: var(--font-serif);">Traditional</div>
                         <div style="color: var(--text-muted); line-height: 2;">
                             Click dropdown<br>
                             Select matter<br>
@@ -483,7 +456,7 @@
                         Voice Time
                     </div>
                     <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(245, 158, 11, 0.15)); border: 1px solid var(--primary); padding: 32px; border-radius: 8px; min-height: 300px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="font-size: 2.5em; margin-bottom: 16px;">🎙️</div>
+                        <div style="font-size: 1.5em; margin-bottom: 16px; color: var(--primary); font-family: var(--font-serif);">Voice Time</div>
                         <div style="color: var(--text-main); line-height: 2.5; font-size: 1.1em;">
                             <div style="background: var(--bg-card); padding: 8px 16px; border-radius: 4px; margin-bottom: 8px;">
                                 <span style="font-family: monospace; color: var(--primary); font-weight: 700;">Ctrl+Space</span>
