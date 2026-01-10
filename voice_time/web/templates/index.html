@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - TimeBrief{% endblock %}
+{% block title %}Timer - TimeBrief{% endblock %}
 
 {% block styles %}
 <style>
@@ -490,16 +490,17 @@
 </div>
 {% endif %}
 
-<!-- Voice/Text Input -->
+<!-- Voice/Text Input for Timer -->
 <div class="card input-area">
-    <h2 style="font-size: 1.1em; margin-bottom: 16px; color: var(--text-muted); font-weight: 500;">Voice Command</h2>
+    <h2 style="font-size: 1.1em; margin-bottom: 8px; color: var(--text-main); font-weight: 600;">Start Timer by Voice</h2>
+    <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 16px;">Say "Working on [matter]" or "Done" to stop</p>
     
     <button id="voice-btn" class="voice-btn" onclick="toggleVoiceRecording()">
         <span id="voice-text">Press to Talk (Ctrl+Space)</span>
     </button>
     
     <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
-        <input type="text" id="utterance-input" placeholder="Or type: 'Working on Smith matter' or 'Done with disclosure'">
+        <input type="text" id="utterance-input" placeholder="Or type: 'Working on Smith' or 'Done'">
         <div style="display: flex; gap: 8px;">
             <button class="btn" onclick="processInput()" style="flex: 1;">Submit</button>
             <button class="btn" onclick="clearInput()" style="background: var(--bg-hover); color: var(--text-muted);">Clear</button>
@@ -516,6 +517,10 @@
     </div>
     
     <div id="response-message" style="margin-top: 16px;"></div>
+    
+    <div style="margin-top: 16px; padding: 12px; background: var(--bg-sidebar); border-radius: var(--radius-sm); font-size: 0.85em; color: var(--text-muted);">
+        <strong>Voice commands:</strong> "Working on Smith" | "Starting Thompson disclosure" | "Done" | "Finished"
+    </div>
 </div>
 
 <!-- Today's Summary -->

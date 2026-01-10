@@ -24,6 +24,23 @@ def register_routes(app):
         from ..database.sample_data import TUTORIAL_SCENARIOS
         return render_template('tutorial.html', scenarios=TUTORIAL_SCENARIOS)
     
+    @app.route('/planning')
+    def planning():
+        """Day planning page - separate from time recording."""
+        session = app.session
+        
+        # Get today's plan
+        today = date.today()
+        plan = session.query(DayPlan).filter(DayPlan.date == today).first()
+        
+        tasks = []
+        if plan:
+            tasks = session.query(PlannedTask).filter(
+                PlannedTask.day_plan_id == plan.id
+            ).order_by(PlannedTask.sort_order).all()
+        
+        return render_template('planning.html', tasks=tasks)
+    
     @app.route('/why')
     def why():
         """Why Voice Time? - Comparison page."""

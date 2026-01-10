@@ -11,7 +11,7 @@ from .stack import TaskStack, TaskContext
 from .edit_commands import EditCommandParser
 from ..database.models import (
     Matter, ActivityType, DayPlan, PlannedTask,
-    WorkLog, VoiceEvent
+    WorkLog, VoiceEvent, ActiveTimer
 )
 from ..llm.client import OllamaClient
 from ..llm.parser import PlanParser
@@ -154,10 +154,25 @@ class DayState:
             matter_match = self.matter_matcher.find_matter(utterance)
             
             if matter_match.match:
-                # Got a valid matter - now process the original intent
+                # Got a valid matter - now START A TIMER
                 self.pending_clarification = None
                 
-                # Start work on this matter
+                # Stop any existing timer first
+                existing_timer = self.session.query(ActiveTimer).first()
+                if existing_timer:
+                    self._save_timer_to_log(existing_timer)
+                    self.session.delete(existing_timer)
+                
+                # Create new timer
+                new_timer = ActiveTimer(
+                    matter_id=matter_match.match.id,
+                    activity_type_id=None,
+                    started_at=datetime.now(),
+                    is_active=True
+                )
+                self.session.add(new_timer)
+                
+                # Update internal state
                 self.active_matter_id = matter_match.match.id
                 self.active_activity_type_id = None
                 self.current_work_started_at = datetime.now()
@@ -169,7 +184,7 @@ class DayState:
                 
                 return ProcessingResult(
                     success=True,
-                    message=f"Started: {matter_match.match.display_name}"
+                    message=f"Timer started: {matter_match.match.display_name}"
                 )
             else:
                 # Still can't find matter - give up and clear state
@@ -463,11 +478,7 @@ class DayState:
         )
     
     def _handle_start(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
-        """Handle starting work on a task."""
-        # Close current work if any
-        if self.current_work_started_at:
-            self._close_current_work(utterance)
-        
+        """Handle starting work on a task - CREATES AN ACTUAL TIMER."""
         # Extract matter and activity
         matter_match = self.matter_matcher.find_matter(utterance)
         activity_match = self.activity_matcher.find_activity_type(utterance)
@@ -502,9 +513,25 @@ class DayState:
                     data={'available': available}
                 )
         
-        # Start new work block
+        # Stop any existing timer first and save it
+        existing_timer = self.session.query(ActiveTimer).first()
+        if existing_timer:
+            self._save_timer_to_log(existing_timer)
+            self.session.delete(existing_timer)
+        
+        # Create a NEW ActiveTimer in the database
+        activity_id = activity_match.match.id if activity_match.match else None
+        new_timer = ActiveTimer(
+            matter_id=matter_match.match.id,
+            activity_type_id=activity_id,
+            started_at=datetime.now(),
+            is_active=True
+        )
+        self.session.add(new_timer)
+        
+        # Also update internal state for consistency
         self.active_matter_id = matter_match.match.id
-        self.active_activity_type_id = activity_match.match.id if activity_match.match else None
+        self.active_activity_type_id = activity_id
         self.current_work_started_at = datetime.now()
         
         # Touch the matter (update recency)
@@ -516,45 +543,81 @@ class DayState:
         
         return ProcessingResult(
             success=True,
-            message=f"Started: {matter_name} - {activity_name}"
+            message=f"Timer started: {matter_name} - {activity_name}"
         )
     
+    def _save_timer_to_log(self, timer: ActiveTimer, narrative: str = None):
+        """Save an ActiveTimer to the work log."""
+        import math
+        
+        # Calculate hours (minimum 0.1 = 1 unit)
+        elapsed_seconds = timer.elapsed_seconds
+        units = math.ceil(elapsed_seconds / 360)  # 6 min = 360 sec
+        hours = max(0.1, units * 0.1)
+        
+        log = WorkLog(
+            matter_id=timer.matter_id,
+            activity_type_id=timer.activity_type_id,
+            started_at=timer.created_at,
+            ended_at=datetime.now(),
+            duration_hours=hours,
+            narrative=narrative or timer.narrative_draft,
+            allocation_status='allocated'
+        )
+        self.session.add(log)
+    
     def _handle_complete(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
-        """Handle completing a task."""
-        if not self.current_work_started_at:
+        """Handle completing a task - STOPS THE ACTIVE TIMER."""
+        import math
+        
+        # Check for active timer in database
+        active_timer = self.session.query(ActiveTimer).first()
+        
+        if not active_timer and not self.current_work_started_at:
             return self._handle_log_historical(utterance, event)
         
-        # Infer duration
-        duration_result = self.temporal_parser.infer_duration(
-            utterance,
-            self.current_work_started_at,
-            datetime.now()
-        )
-        
-        # Get matter and activity
-        matter = self.session.query(Matter).get(self.active_matter_id)
-        activity = self.session.query(ActivityType).get(self.active_activity_type_id)
+        # Get matter and activity from timer or internal state
+        if active_timer:
+            matter = active_timer.matter
+            activity = active_timer.activity_type
+            started_at = active_timer.created_at
+            elapsed_seconds = active_timer.elapsed_seconds
+            units = math.ceil(elapsed_seconds / 360)
+            duration_hours = max(0.1, units * 0.1)
+        else:
+            matter = self.session.query(Matter).get(self.active_matter_id)
+            activity = self.session.query(ActivityType).get(self.active_activity_type_id)
+            started_at = self.current_work_started_at
+            # Infer duration from time elapsed
+            duration_result = self.temporal_parser.infer_duration(
+                utterance, self.current_work_started_at, datetime.now()
+            )
+            duration_hours = duration_result.hours
         
         # Generate narrative
         narrative = self.narrative_generator.generate(
             utterance,
             matter.display_name if matter else "General",
             activity.code if activity else "ADMIN",
-            duration_result.hours
+            duration_hours
         )
         
         # Create work log
         work_log = WorkLog(
-            matter_id=self.active_matter_id,
-            activity_type_id=self.active_activity_type_id,
+            matter_id=matter.id if matter else self.active_matter_id,
+            activity_type_id=activity.id if activity else self.active_activity_type_id,
             planned_task_id=self.active_planned_task_id,
-            started_at=self.current_work_started_at,
+            started_at=started_at,
             ended_at=datetime.now(),
-            duration_hours=duration_result.hours,
+            duration_hours=duration_hours,
             narrative=narrative,
             source_event_id=event.id
         )
         self.session.add(work_log)
+        
+        # Delete active timer
+        if active_timer:
+            self.session.delete(active_timer)
         
         # Mark planned task as done if linked
         if self.active_planned_task_id:
@@ -562,7 +625,7 @@ class DayState:
             if task:
                 task.status = "done"
         
-        # Clear active work
+        # Clear internal state
         self.active_matter_id = None
         self.active_activity_type_id = None
         self.active_planned_task_id = None
@@ -573,10 +636,9 @@ class DayState:
         matter_name = matter.display_name if matter else "General"
         activity_name = activity.label if activity else "work"
         
-        message = f"✓ Logged {duration_result.hours}h to {matter_name} - {activity_name}"
-        
-        if duration_result.needs_confirmation:
-            message += f"\n(Say 'change entry X to Y hours' if incorrect)"
+        # Calculate units for display
+        units_display = int(duration_hours / 0.1)
+        message = f"Stopped: {duration_hours}h ({units_display} units) logged to {matter_name}"
         
         return ProcessingResult(
             success=True,

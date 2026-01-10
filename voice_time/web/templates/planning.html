@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block title %}Plan Your Day - TimeBrief{% endblock %}
+
+{% block styles %}
+<style>
+    .planning-hero {
+        text-align: center;
+        padding: 40px 24px;
+        background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        margin-bottom: 24px;
+    }
+    
+    .planning-hero h1 {
+        font-family: var(--font-serif);
+        font-size: 2em;
+        margin-bottom: 12px;
+    }
+    
+    .planning-hero p {
+        color: var(--text-muted);
+        font-size: 1.1em;
+        max-width: 500px;
+        margin: 0 auto 24px;
+    }
+    
+    .voice-input-large {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .voice-btn-large {
+        width: 100%;
+        padding: 24px;
+        background: var(--primary);
+        color: var(--bg-app);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 1.2em;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 16px;
+    }
+    
+    .voice-btn-large:hover {
+        background: #d97706;
+        transform: translateY(-2px);
+    }
+    
+    .voice-btn-large.recording {
+        background: #ef4444;
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+    
+    .text-input-area {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+    }
+    
+    .text-input-area textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 16px;
+        font-size: 1em;
+        font-family: var(--font-sans);
+        background: var(--bg-sidebar);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        color: var(--text-main);
+        resize: vertical;
+    }
+    
+    .text-input-area textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    
+    .example-box {
+        background: var(--bg-sidebar);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        margin-top: 24px;
+    }
+    
+    .example-box h3 {
+        font-size: 0.9em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 12px;
+    }
+    
+    .example-text {
+        font-style: italic;
+        color: var(--text-main);
+        line-height: 1.6;
+    }
+    
+    /* Today's Plan */
+    .plan-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+    }
+    
+    .task-list {
+        list-style: none;
+    }
+    
+    .task-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px;
+        background: var(--bg-hover);
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
+    }
+    
+    .task-number {
+        width: 32px;
+        height: 32px;
+        background: var(--primary);
+        color: var(--bg-app);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9em;
+        flex-shrink: 0;
+    }
+    
+    .task-item.done .task-number {
+        background: var(--success);
+    }
+    
+    .task-content {
+        flex: 1;
+    }
+    
+    .task-matter {
+        font-weight: 600;
+        color: var(--text-main);
+    }
+    
+    .task-title {
+        color: var(--text-muted);
+        font-size: 0.95em;
+        margin-top: 4px;
+    }
+    
+    .task-estimate {
+        font-size: 0.85em;
+        color: var(--primary);
+        margin-top: 4px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+    }
+    
+    #response-message {
+        margin-top: 16px;
+    }
+    
+    #processing-status {
+        margin-top: 12px;
+        padding: 12px;
+        background: var(--purple-dim);
+        border-radius: var(--radius-sm);
+        text-align: center;
+        color: var(--purple);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="planning-hero">
+    <h1>Plan Your Day</h1>
+    <p>Describe your tasks for today. TimeBrief will create your plan and you can start timers from it.</p>
+    
+    <div class="voice-input-large">
+        <button id="voice-btn" class="voice-btn-large" onclick="toggleRecording()">
+            Press to Talk (Ctrl+Space)
+        </button>
+        
+        <div class="text-input-area">
+            <textarea id="plan-input" placeholder="Or type your plan here..."></textarea>
+            <div style="display: flex; gap: 12px; margin-top: 12px;">
+                <button class="btn" onclick="submitPlan()" style="flex: 1;">Create Plan</button>
+                <button class="btn" onclick="clearInput()" style="background: var(--bg-hover); color: var(--text-muted);">Clear</button>
+            </div>
+        </div>
+        
+        <div id="processing-status" style="display: none;">
+            <span id="processing-stage">Processing...</span>
+        </div>
+        
+        <div id="response-message"></div>
+        
+        <div class="example-box">
+            <h3>Example</h3>
+            <p class="example-text">
+                "Today I need to finish the Thompson disclosure, draft the Brown skeleton argument, 
+                call opposing counsel at 2pm, and review the Acme contracts."
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="plan-section">
+    <h2 style="margin-bottom: 20px;">Today's Plan</h2>
+    
+    {% if tasks %}
+    <ul class="task-list">
+        {% for task in tasks %}
+        <li class="task-item {{ 'done' if task.status == 'done' else '' }}">
+            <div class="task-number">{{ loop.index }}</div>
+            <div class="task-content">
+                <div class="task-matter">
+                    {% if task.matter %}{{ task.matter.display_name }}{% else %}General{% endif %}
+                    {% if task.activity_type %} - {{ task.activity_type.label }}{% endif %}
+                </div>
+                <div class="task-title">{{ task.title }}</div>
+                {% if task.estimated_hours %}
+                <div class="task-estimate">Est: {{ task.estimated_hours }}h</div>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+        <p>No plan for today yet.</p>
+        <p style="font-size: 0.9em; margin-top: 8px;">Use voice or text above to describe your tasks.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    let isRecording = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    
+    async function toggleRecording() {
+        if (!isRecording) {
+            await startRecording();
+        } else {
+            await stopRecording();
+        }
+    }
+    
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, sampleRate: 16000 } });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                await processVoice(audioBlob);
+                stream.getTracks().forEach(track => track.stop());
+            };
+            
+            mediaRecorder.start();
+            isRecording = true;
+            document.getElementById('voice-btn').classList.add('recording');
+            document.getElementById('voice-btn').textContent = 'Recording... Click to Stop';
+        } catch (err) {
+            alert('Could not access microphone');
+        }
+    }
+    
+    async function stopRecording() {
+        if (mediaRecorder && isRecording) {
+            mediaRecorder.stop();
+            isRecording = false;
+            document.getElementById('voice-btn').classList.remove('recording');
+            document.getElementById('voice-btn').textContent = 'Press to Talk (Ctrl+Space)';
+        }
+    }
+    
+    async function processVoice(audioBlob) {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+        
+        showProcessing('Transcribing...');
+        
+        try {
+            const response = await fetch('/process-voice', { method: 'POST', body: formData });
+            const data = await response.json();
+            
+            if (data.transcript) {
+                document.getElementById('plan-input').value = data.transcript;
+                showProcessing('Creating plan...');
+                
+                // Auto-submit if it looks like a plan
+                if (data.transcript.toLowerCase().includes('today') || 
+                    data.transcript.toLowerCase().includes('need to')) {
+                    await submitPlanText(data.transcript);
+                } else {
+                    hideProcessing();
+                    showResponse(data.success, data.message);
+                    if (data.success) {
+                        setTimeout(() => window.location.reload(), 1500);
+                    }
+                }
+            } else {
+                hideProcessing();
+                showResponse(false, 'No speech detected');
+            }
+        } catch (err) {
+            hideProcessing();
+            showResponse(false, 'Error: ' + err.message);
+        }
+    }
+    
+    async function submitPlan() {
+        const text = document.getElementById('plan-input').value.trim();
+        if (!text) return;
+        await submitPlanText(text);
+    }
+    
+    async function submitPlanText(text) {
+        showProcessing('Creating plan...');
+        
+        try {
+            const response = await fetch('/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ utterance: text })
+            });
+            const data = await response.json();
+            
+            hideProcessing();
+            showResponse(data.success, data.message);
+            
+            if (data.success) {
+                setTimeout(() => window.location.reload(), 1500);
+            }
+        } catch (err) {
+            hideProcessing();
+            showResponse(false, 'Error: ' + err.message);
+        }
+    }
+    
+    function showProcessing(stage) {
+        document.getElementById('processing-status').style.display = 'block';
+        document.getElementById('processing-stage').textContent = stage;
+    }
+    
+    function hideProcessing() {
+        document.getElementById('processing-status').style.display = 'none';
+    }
+    
+    function showResponse(success, message) {
+        const div = document.getElementById('response-message');
+        div.innerHTML = `<div class="message ${success ? 'message-success' : 'message-error'}">${message}</div>`;
+    }
+    
+    function clearInput() {
+        document.getElementById('plan-input').value = '';
+        document.getElementById('response-message').innerHTML = '';
+    }
+    
+    // Keyboard shortcuts
+    let recordingStartedByKeyboard = false;
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.code === 'Space' && !isRecording) {
+            e.preventDefault();
+            recordingStartedByKeyboard = true;
+            startRecording();
+        }
+    });
+    
+    document.addEventListener('keyup', function(e) {
+        if (e.code === 'Space' && isRecording && recordingStartedByKeyboard && e.ctrlKey) {
+            e.preventDefault();
+            recordingStartedByKeyboard = false;
+            stopRecording();
+        }
+        if ((e.key === 'Control') && recordingStartedByKeyboard) {
+            recordingStartedByKeyboard = false;
+            if (isRecording) stopRecording();
+        }
+    });
+</script>
+{% endblock %}
