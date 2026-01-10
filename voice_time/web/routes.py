@@ -1036,35 +1036,6 @@ def register_routes(app):
         
         return render_template('plan.html', tasks=tasks)
     
-    @app.route('/review')
-    def review():
-        """End-of-day review."""
-        session = app.session
-        today = date.today()
-        
-        # Get all work logs for today
-        logs = session.query(WorkLog).filter(
-            WorkLog.created_at >= today
-        ).all()
-        
-        # Calculate totals by matter and activity
-        summary = {}
-        for log in logs:
-            matter_name = log.matter.display_name if log.matter else "General"
-            activity_name = log.activity_type.label if log.activity_type else "Unspecified"
-            
-            if matter_name not in summary:
-                summary[matter_name] = {'total': 0.0, 'activities': {}}
-            
-            summary[matter_name]['total'] += log.duration_hours
-            
-            if activity_name not in summary[matter_name]['activities']:
-                summary[matter_name]['activities'][activity_name] = 0.0
-            
-            summary[matter_name]['activities'][activity_name] += log.duration_hours
-        
-        return render_template('review.html', summary=summary, logs=logs)
-    
     @app.route('/update-entry', methods=['POST'])
     def update_entry():
         """Update a work log entry."""
