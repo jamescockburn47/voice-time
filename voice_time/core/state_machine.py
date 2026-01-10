@@ -525,7 +525,20 @@ class DayState:
         )
     
     def _handle_plan(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
-        """Handle morning planning."""
+        """Handle morning planning with follow-up questions."""
+        # Check if input is too vague
+        if len(utterance.strip()) < 15:
+            # Too short - ask for more detail
+            return ProcessingResult(
+                success=False,
+                message="What would you like to plan? Tell me your tasks for today.",
+                needs_clarification=True,
+                clarification_question="plan_tasks",
+                data={
+                    'example': "Today I need to finish Thompson disclosure, draft Brown skeleton, and call counsel"
+                }
+            )
+        
         # Get active matters for context
         matters = self.session.query(Matter).filter(Matter.is_active == True).all()
         matters_data = [
@@ -540,6 +553,17 @@ class DayState:
         # Parse plan using LLM
         parsed = self.plan_parser.parse(utterance, matters_data)
         
+        # Check if LLM found any tasks
+        if not parsed.get("tasks"):
+            # No tasks found - ask for clarification
+            available = self._get_available_matters()
+            return ProcessingResult(
+                success=False,
+                message=f"I couldn't identify any tasks. Try: 'Today I need to work on [matter]'.\n\nAvailable matters: {available}",
+                needs_clarification=True,
+                clarification_question="plan_tasks"
+            )
+        
         # Create or get today's plan
         today = date.today()
         plan = self.session.query(DayPlan).filter(DayPlan.date == today).first()
@@ -552,6 +576,8 @@ class DayState:
         
         # Create planned tasks
         created_tasks = []
+        unmatched_matters = []
+        
         for i, task_data in enumerate(parsed["tasks"]):
             # Resolve matter
             matter = None
@@ -559,6 +585,8 @@ class DayState:
                 match = self.matter_matcher.find_matter(task_data["matter_ref"])
                 if match.match:
                     matter = match.match
+                else:
+                    unmatched_matters.append(task_data["matter_ref"])
             
             # Resolve activity type
             activity = self.session.query(ActivityType).filter(
@@ -584,12 +612,34 @@ class DayState:
         task_count = len(created_tasks)
         matter_count = len(set(t.matter_id for t in created_tasks if t.matter_id))
         
-        message = f"✓ Planned {task_count} task{'s' if task_count != 1 else ''}"
+        message = f"Planned {task_count} task{'s' if task_count != 1 else ''}"
         if matter_count > 0:
             message += f" across {matter_count} matter{'s' if matter_count != 1 else ''}"
         
-        if parsed["unresolved_mentions"]:
-            message += f"\n\nNote: Couldn't identify: {', '.join(parsed['unresolved_mentions'])}"
+        # Check for issues that need follow-up
+        all_unresolved = list(set(unmatched_matters + parsed.get("unresolved_mentions", [])))
+        
+        if all_unresolved:
+            # Some matters weren't matched - ask about them
+            available = self._get_available_matters()
+            message += f"\n\nCouldn't match: {', '.join(all_unresolved)}.\nAvailable: {available}"
+            
+            return ProcessingResult(
+                success=True,
+                message=message,
+                needs_clarification=True,
+                clarification_question="unmatched_matters",
+                data={
+                    "tasks": created_tasks,
+                    "plan_id": plan.id,
+                    "unmatched": all_unresolved
+                }
+            )
+        
+        # Check if any tasks are missing matters
+        tasks_without_matters = [t for t in created_tasks if not t.matter_id]
+        if tasks_without_matters:
+            message += "\n\nSome tasks don't have matters assigned. You can edit them on the Planning page."
         
         return ProcessingResult(
             success=True,

@@ -54,22 +54,27 @@ def get_narrative_prompt(
     user_description: str,
     duration: float
 ) -> str:
-    """Generate narrative generation prompt."""
-    return f'''Generate a professional legal billing narrative from this description.
+    """Generate narrative generation prompt - FAITHFUL to user's words."""
+    return f'''Convert to professional billing narrative. DO NOT INVENT DETAILS.
 
-MATTER: {matter_name}
+USER SAID: "{user_description}"
 ACTIVITY TYPE: {activity_type}
-USER DESCRIPTION: "{user_description}"
-DURATION: {duration} hours
 
-Requirements:
-- Professional, neutral tone suitable for client billing
-- Concise but specific
-- No first person ("I reviewed" → "Review of...")
-- Include key details mentioned
-- Typical length: 10-30 words
+CRITICAL RULES:
+- ONLY include details the user actually mentioned
+- DO NOT add made-up purposes, reasons, or outcomes
+- DO NOT add "client satisfaction", "ensuring compliance", "strategic objectives" etc.
+- Simply rephrase what they said professionally
+- Remove first person ("I reviewed" → "Review of")
+- Keep it brief: 5-15 words
 
-Respond with the narrative only, no explanation.'''
+EXAMPLES:
+- "Looking at the disclosure docs" → "Review of disclosure documents"
+- "Drafting the skeleton" → "Drafting skeleton argument"
+- "Call with client" → "Telephone attendance with client"
+- "Working on the case" → "General case work"
+
+Respond with the narrative only (no quotes, no explanation).'''
 
 
 def get_matter_resolution_prompt(

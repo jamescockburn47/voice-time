@@ -425,6 +425,140 @@
         height: 8px;
         border-radius: 50%;
     }
+    
+    /* Two Column Layout */
+    .page-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 24px;
+    }
+    
+    @media (max-width: 900px) {
+        .page-layout {
+            grid-template-columns: 1fr;
+        }
+        .sidebar {
+            order: 2;
+        }
+    }
+    
+    /* Sidebar */
+    .sidebar {
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+    
+    .sidebar-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-bottom: 16px;
+    }
+    
+    .sidebar-title {
+        font-family: var(--font-serif);
+        font-size: 1.1em;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: var(--text-main);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .sidebar-title a {
+        font-size: 0.75em;
+        color: var(--primary);
+        text-decoration: none;
+        font-family: var(--font-sans);
+        font-weight: 500;
+    }
+    
+    .plan-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .plan-item:last-child {
+        border-bottom: none;
+    }
+    
+    .plan-item:hover {
+        background: var(--bg-hover);
+        margin: 0 -12px;
+        padding: 10px 12px;
+        border-radius: var(--radius-sm);
+    }
+    
+    .plan-item.done {
+        opacity: 0.5;
+    }
+    
+    .plan-number {
+        width: 24px;
+        height: 24px;
+        background: var(--bg-hover);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75em;
+        font-weight: 600;
+        color: var(--text-muted);
+        flex-shrink: 0;
+    }
+    
+    .plan-item.done .plan-number {
+        background: var(--success);
+        color: white;
+    }
+    
+    .plan-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .plan-matter {
+        font-weight: 500;
+        font-size: 0.9em;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .plan-task {
+        font-size: 0.8em;
+        color: var(--text-muted);
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .empty-sidebar {
+        text-align: center;
+        padding: 20px;
+        color: var(--text-muted);
+        font-size: 0.9em;
+    }
+    
+    .empty-sidebar a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+    
+    /* Main content area */
+    .main-content {
+        min-width: 0;
+    }
 </style>
 {% endblock %}
 
@@ -441,6 +575,58 @@
         <span id="mic-status">Checking mic...</span>
     </div>
 </div>
+
+<div class="page-layout">
+
+<!-- Sidebar: Today's Plan -->
+<aside class="sidebar">
+    <div class="sidebar-card">
+        <h3 class="sidebar-title">
+            Today's Plan
+            <a href="/planning">Edit</a>
+        </h3>
+        {% if tasks %}
+        <div class="plan-list">
+            {% for task in tasks %}
+            <div class="plan-item {{ 'done' if task.status == 'done' else '' }}" onclick="startTaskTimer('{{ task.matter.id if task.matter else '' }}', '{{ task.activity_type.id if task.activity_type else '' }}')">
+                <div class="plan-number">{{ loop.index }}</div>
+                <div class="plan-content">
+                    <div class="plan-matter">
+                        {% if task.matter %}{{ task.matter.display_name|truncate(25) }}{% else %}General{% endif %}
+                    </div>
+                    <div class="plan-task">{{ task.title|truncate(30) }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-sidebar">
+            <p>No plan yet</p>
+            <p style="margin-top: 8px;"><a href="/planning">Create your plan</a></p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Quick Summary -->
+    {% if totals %}
+    <div class="sidebar-card">
+        <h3 class="sidebar-title">Today</h3>
+        {% for matter, hours in totals.items() %}
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85em;">
+            <span style="color: var(--text-muted);">{{ matter|truncate(15) }}</span>
+            <span style="color: var(--primary); font-weight: 600;">{{ "%.1f"|format(hours) }}h</span>
+        </div>
+        {% endfor %}
+        <div style="display: flex; justify-content: space-between; padding-top: 8px; margin-top: 8px; border-top: 1px solid var(--border); font-weight: 600;">
+            <span>Total</span>
+            <span style="color: var(--primary);">{{ "%.1f"|format(total_hours) }}h</span>
+        </div>
+    </div>
+    {% endif %}
+</aside>
+
+<!-- Main Content -->
+<div class="main-content">
 
 <!-- Active Timer -->
 {% if active_timer %}
@@ -523,29 +709,6 @@
     </div>
 </div>
 
-<!-- Today's Summary -->
-<div class="card">
-    <h2>Today's Summary</h2>
-    {% if totals %}
-    <div>
-        {% for matter, hours in totals.items() %}
-        <div class="summary-row">
-            <span class="summary-matter">{{ matter }}</span>
-            <span class="summary-hours">{{ "%.1f"|format(hours) }}h ({{ (hours / 0.1)|int }} units)</span>
-        </div>
-        {% endfor %}
-        <div class="summary-row">
-            <span class="summary-matter">Total</span>
-            <span class="summary-hours">{{ "%.1f"|format(total_hours) }}h</span>
-        </div>
-    </div>
-    {% else %}
-    <p style="text-align: center; color: var(--text-muted); padding: 24px;">
-        No time logged yet today
-    </p>
-    {% endif %}
-</div>
-
 <!-- Work Log -->
 <div class="card">
     <h2>Work Log</h2>
@@ -580,6 +743,9 @@
     </p>
     {% endif %}
 </div>
+
+</div><!-- end main-content -->
+</div><!-- end page-layout -->
 
 <!-- Start Timer Modal -->
 <div id="start-timer-modal" class="modal-overlay">
@@ -757,6 +923,35 @@
             }
         } catch (err) {
             alert('Error stopping timer: ' + err.message);
+        }
+    }
+    
+    // Start timer from a planned task in sidebar
+    async function startTaskTimer(matterId, activityId) {
+        if (!matterId) {
+            alert('This task has no matter assigned. Use the Start Timer button instead.');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/timer/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    matter_id: matterId,
+                    activity_id: activityId || null,
+                    narrative: ''
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert('Error starting timer: ' + err.message);
         }
     }
     
