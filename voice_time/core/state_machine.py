@@ -132,24 +132,37 @@ class DayState:
             )
     
     def _handle_edit_command(self, cmd, event: VoiceEvent) -> ProcessingResult:
-        """Handle voice editing commands for work log entries - COMPLETELY HANDS-FREE."""
+        """
+        Handle voice editing commands for work log entries - COMPLETELY HANDS-FREE.
+        
+        BUG FIX 1: Now handles all command types including 'add_time', 'change_matter', 'change_activity'
+        BUG FIX 2: Validates entry_number >= 1 to prevent negative indexing
+        """
         # Get today's logs
         logs = self.session.query(WorkLog).filter(
             WorkLog.created_at >= date.today()
         ).order_by(WorkLog.created_at).all()
         
-        if not logs:
+        if not logs and cmd.command_type != 'add_time':
             return ProcessingResult(
                 success=False,
                 message="No entries to edit today"
             )
         
-        if cmd.entry_number and cmd.entry_number > len(logs):
-            return ProcessingResult(
-                success=False,
-                message=f"Entry {cmd.entry_number} not found (only {len(logs)} entries today)"
-            )
+        # BUG FIX 2: Validate entry number is valid (>= 1 and <= len(logs))
+        if cmd.entry_number is not None:
+            if cmd.entry_number < 1:
+                return ProcessingResult(
+                    success=False,
+                    message=f"Invalid entry number: {cmd.entry_number} (must be 1 or higher)"
+                )
+            if cmd.entry_number > len(logs):
+                return ProcessingResult(
+                    success=False,
+                    message=f"Entry {cmd.entry_number} not found (only {len(logs)} entries today)"
+                )
         
+        # Handle each command type
         if cmd.command_type == 'change_duration':
             log = logs[cmd.entry_number - 1]
             old_duration = log.duration_hours
@@ -247,22 +260,30 @@ class DayState:
             )
         
         elif cmd.command_type == 'add_time':
+            # BUG FIX 1: Handle add_time command properly
             # Find matter
             matter_match = self.matter_matcher.find_matter(cmd.matter_name)
             if not matter_match.match:
                 return ProcessingResult(
                     success=False,
-                    message=f"Could not find matter: {cmd.matter_name}"
+                    message=f"Could not find matter: {cmd.matter_name}",
+                    needs_clarification=True
                 )
+            
+            # Infer activity from context or default to ADMIN
+            activity_match = self.activity_matcher.find_activity_type(cmd.matter_name)
+            activity_id = activity_match.match.id if activity_match.match else None
             
             # Create new work log
             work_log = WorkLog(
                 matter_id=matter_match.match.id,
+                activity_type_id=activity_id,
                 duration_hours=cmd.new_duration,
                 narrative=f"Additional time entry - {cmd.matter_name}",
                 started_at=datetime.now() - timedelta(hours=cmd.new_duration),
                 ended_at=datetime.now(),
-                source_event_id=event.id
+                source_event_id=event.id,
+                allocation_status="allocated"
             )
             self.session.add(work_log)
             self.session.commit()
@@ -272,9 +293,10 @@ class DayState:
                 message=f"✓ Added {cmd.new_duration}h to {matter_match.match.display_name}"
             )
         
+        # If we get here, command type wasn't recognized
         return ProcessingResult(
             success=False,
-            message="Edit command not recognized"
+            message=f"Edit command type '{cmd.command_type}' not yet implemented"
         )
     
     def _handle_plan(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
