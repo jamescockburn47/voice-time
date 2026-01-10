@@ -13,6 +13,11 @@ def register_routes(app):
         from ..database.sample_data import TUTORIAL_SCENARIOS
         return render_template('tutorial.html', scenarios=TUTORIAL_SCENARIOS)
     
+    @app.route('/why')
+    def why():
+        """Why Voice Time? - Comparison page."""
+        return render_template('why.html')
+    
     @app.route('/')
     def index():
         """Main dashboard."""
@@ -132,6 +137,44 @@ def register_routes(app):
             summary[matter_name]['activities'][activity_name] += log.duration_hours
         
         return render_template('review.html', summary=summary, logs=logs)
+    
+    @app.route('/update-entry', methods=['POST'])
+    def update_entry():
+        """Update a work log entry."""
+        data = request.json
+        log_id = data.get('log_id')
+        duration = data.get('duration')
+        narrative = data.get('narrative')
+        
+        session = app.session
+        log = session.query(WorkLog).get(log_id)
+        
+        if not log:
+            return jsonify({'success': False, 'message': 'Entry not found'})
+        
+        if duration is not None:
+            log.duration_hours = float(duration)
+        
+        if narrative is not None:
+            log.narrative = narrative
+        
+        session.commit()
+        
+        return jsonify({'success': True, 'message': 'Entry updated'})
+    
+    @app.route('/delete-entry/<log_id>', methods=['POST'])
+    def delete_entry(log_id):
+        """Delete a work log entry."""
+        session = app.session
+        log = session.query(WorkLog).get(log_id)
+        
+        if not log:
+            return jsonify({'success': False, 'message': 'Entry not found'})
+        
+        session.delete(log)
+        session.commit()
+        
+        return jsonify({'success': True, 'message': 'Entry deleted'})
     
     @app.route('/export/csv')
     def export_csv():

@@ -27,6 +27,24 @@
 {% endblock %}
 
 {% block content %}
+
+<div class="card" style="background: linear-gradient(135deg, var(--purple-dim), var(--primary-dim)); border: 1px solid var(--purple-border);">
+    <div style="text-align: center;">
+        <h2 style="font-family: var(--font-serif); font-size: 2em; margin-bottom: 12px;">
+            ✏️ Review & Edit with Voice
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">
+            Review your entries and make changes using voice commands
+        </p>
+        <div style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-md); display: inline-block;">
+            <strong style="color: var(--text-main);">Voice Commands:</strong><br>
+            <span style="color: var(--text-muted); font-size: 0.95em;">
+                "Change entry 3 to 3 hours" • "Update Thompson narrative to mention expert report" • "Delete that last entry"
+            </span>
+        </div>
+    </div>
+</div>
+
 <div class="card">
     <div class="review-header">
         <span class="review-icon">📊</span>
@@ -56,20 +74,26 @@
 
 <div class="card">
     <h2>📋 Detailed Log</h2>
+    <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.95em;">
+        Click any entry to edit, or use voice: "Change entry X to Y hours" or "Update entry X narrative"
+    </p>
     
     {% if logs %}
     <table class="log-table">
         <thead>
             <tr>
+                <th style="width: 40px;">#</th>
                 <th>Matter</th>
                 <th>Activity</th>
                 <th>Duration</th>
                 <th>Narrative</th>
+                <th style="width: 100px;">Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for log in logs %}
-            <tr>
+            <tr class="log-row" data-log-id="{{ log.id }}">
+                <td style="color: var(--text-muted); font-weight: 600;">{{ loop.index }}</td>
                 <td>
                     {% if log.matter %}
                         {{ log.matter.display_name }}
@@ -82,16 +106,64 @@
                         {{ log.activity_type.label }}
                     {% endif %}
                 </td>
-                <td>{{ "%.1f"|format(log.duration_hours) }}h</td>
-                <td>{{ log.narrative or '-' }}</td>
+                <td class="editable-duration" contenteditable="true" style="cursor: text; background: var(--bg-hover); padding: 8px; border-radius: var(--radius-sm);">
+                    {{ "%.1f"|format(log.duration_hours) }}
+                </td>
+                <td class="editable-narrative" contenteditable="true" style="cursor: text; background: var(--bg-hover); padding: 8px; border-radius: var(--radius-sm);">
+                    {{ log.narrative or 'Click to add description' }}
+                </td>
+                <td style="text-align: center;">
+                    <button class="edit-btn" onclick="saveEntry({{ loop.index }})" style="background: var(--primary); color: var(--bg-app); border: none; padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.85em;">
+                        Save
+                    </button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    
+    <div style="margin-top: 24px; padding: 20px; background: var(--bg-hover); border-radius: var(--radius-md); border-left: 3px solid var(--purple);">
+        <h4 style="color: var(--text-main); margin-bottom: 12px;">💡 Voice Editing Tips:</h4>
+        <ul style="color: var(--text-muted); line-height: 1.8; padding-left: 20px;">
+            <li>Press Ctrl+Space → "Change entry 3 to 2.5 hours"</li>
+            <li>Press Ctrl+Space → "Update entry 1 narrative to mention the expert report and witness credibility"</li>
+            <li>Press Ctrl+Space → "Delete entry 5"</li>
+            <li>Press Ctrl+Space → "Add 30 minutes to Thompson for emails I forgot"</li>
+        </ul>
+    </div>
     {% else %}
-    <p style="color: #7f8c8d;">No entries to review</p>
+    <p style="color: var(--text-muted);">No entries to review</p>
     {% endif %}
 </div>
+
+<script>
+function saveEntry(entryNumber) {
+    const row = document.querySelectorAll('.log-row')[entryNumber - 1];
+    const duration = row.querySelector('.editable-duration').textContent.trim();
+    const narrative = row.querySelector('.editable-narrative').textContent.trim();
+    const logId = row.dataset.logId;
+    
+    // Send update to server
+    fetch('/update-entry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            log_id: logId,
+            duration: parseFloat(duration),
+            narrative: narrative
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✓ Entry updated!');
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+</script>
 
 <div class="card export-section">
     <a href="/export/csv" class="btn btn-success" style="text-decoration: none; display: inline-block;">📥 Export to CSV</a>

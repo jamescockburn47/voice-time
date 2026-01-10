@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block title %}Why Voice Time? - The Problem with Traditional Time Recording{% endblock %}
+
+{% block styles %}
+<style>
+    .hero {
+        background: linear-gradient(135deg, var(--purple-dim), var(--primary-dim));
+        border: 2px solid var(--purple-border);
+        padding: 48px 32px;
+        border-radius: var(--radius-lg);
+        text-align: center;
+        margin-bottom: 48px;
+    }
+    
+    .hero h1 {
+        font-family: var(--font-serif);
+        font-size: 3em;
+        background: linear-gradient(135deg, var(--purple), var(--primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 16px;
+    }
+    
+    .hero-subtitle {
+        color: var(--text-muted);
+        font-size: 1.2em;
+        margin-bottom: 24px;
+    }
+    
+    .problem-section {
+        background: rgba(239, 68, 68, 0.1);
+        border-left: 4px solid var(--error);
+        padding: 24px;
+        border-radius: var(--radius-md);
+        margin-bottom: 32px;
+    }
+    
+    .problem-section h2 {
+        color: var(--error);
+        margin-bottom: 20px;
+        font-family: var(--font-serif);
+    }
+    
+    .solution-section {
+        background: rgba(34, 197, 94, 0.1);
+        border-left: 4px solid var(--success);
+        padding: 24px;
+        border-radius: var(--radius-md);
+        margin-bottom: 32px;
+    }
+    
+    .solution-section h2 {
+        color: var(--success);
+        margin-bottom: 20px;
+        font-family: var(--font-serif);
+    }
+    
+    .pain-points {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .pain-point {
+        padding: 16px;
+        background: var(--bg-hover);
+        border-radius: var(--radius-sm);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: start;
+        gap: 12px;
+    }
+    
+    .pain-icon {
+        font-size: 1.5em;
+        flex-shrink: 0;
+    }
+    
+    .pain-content h4 {
+        color: var(--text-main);
+        margin-bottom: 6px;
+        font-size: 1.1em;
+    }
+    
+    .pain-content p {
+        color: var(--text-muted);
+        font-size: 0.95em;
+        line-height: 1.5;
+    }
+    
+    .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 24px 0;
+    }
+    
+    .comparison-table th {
+        background: var(--bg-sidebar);
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-main);
+        border-bottom: 2px solid var(--border);
+    }
+    
+    .comparison-table td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+    }
+    
+    .comparison-table tr:hover {
+        background: var(--bg-hover);
+    }
+    
+    .old-way {
+        color: var(--error);
+    }
+    
+    .new-way {
+        color: var(--success);
+    }
+    
+    .benefit-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 32px;
+    }
+    
+    .benefit-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        text-align: center;
+        transition: all 0.2s;
+    }
+    
+    .benefit-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--primary);
+        box-shadow: 0 8px 16px var(--primary-glow);
+    }
+    
+    .benefit-icon {
+        font-size: 3em;
+        margin-bottom: 16px;
+    }
+    
+    .benefit-title {
+        font-family: var(--font-serif);
+        font-size: 1.2em;
+        color: var(--text-main);
+        margin-bottom: 12px;
+    }
+    
+    .benefit-desc {
+        color: var(--text-muted);
+        font-size: 0.95em;
+        line-height: 1.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="hero">
+    <h1>⚡ Why Voice Time?</h1>
+    <p class="hero-subtitle">Traditional time recording is broken. We fixed it.</p>
+</div>
+
+<div class="problem-section">
+    <h2>😤 The Problem with Traditional Time Recording</h2>
+    
+    <ul class="pain-points">
+        <li class="pain-point">
+            <span class="pain-icon">🖱️</span>
+            <div class="pain-content">
+                <h4>Click, Click, Click...</h4>
+                <p>Open time recording app → Select matter from dropdown → Select activity type → Click start timer → Do work → Remember to click stop → Enter description → Click save. <strong>Every. Single. Time.</strong></p>
+            </div>
+        </li>
+        
+        <li class="pain-point">
+            <span class="pain-icon">⏰</span>
+            <div class="pain-content">
+                <h4>Manual Timer Management</h4>
+                <p>Forgot to start the timer? Too bad. Forgot to stop it? Now you have to manually calculate. Switched tasks? Better remember to stop one timer and start another. <strong>It's exhausting.</strong></p>
+            </div>
+        </li>
+        
+        <li class="pain-point">
+            <span class="pain-icon">📝</span>
+            <div class="pain-content">
+                <h4>Typing Out Descriptions</h4>
+                <p>After every task, type a professional billing narrative. "Review and analysis of disclosure bundle with particular focus on..." <strong>200 words minimum, apparently.</strong></p>
+            </div>
+        </li>
+        
+        <li class="pain-point">
+            <span class="pain-icon">🪟</span>
+            <div class="pain-content">
+                <h4>Window Management Hell</h4>
+                <p>Time recording app, document review, emails, research tabs, case management system... Your desktop is a disaster. Alt-tabbing wastes 10% of your day. <strong>Where's that timer window again?</strong></p>
+            </div>
+        </li>
+        
+        <li class="pain-point">
+            <span class="pain-icon">🎯</span>
+            <div class="pain-content">
+                <h4>Zero Context Awareness</h4>
+                <p>The system has no idea what you're working on. Every entry requires full manual input. No memory, no intelligence, no help. <strong>Just a glorified spreadsheet.</strong></p>
+            </div>
+        </li>
+        
+        <li class="pain-point">
+            <span class="pain-icon">🔍</span>
+            <div class="pain-content">
+                <h4>No Easy Review</h4>
+                <p>End of day: scroll through cryptic entries, try to remember what "30 mins misc" was, manually add up hours, hope you didn't miss anything. <strong>Then submit and pray.</strong></p>
+            </div>
+        </li>
+        
+        <li class="pain-point">
+            <span class="pain-icon">😓</span>
+            <div class="pain-content">
+                <h4>Friday Afternoon Catch-Up</h4>
+                <p>Haven't logged time all week? Friday 4:30 PM: desperately try to remember what you did Monday morning. <strong>"Uh... 2 hours on... something?"</strong></p>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<div class="solution-section">
+    <h2>✨ The Voice Time Difference</h2>
+    
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th class="old-way">❌ Traditional Way</th>
+                <th class="new-way">✅ Voice Time Way</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Start tracking</strong></td>
+                <td class="old-way">Open app → Select matter → Select activity → Click start timer → Minimize app</td>
+                <td class="new-way">Press Ctrl+Space → "Working on Thompson" → Release<br><em>(2 seconds total)</em></td>
+            </tr>
+            <tr>
+                <td><strong>Finish task</strong></td>
+                <td class="old-way">Find timer window → Click stop → Type description → Save entry</td>
+                <td class="new-way">Press Ctrl+Space → "Done with that" → Release<br><em>(Auto-logs with narrative)</em></td>
+            </tr>
+            <tr>
+                <td><strong>Handle interruption</strong></td>
+                <td class="old-way">Stop timer → Save → Start new timer → Remember what you were doing → Hope you wrote it down</td>
+                <td class="new-way">Press Ctrl+Space → "Quick call about Williams" → Done → "Back to what I was doing"<br><em>(Context remembered)</em></td>
+            </tr>
+            <tr>
+                <td><strong>Enter description</strong></td>
+                <td class="old-way">Type: "Review and analysis of witness statements from defendant with particular focus on chronology and credibility issues..."</td>
+                <td class="new-way">Say: "Went through the witness statements looking for timeline issues"<br><em>(Auto-generates professional narrative)</em></td>
+            </tr>
+            <tr>
+                <td><strong>Review before submitting</strong></td>
+                <td class="old-way">Scroll through list, manually check each entry, calculate totals on calculator, hope you didn't miss anything</td>
+                <td class="new-way">Click Review → See summary by matter → Voice-edit any entry → Export<br><em>(Smart totals, easy editing)</em></td>
+            </tr>
+            <tr>
+                <td><strong>Catch up on missed time</strong></td>
+                <td class="old-way">Try to remember, guess durations, make up descriptions, feel guilty about inaccuracy</td>
+                <td class="new-way">Press Ctrl+Space → "Spent 2 hours on Thompson this morning"<br><em>(Handles past tense naturally)</em></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2 style="text-align: center; margin-bottom: 32px;">🚀 Key Innovations</h2>
+    
+    <div class="benefit-grid">
+        <div class="benefit-card">
+            <div class="benefit-icon">🧠</div>
+            <div class="benefit-title">Context Awareness</div>
+            <div class="benefit-desc">Knows what you're working on. "Done with that" just works.</div>
+        </div>
+        
+        <div class="benefit-card">
+            <div class="benefit-icon">⏱️</div>
+            <div class="benefit-title">Smart Duration</div>
+            <div class="benefit-desc">"Couple of hours", "since lunch", "all morning" - it understands.</div>
+        </div>
+        
+        <div class="benefit-card">
+            <div class="benefit-icon">📅</div>
+            <div class="benefit-title">Morning Planning</div>
+            <div class="benefit-desc">Describe your day once. System uses it to resolve everything later.</div>
+        </div>
+        
+        <div class="benefit-card">
+            <div class="benefit-icon">🎙️</div>
+            <div class="benefit-title">Voice First</div>
+            <div class="benefit-desc">Press Ctrl+Space, speak, done. No windows to manage.</div>
+        </div>
+        
+        <div class="benefit-card">
+            <div class="benefit-icon">📝</div>
+            <div class="benefit-title">Auto Narratives</div>
+            <div class="benefit-desc">Casual speech becomes professional billing descriptions.</div>
+        </div>
+        
+        <div class="benefit-card">
+            <div class="benefit-icon">🔄</div>
+            <div class="benefit-icon">Task Stack</div>
+            <div class="benefit-desc">Handle interruptions elegantly. Return to what you were doing.</div>
+        </div>
+        
+        <div class="benefit-card">
+            <div class="benefit-icon">💾</div>
+            <div class="benefit-title">Local First</div>
+            <div class="benefit-desc">Your data stays on your machine. Works offline.</div>
+        </div>
+        
+        <div class="benefit-card">
+            <div class="benefit-icon">✏️</div>
+            <div class="benefit-title">Voice Editing</div>
+            <div class="benefit-desc">Review and edit entries with voice commands. No typing.</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="margin-bottom: 24px;">📊 Time Saved Per Day</h2>
+    
+    <div style="background: var(--bg-hover); padding: 24px; border-radius: var(--radius-md); margin-bottom: 24px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; text-align: center;">
+            <div>
+                <div style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 8px;">TRADITIONAL SYSTEM</div>
+                <div style="font-size: 3em; font-family: var(--font-serif); color: var(--error);">30min</div>
+                <div style="color: var(--text-muted); font-size: 0.9em;">wasted daily on admin</div>
+            </div>
+            <div>
+                <div style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 8px;">VOICE TIME</div>
+                <div style="font-size: 3em; font-family: var(--font-serif); color: var(--success);">5min</div>
+                <div style="color: var(--text-muted); font-size: 0.9em;">actual logging time</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+            <div style="font-size: 1.4em; color: var(--primary); font-family: var(--font-serif); font-weight: 700;">
+                25 minutes saved per day
+            </div>
+            <div style="color: var(--text-muted); margin-top: 8px;">
+                = 2+ hours/week = 100+ hours/year = <strong style="color: var(--primary);">£25,000 in billable time!</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="margin-bottom: 24px;">🎯 Real Example: Traditional vs Voice Time</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div>
+            <h3 style="color: var(--error); margin-bottom: 16px;">❌ Traditional System</h3>
+            <div style="background: rgba(239, 68, 68, 0.1); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--error);">
+                <ol style="color: var(--text-muted); line-height: 2; padding-left: 20px;">
+                    <li>Open time recording app (Alt-Tab)</li>
+                    <li>Click "New Entry"</li>
+                    <li>Select matter from dropdown (scroll, scroll...)</li>
+                    <li>Select activity type (more clicking)</li>
+                    <li>Click "Start Timer"</li>
+                    <li>Minimize app</li>
+                    <li><em>(2 hours of work)</em></li>
+                    <li>Remember to stop timer (often forget!)</li>
+                    <li>Type description (5 minutes)</li>
+                    <li>Click "Save"</li>
+                    <li>Repeat for EVERY task</li>
+                </ol>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--error); text-align: center;">
+                    <strong style="color: var(--error);">~2 minutes overhead per entry</strong><br>
+                    <span style="font-size: 0.9em; color: var(--text-muted);">15 entries/day = 30 minutes wasted</span>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <h3 style="color: var(--success); margin-bottom: 16px;">✅ Voice Time</h3>
+            <div style="background: rgba(34, 197, 94, 0.1); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--success);">
+                <ol style="color: var(--text-muted); line-height: 2; padding-left: 20px;">
+                    <li>Press Ctrl+Space</li>
+                    <li>Say: "Working on Thompson witnesses"</li>
+                    <li>Release</li>
+                    <li><em>(2 hours of work)</em></li>
+                    <li>Press Ctrl+Space</li>
+                    <li>Say: "Done with that"</li>
+                    <li>Release</li>
+                    <li><em>(System auto-logs with narrative)</em></li>
+                    <li>Done! 🎉</li>
+                </ol>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--success); text-align: center;">
+                    <strong style="color: var(--success);">~5 seconds overhead per entry</strong><br>
+                    <span style="font-size: 0.9em; color: var(--text-muted);">15 entries/day = 75 seconds total</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="margin-bottom: 24px;">🎨 Feature Comparison</h2>
+    
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>Traditional Systems</th>
+                <th>Voice Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Input Method</strong></td>
+                <td class="old-way">Click dropdowns, type text, manage windows</td>
+                <td class="new-way">Press one key, speak naturally</td>
+            </tr>
+            <tr>
+                <td><strong>Matter Selection</strong></td>
+                <td class="old-way">Scroll through dropdown of 50+ matters</td>
+                <td class="new-way">Say "Thompson" - fuzzy matching finds it</td>
+            </tr>
+            <tr>
+                <td><strong>Duration Tracking</strong></td>
+                <td class="old-way">Manual start/stop timers, easy to forget</td>
+                <td class="new-way">"Done with that" - auto-calculates elapsed time</td>
+            </tr>
+            <tr>
+                <td><strong>Natural Language</strong></td>
+                <td class="old-way">Must enter exact hours: "2.5"</td>
+                <td class="new-way">"Couple of hours", "all morning", "since lunch"</td>
+            </tr>
+            <tr>
+                <td><strong>Descriptions</strong></td>
+                <td class="old-way">Type professional narrative manually</td>
+                <td class="new-way">"Went through the docs" → AI generates billing narrative</td>
+            </tr>
+            <tr>
+                <td><strong>Context Memory</strong></td>
+                <td class="old-way">None - re-enter matter every time</td>
+                <td class="new-way">Remembers active matter - "Done with that" knows what "that" is</td>
+            </tr>
+            <tr>
+                <td><strong>Interruptions</strong></td>
+                <td class="old-way">Stop timer, save, start new, lose context</td>
+                <td class="new-way">"Quick call" → "Back to what I was doing" - task stack</td>
+            </tr>
+            <tr>
+                <td><strong>Morning Planning</strong></td>
+                <td class="old-way">Not supported - no planning features</td>
+                <td class="new-way">Describe your day - system structures it automatically</td>
+            </tr>
+            <tr>
+                <td><strong>Review & Edit</strong></td>
+                <td class="old-way">Scroll list, click edit, change values, save</td>
+                <td class="new-way">Visual review + voice editing: "Change that to 3 hours"</td>
+            </tr>
+            <tr>
+                <td><strong>Intelligence</strong></td>
+                <td class="old-way">Zero - it's a dumb form</td>
+                <td class="new-way">AI-powered: understands context, infers duration, matches matters</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-hover)); border: 2px solid var(--primary); text-align: center; padding: 40px;">
+    <h2 style="font-size: 2em; margin-bottom: 16px;">💡 The Core Insight</h2>
+    <p style="color: var(--text-muted); font-size: 1.2em; max-width: 700px; margin: 0 auto 24px; line-height: 1.6;">
+        Time recording becomes <strong style="color: var(--primary);">trivial</strong> when combined with morning planning. 
+        The system knows what you <strong style="color: var(--primary);">intended</strong> to do, 
+        so matching "done with that" to the right matter is <strong style="color: var(--primary);">easy</strong>.
+    </p>
+    <a href="/tutorial" class="btn" style="text-decoration: none; display: inline-block; font-size: 1.1em;">
+        Try It Yourself →
+    </a>
+</div>
+
+{% endblock %}

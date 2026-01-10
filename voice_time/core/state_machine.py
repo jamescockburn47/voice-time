@@ -8,6 +8,7 @@ from .intent import IntentClassifier, Intent
 from .matcher import MatterMatcher, ActivityMatcher
 from .temporal import TemporalParser
 from .stack import TaskStack, TaskContext
+from .edit_commands import EditCommandParser
 from ..database.models import (
     Matter, ActivityType, DayPlan, PlannedTask,
     WorkLog, VoiceEvent
@@ -54,6 +55,7 @@ class DayState:
         self.activity_matcher = ActivityMatcher(session)
         self.temporal_parser = TemporalParser(config.temporal)
         self.task_stack = TaskStack()
+        self.edit_parser = EditCommandParser()
         
         # LLM components (used sparingly)
         self.plan_parser = PlanParser(llm_client)
@@ -87,6 +89,11 @@ class DayState:
         
         # Update last interaction time
         self.last_interaction_time = datetime.now()
+        
+        # Check if this is an edit command first
+        edit_cmd = self.edit_parser.parse(utterance)
+        if edit_cmd:
+            return self._handle_edit_command(edit_cmd, event)
         
         # Classify intent (fast path)
         intent_result = self.intent_classifier.classify(utterance)
@@ -423,6 +430,89 @@ class DayState:
         # In a more complete implementation, this would create a work log
         # For now, we just clear the state
         pass
+    
+    def _handle_edit_command(self, cmd, event: VoiceEvent) -> ProcessingResult:
+        """Handle editing commands for work log entries."""
+        if cmd.command_type == 'change_duration':
+            # Get today's logs
+            logs = self.session.query(WorkLog).filter(
+                WorkLog.created_at >= date.today()
+            ).order_by(WorkLog.created_at).all()
+            
+            if cmd.entry_number > len(logs):
+                return ProcessingResult(
+                    success=False,
+                    message=f"Entry {cmd.entry_number} not found"
+                )
+            
+            log = logs[cmd.entry_number - 1]
+            old_duration = log.duration_hours
+            log.duration_hours = cmd.new_duration
+            self.session.commit()
+            
+            return ProcessingResult(
+                success=True,
+                message=f"✓ Entry {cmd.entry_number} changed from {old_duration}h to {cmd.new_duration}h"
+            )
+        
+        elif cmd.command_type == 'update_narrative':
+            logs = self.session.query(WorkLog).filter(
+                WorkLog.created_at >= date.today()
+            ).order_by(WorkLog.created_at).all()
+            
+            if cmd.entry_number > len(logs):
+                return ProcessingResult(
+                    success=False,
+                    message=f"Entry {cmd.entry_number} not found"
+                )
+            
+            log = logs[cmd.entry_number - 1]
+            
+            # Generate professional narrative from casual update
+            if log.matter and log.activity_type:
+                narrative = self.narrative_generator.generate(
+                    cmd.narrative_update,
+                    log.matter.display_name,
+                    log.activity_type.code,
+                    log.duration_hours
+                )
+                log.narrative = narrative
+            else:
+                log.narrative = cmd.narrative_update
+            
+            self.session.commit()
+            
+            return ProcessingResult(
+                success=True,
+                message=f"✓ Entry {cmd.entry_number} narrative updated"
+            )
+        
+        elif cmd.command_type == 'delete':
+            logs = self.session.query(WorkLog).filter(
+                WorkLog.created_at >= date.today()
+            ).order_by(WorkLog.created_at).all()
+            
+            if cmd.entry_number > len(logs):
+                return ProcessingResult(
+                    success=False,
+                    message=f"Entry {cmd.entry_number} not found"
+                )
+            
+            log = logs[cmd.entry_number - 1]
+            matter_name = log.matter.display_name if log.matter else "General"
+            
+            self.session.delete(log)
+            self.session.commit()
+            
+            return ProcessingResult(
+                success=True,
+                message=f"✓ Deleted entry {cmd.entry_number} ({matter_name})"
+            )
+        
+        return ProcessingResult(
+            success=False,
+            message="Edit command not recognized"
+        )
     
     def _load_today_plan(self):
         """Load today's plan if it exists."""
