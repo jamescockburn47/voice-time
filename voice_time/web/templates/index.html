@@ -234,7 +234,7 @@
 <!-- Ollama Status Indicator -->
 <div id="ollama-status" style="padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
     <div style="display: flex; align-items: center; gap: 12px;">
-        <span id="ollama-indicator">🔴</span>
+        <span id="ollama-indicator" style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
         <span id="ollama-message" style="color: var(--text-muted); font-size: 0.95em;">Checking AI status...</span>
     </div>
     <button onclick="checkOllamaStatus()" style="background: var(--bg-hover); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.85em;">
@@ -281,12 +281,12 @@
     
     <!-- Processing Status -->
     <div id="processing-status" style="display: none; margin-top: 12px; padding: 12px; background: var(--purple-dim); border: 1px solid var(--purple-border); border-radius: var(--radius-sm); text-align: center;">
-        <span style="color: var(--purple); font-size: 0.95em;">⚙️ <span id="processing-stage">Processing...</span></span>
+        <span style="color: var(--purple); font-size: 0.95em;"><span id="processing-stage">Processing...</span></span>
     </div>
     
     <!-- Debug Info -->
     <div id="debug-info" style="display: none;" class="debug-panel">
-        <div class="debug-title">🔍 Debug Information</div>
+        <div class="debug-title">Debug Information</div>
         <div id="debug-content" class="debug-content"></div>
     </div>
     
@@ -294,7 +294,7 @@
 </div>
 
 <div class="card">
-    <h2>📊 Today's Summary</h2>
+    <h2>Today's Summary</h2>
     <div class="totals">
         {% if totals %}
             {% for matter, hours in totals.items() %}
@@ -312,7 +312,7 @@
 </div>
 
 <div class="card">
-    <h2>📝 Today's Plan</h2>
+    <h2>Today's Plan</h2>
     {% if tasks %}
     <ul class="task-list">
         {% for task in tasks %}
@@ -339,7 +339,7 @@
 </div>
 
 <div class="card">
-    <h2>✅ Work Log</h2>
+    <h2>Work Log</h2>
     {% if logs %}
     <div>
         {% for log in logs %}
@@ -408,22 +408,22 @@
             addDebugLog(`Ollama status: ${data.status}`);
             
             if (data.status === 'ready') {
-                indicator.textContent = '🟢';
+                indicator.style.background = '#22c55e';
                 message.innerHTML = `<span style="color: var(--success);">AI ready</span> <span style="color: var(--text-muted); font-size: 0.85em;">(${data.model})</span>`;
-                addDebugLog('✓ Ollama ready and responding');
+                addDebugLog('Ollama ready and responding');
             } else if (data.status === 'not_running') {
-                indicator.textContent = '🔴';
+                indicator.style.background = '#ef4444';
                 message.innerHTML = `<span style="color: var(--error);">Ollama not running</span> <span style="color: var(--text-muted); font-size: 0.85em;">- Run: <code style="background: var(--bg-hover); padding: 2px 6px; border-radius: 2px;">ollama serve</code></span>`;
-                addDebugLog('✗ Ollama not running');
+                addDebugLog('Ollama not running');
             } else {
-                indicator.textContent = '🟡';
+                indicator.style.background = '#f59e0b';
                 message.innerHTML = `<span style="color: var(--warning);">AI issue:</span> <span style="color: var(--text-muted); font-size: 0.85em;">${data.message}</span>`;
-                addDebugLog(`⚠ Ollama issue: ${data.message}`);
+                addDebugLog(`Ollama issue: ${data.message}`);
             }
         } catch (err) {
-            indicator.textContent = '🔴';
+            indicator.style.background = '#ef4444';
             message.innerHTML = `<span style="color: var(--error);">Cannot check AI status</span>`;
-            addDebugLog(`✗ Error checking Ollama: ${err.message}`);
+            addDebugLog(`Error checking Ollama: ${err.message}`);
         }
     }
     
@@ -432,12 +432,12 @@
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(track => track.stop());
-            updateMicStatus('ready', '🟢 Microphone ready');
-            addDebugLog('✓ Microphone access granted');
+            updateMicStatus('ready', 'Microphone ready');
+            addDebugLog('Microphone access granted');
         } catch (err) {
-            updateMicStatus('error', '🔴 Microphone access denied - Click to grant');
+            updateMicStatus('error', 'Microphone access denied - Click to grant');
             document.getElementById('mic-status').onclick = requestMicrophoneAccess;
-            addDebugLog(`✗ Microphone error: ${err.message}`);
+            addDebugLog(`Microphone error: ${err.message}`);
         }
     }
     
@@ -445,12 +445,12 @@
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(track => track.stop());
-            updateMicStatus('ready', '🟢 Microphone ready');
+            updateMicStatus('ready', 'Microphone ready');
             document.getElementById('mic-status').onclick = null;
-            addDebugLog('✓ Microphone access granted after request');
+            addDebugLog('Microphone access granted after request');
         } catch (err) {
             alert('Please allow microphone access in your browser settings');
-            addDebugLog(`✗ Microphone request denied: ${err.message}`);
+            addDebugLog(`Microphone request denied: ${err.message}`);
         }
     }
     
@@ -458,14 +458,14 @@
         const indicator = document.getElementById('mic-indicator');
         const msg = document.getElementById('mic-message');
         
-        const indicators = {
-            'ready': '🟢',
-            'recording': '🔴',
-            'processing': '⚙️',
-            'error': '🔴'
+        const colors = {
+            'ready': '#22c55e',
+            'recording': '#ef4444',
+            'processing': '#a78bfa',
+            'error': '#ef4444'
         };
         
-        indicator.textContent = indicators[status] || '●';
+        indicator.style.cssText = `width: 8px; height: 8px; border-radius: 50%; background: ${colors[status] || '#666'}; display: inline-block; margin-right: 6px;`;
         msg.textContent = message || '';
     }
     
@@ -511,12 +511,12 @@
             document.getElementById('voice-text').textContent = 'Recording... Click to Stop';
             updateMicStatus('recording', 'Recording... speak now!');
             
-            addDebugLog('✓ Recording started');
+            addDebugLog('Recording started');
             
         } catch (err) {
             alert('Could not access microphone. Please check permissions.');
             console.error(err);
-            addDebugLog(`✗ Recording error: ${err.message}`);
+                addDebugLog(`Recording error: ${err.message}`);
         }
     }
     
@@ -563,15 +563,15 @@
                 recognizedDiv.style.display = 'block';
                 recognizedContent.textContent = `"${data.transcript}"`;
                 document.getElementById('utterance-input').value = data.transcript;
-                addDebugLog(`✓ Transcript: "${data.transcript}"`);
+                addDebugLog(`Transcript: "${data.transcript}"`);
                 
                 // Update processing stage
                 processingStage.textContent = 'Processing with AI (matching matters, inferring intent)...';
             } else {
                 processingDiv.style.display = 'none';
                 responseDiv.innerHTML = '<div class="message message-error">No speech detected. Try speaking louder and clearer.</div>';
-                updateMicStatus('ready', '🟢 Try again');
-                addDebugLog('✗ No transcript returned');
+                updateMicStatus('ready', 'Try again');
+                addDebugLog('No transcript returned');
                 return;
             }
             
@@ -581,8 +581,8 @@
             if (data.success) {
                 processingDiv.style.display = 'none';
                 responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
-                updateMicStatus('ready', '🟢 Microphone ready');
-                addDebugLog(`✓ Success: ${data.message}`);
+                updateMicStatus('ready', 'Microphone ready');
+                addDebugLog(`Success: ${data.message}`);
                 
                 // Reload to show updates
                 setTimeout(() => window.location.reload(), 1500);
@@ -591,15 +591,15 @@
                 responseDiv.innerHTML = 
                     `<div class="message message-error"><strong>Processing failed:</strong><br>${data.message || 'Could not process voice input'}</div>`;
                 updateMicStatus('ready', '🟢 Try again');
-                addDebugLog(`✗ Failed: ${data.message}`);
+                addDebugLog(`Failed: ${data.message}`);
             }
         } catch (err) {
             processingDiv.style.display = 'none';
             recognizedDiv.style.display = 'none';
             responseDiv.innerHTML = 
                 `<div class="message message-error"><strong>Error:</strong> ${err.message}<br><br>Check the debug log below for details.</div>`;
-            updateMicStatus('error', '🔴 Error - try again');
-            addDebugLog(`✗ Exception: ${err.message}`);
+            updateMicStatus('error', 'Error - try again');
+            addDebugLog(`Exception: ${err.message}`);
         }
     }
     
@@ -646,11 +646,11 @@
             
             if (data.success) {
                 responseDiv.innerHTML = `<div class="message message-success">${data.message}</div>`;
-                addDebugLog(`✓ Success: ${data.message}`);
+                addDebugLog(`Success: ${data.message}`);
                 setTimeout(() => window.location.reload(), 1500);
             } else {
                 responseDiv.innerHTML = `<div class="message message-error"><strong>Processing failed:</strong><br>${data.message}</div>`;
-                addDebugLog(`✗ Failed: ${data.message}`);
+                addDebugLog(`Failed: ${data.message}`);
             }
             input.value = '';
         })

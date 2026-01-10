@@ -181,12 +181,6 @@
         padding: 64px 24px;
         color: var(--text-muted);
     }
-    
-    .empty-state-icon {
-        font-size: 4em;
-        margin-bottom: 24px;
-        opacity: 0.5;
-    }
 </style>
 {% endblock %}
 
@@ -194,7 +188,7 @@
 
 <div class="card">
     <div class="matters-header">
-        <h2>📁 Your Matters</h2>
+        <h2>Your Matters</h2>
         <button class="add-matter-btn" onclick="showAddMatter()">+ Add Matter</button>
     </div>
     
@@ -219,7 +213,7 @@
                 <div style="color: var(--text-muted); font-size: 0.85em; margin-bottom: 12px;">
                     Used {{ matter.use_count or 0 }} times
                     {% if matter.last_used_at %}
-                        • Last used: {{ matter.last_used_at.strftime('%b %d') }}
+                        · Last used: {{ matter.last_used_at.strftime('%b %d') }}
                     {% endif %}
                 </div>
                 
@@ -233,7 +227,6 @@
             {% endfor %}
         {% else %}
             <div class="empty-state">
-                <div class="empty-state-icon">📋</div>
                 <p style="font-size: 1.1em; margin-bottom: 16px;">No matters yet</p>
                 <p>Click "Add Matter" above to add your first legal matter</p>
             </div>
@@ -311,7 +304,7 @@
             const result = await response.json();
             
             if (result.success) {
-                alert('✓ Matter added successfully!');
+                alert('Matter added successfully!');
                 window.location.reload();
             } else {
                 alert('Error: ' + result.message);
@@ -322,7 +315,6 @@
     }
     
     async function archiveMatter(matterId, isCurrentlyActive) {
-        // BUG FIX: Show correct confirmation message based on current state
         const action = isCurrentlyActive ? 'archive' : 'reactivate';
         const confirmMessage = isCurrentlyActive 
             ? 'Archive this matter? (It will be hidden but can be reactivated later)'
@@ -350,7 +342,6 @@
     }
     
     function editMatter(matterId) {
-        // TODO: Implement edit functionality
         alert('Edit functionality coming soon! For now, archive and create a new one.');
     }
     

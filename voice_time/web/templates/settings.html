@@ -82,33 +82,6 @@
         color: var(--text-muted);
     }
     
-    .fix-section {
-        background: rgba(239, 68, 68, 0.1);
-        border: 1px solid var(--error);
-        border-radius: var(--radius-md);
-        padding: 20px;
-        margin-top: 16px;
-    }
-    
-    .fix-section h4 {
-        color: var(--error);
-        margin-bottom: 12px;
-    }
-    
-    .permission-prompt {
-        background: var(--purple-dim);
-        border: 2px dashed var(--purple-border);
-        padding: 32px;
-        border-radius: var(--radius-lg);
-        text-align: center;
-    }
-    
-    .permission-prompt h3 {
-        color: var(--purple);
-        font-family: var(--font-serif);
-        margin-bottom: 16px;
-    }
-    
     .test-btn {
         background: var(--primary);
         color: var(--bg-app);
@@ -129,19 +102,23 @@
         opacity: 0.5;
         cursor: not-allowed;
     }
+    
+    .test-btn.recording {
+        background: #ef4444;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 
 <div class="settings-hero">
-    <h1>⚙️ Settings & Voice Diagnostics</h1>
+    <h1>Settings & Voice Diagnostics</h1>
     <p style="color: var(--text-muted);">Test your microphone and voice recognition settings</p>
 </div>
 
 <!-- Microphone Permission Test -->
 <div class="card">
-    <h2>🎤 Microphone Access</h2>
+    <h2>Microphone Access</h2>
     
     <div id="mic-permission-status" class="test-card">
         <div class="test-header">
@@ -159,7 +136,7 @@
 
 <!-- Microphone Test -->
 <div class="card">
-    <h2>🔊 Microphone Test</h2>
+    <h2>Microphone Test</h2>
     
     <div class="test-card">
         <div class="test-header">
@@ -170,7 +147,7 @@
             Test your microphone by recording and playing back audio.
         </p>
         <button id="mic-test-btn" class="test-btn" onclick="testMicrophone()">
-            🎙️ Start Microphone Test
+            Start Microphone Test
         </button>
         <div id="mic-test-result" class="test-result" style="display: none; margin-top: 16px;">
         </div>
@@ -180,7 +157,7 @@
 
 <!-- Voice Recognition Test -->
 <div class="card">
-    <h2>🗣️ Voice Recognition Test (Detailed)</h2>
+    <h2>Voice Recognition Test (Detailed)</h2>
     
     <div class="test-card">
         <div class="test-header">
@@ -191,7 +168,7 @@
             Test AI speech recognition with detailed diagnostics at each stage.
         </p>
         <button id="transcribe-test-btn" class="test-btn" onclick="testTranscription()">
-            🎙️ Start Detailed Test
+            Start Detailed Test
         </button>
         
         <!-- Detailed progress log -->
@@ -214,7 +191,7 @@
 
 <!-- Whisper Model Status -->
 <div class="card">
-    <h2>🤖 AI Model & Hardware Status</h2>
+    <h2>AI Model & Hardware Status</h2>
     
     <div class="test-card">
         <div class="test-header">
@@ -227,14 +204,14 @@
         <div id="hardware-info" class="test-result" style="display: none; margin-top: 16px;">
         </div>
         <button id="reload-whisper-btn" class="test-btn" style="margin-top: 16px;" onclick="checkWhisperStatus()">
-            🔄 Recheck Model & Hardware
+            Recheck Model & Hardware
         </button>
     </div>
 </div>
 
 <!-- System Info -->
 <div class="card">
-    <h2>ℹ️ System Information</h2>
+    <h2>System Information</h2>
     
     <div class="test-card">
         <table style="width: 100%; color: var(--text-muted);">
@@ -260,7 +237,7 @@
 
 <!-- Troubleshooting -->
 <div class="card">
-    <h2>🔧 Troubleshooting</h2>
+    <h2>Troubleshooting</h2>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
         <div class="test-card">
@@ -299,17 +276,17 @@
             
             if (result.state === 'granted') {
                 statusEl.className = 'test-status status-success';
-                statusEl.textContent = '✓ Granted';
-                resultEl.innerHTML = '✓ Microphone access is granted.<br>You can use voice commands!';
+                statusEl.textContent = 'Granted';
+                resultEl.innerHTML = 'Microphone access is granted.<br>You can use voice commands!';
                 btnEl.style.display = 'none';
                 
                 // Also test if mic actually works
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     stream.getTracks().forEach(track => track.stop());
-                    resultEl.innerHTML += '<br><br>✓ Microphone hardware detected and working!';
+                    resultEl.innerHTML += '<br><br>Microphone hardware detected and working!';
                 } catch {
-                    resultEl.innerHTML += '<br><br>⚠️ Permission granted but microphone not found.';
+                    resultEl.innerHTML += '<br><br>Permission granted but microphone not found.';
                 }
             } else if (result.state === 'prompt') {
                 statusEl.className = 'test-status status-pending';
@@ -318,7 +295,7 @@
                 btnEl.style.display = 'block';
             } else {
                 statusEl.className = 'test-status status-error';
-                statusEl.textContent = '✗ Denied';
+                statusEl.textContent = 'Denied';
                 resultEl.textContent = 'Microphone access was denied. Click the button to try again or check browser settings.';
                 btnEl.style.display = 'block';
             }
@@ -328,12 +305,12 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 stream.getTracks().forEach(track => track.stop());
                 statusEl.className = 'test-status status-success';
-                statusEl.textContent = '✓ Granted';
-                resultEl.textContent = '✓ Microphone access is working!';
+                statusEl.textContent = 'Granted';
+                resultEl.textContent = 'Microphone access is working!';
                 btnEl.style.display = 'none';
             } catch {
                 statusEl.className = 'test-status status-error';
-                statusEl.textContent = '✗ Blocked';
+                statusEl.textContent = 'Blocked';
                 resultEl.textContent = 'Click the button below to grant access.';
                 btnEl.style.display = 'block';
             }
@@ -354,18 +331,18 @@
             stream.getTracks().forEach(track => track.stop());
             
             statusEl.className = 'test-status status-success';
-            statusEl.textContent = '✓ Granted';
-            resultEl.textContent = '✓ Microphone access granted! Voice commands are now available.';
+            statusEl.textContent = 'Granted';
+            resultEl.textContent = 'Microphone access granted! Voice commands are now available.';
             btnEl.style.display = 'none';
         } catch (err) {
             statusEl.className = 'test-status status-error';
-            statusEl.textContent = '✗ Denied';
+            statusEl.textContent = 'Denied';
             resultEl.innerHTML = `
                 <strong style="color: var(--error);">Access denied or no microphone found.</strong><br><br>
                 Please check:<br>
-                • Browser settings (click 🔒 in address bar)<br>
-                • Microphone is plugged in<br>
-                • No other apps are using the microphone
+                - Browser settings (click lock icon in address bar)<br>
+                - Microphone is plugged in<br>
+                - No other apps are using the microphone
             `;
         }
     }
@@ -395,12 +372,12 @@
                 };
                 
                 testRecorder.start();
-                btnEl.textContent = '⏹️ Stop Recording';
-                btnEl.style.background = '#ef4444';
+                btnEl.textContent = 'Stop Recording';
+                btnEl.classList.add('recording');
                 statusEl.className = 'test-status status-testing';
                 statusEl.textContent = 'Recording...';
                 resultEl.style.display = 'block';
-                resultEl.innerHTML = '🎤 <strong>Recording now...</strong><br>Say: "Testing microphone one two three"<br>Then click Stop to hear playback.';
+                resultEl.innerHTML = '<strong>Recording now...</strong><br>Say: "Testing microphone one two three"<br>Then click Stop to hear playback.';
                 
             } catch (err) {
                 statusEl.className = 'test-status status-error';
@@ -412,11 +389,11 @@
             // Stop recording
             testRecorder.stop();
             testRecorder = null;
-            btnEl.textContent = '🎙️ Start Microphone Test';
-            btnEl.style.background = 'var(--primary)';
+            btnEl.textContent = 'Start Microphone Test';
+            btnEl.classList.remove('recording');
             statusEl.className = 'test-status status-success';
-            statusEl.textContent = '✓ Complete';
-            resultEl.innerHTML = '✓ Recording saved!<br>Play it back below to verify your microphone is working.';
+            statusEl.textContent = 'Complete';
+            resultEl.innerHTML = 'Recording saved!<br>Play it back below to verify your microphone is working.';
         }
     }
     
@@ -455,7 +432,7 @@
                         noiseSuppression: true
                     }
                 });
-                addLog('✓ Microphone access granted');
+                addLog('Microphone access granted');
                 
                 transcribeRecorder = new MediaRecorder(stream);
                 transcribeChunks = [];
@@ -475,12 +452,12 @@
                     // Show playback for debugging
                     debugAudio.src = URL.createObjectURL(blob);
                     audioDebug.style.display = 'block';
-                    addLog('✓ Audio available for playback (check quality)');
+                    addLog('Audio available for playback (check quality)');
                     
                     statusEl.className = 'test-status status-testing';
                     statusEl.textContent = 'Transcribing...';
                     resultEl.style.display = 'block';
-                    resultEl.textContent = '⚙️ Sending to AI for transcription...';
+                    resultEl.textContent = 'Sending to AI for transcription...';
                     
                     addLog('Sending audio to server...');
                     
@@ -498,12 +475,12 @@
                         addLog(`Server response stage: ${data.stage}`);
                         
                         if (data.success && data.transcript) {
-                            addLog(`✓ Transcription successful: "${data.transcript}"`);
+                            addLog(`Transcription successful: "${data.transcript}"`);
                             
                             statusEl.className = 'test-status status-success';
-                            statusEl.textContent = '✓ Working!';
+                            statusEl.textContent = 'Working!';
                             resultEl.innerHTML = `
-                                <strong style="color: var(--success);">✓ Voice recognition is working perfectly!</strong><br><br>
+                                <strong style="color: var(--success);">Voice recognition is working perfectly!</strong><br><br>
                                 <strong>You said:</strong><br>
                                 <div style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); margin-top: 12px; border-left: 3px solid var(--success);">
                                     <span style="color: var(--text-main); font-size: 1.2em; font-weight: 600;">"${data.transcript}"</span>
@@ -515,22 +492,22 @@
                                 </div>
                             `;
                         } else if (data.transcript === '') {
-                            addLog('⚠️ No speech detected in audio', true);
+                            addLog('No speech detected in audio', true);
                             
                             statusEl.className = 'test-status status-error';
                             statusEl.textContent = 'No Speech';
                             resultEl.innerHTML = `
                                 <strong style="color: var(--error);">No speech detected</strong><br><br>
                                 Possible causes:<br>
-                                • Speaking too quietly<br>
-                                • Microphone too far away<br>
-                                • Background noise masking speech<br>
-                                • Audio too short<br><br>
+                                - Speaking too quietly<br>
+                                - Microphone too far away<br>
+                                - Background noise masking speech<br>
+                                - Audio too short<br><br>
                                 <strong>Try:</strong><br>
-                                • Speak louder and clearer<br>
-                                • Move microphone closer<br>
-                                • Reduce background noise<br>
-                                • Record for at least 2-3 seconds
+                                - Speak louder and clearer<br>
+                                - Move microphone closer<br>
+                                - Reduce background noise<br>
+                                - Record for at least 2-3 seconds
                             `;
                         } else {
                             addLog(`Error at stage: ${data.stage}`, true);
@@ -568,13 +545,13 @@
                 transcribeRecorder.start();
                 addLog('Recording started - speak now!');
                 
-                btnEl.textContent = '⏹️ Stop & Transcribe';
-                btnEl.style.background = '#ef4444';
+                btnEl.textContent = 'Stop & Transcribe';
+                btnEl.classList.add('recording');
                 statusEl.className = 'test-status status-testing';
                 statusEl.textContent = 'Recording...';
                 resultEl.style.display = 'block';
                 resultEl.innerHTML = `
-                    🎤 <strong style="color: var(--error);">Recording now - SPEAK CLEARLY!</strong><br><br>
+                    <strong style="color: var(--error);">Recording now - SPEAK CLEARLY!</strong><br><br>
                     <div style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); margin: 12px 0;">
                         Say this test phrase:<br>
                         <strong style="color: var(--primary); font-size: 1.1em;">"Today I need to work on the Thompson case"</strong>
@@ -595,8 +572,8 @@
             addLog('Stopping recording...');
             transcribeRecorder.stop();
             transcribeRecorder = null;
-            btnEl.textContent = '🎙️ Start Detailed Test';
-            btnEl.style.background = 'var(--primary)';
+            btnEl.textContent = 'Start Detailed Test';
+            btnEl.classList.remove('recording');
         }
     }
     
@@ -618,13 +595,13 @@
             
             if (data.status === 'ready') {
                 statusEl.className = 'test-status status-success';
-                statusEl.textContent = '✓ Ready';
+                statusEl.textContent = 'Ready';
                 
                 const modelStatusColor = data.model_status === 'loaded' ? 'var(--success)' : 'var(--warning)';
                 
                 resultEl.innerHTML = `
                     <strong style="color: ${modelStatusColor};">
-                        ${data.model_status === 'loaded' ? '✓' : '⚠️'} ${data.message}
+                        ${data.model_status === 'loaded' ? '' : ''}${data.message}
                     </strong><br><br>
                     <strong>Configuration:</strong><br>
                     Model: ${data.model}<br>
@@ -639,20 +616,20 @@
                     hwHtml += `CPU: ${data.hardware.cpu}<br>`;
                     
                     if (data.hardware.has_cuda) {
-                        hwHtml += '✓ NVIDIA GPU (CUDA) - Using GPU acceleration<br>';
+                        hwHtml += 'NVIDIA GPU (CUDA) - Using GPU acceleration<br>';
                     }
                     if (data.hardware.has_amd) {
-                        hwHtml += '✓ AMD GPU detected<br>';
+                        hwHtml += 'AMD GPU detected<br>';
                     }
                     if (data.hardware.has_npu) {
-                        hwHtml += '✓ AMD Ryzen AI with NPU (Evo x2)<br>';
+                        hwHtml += 'AMD Ryzen AI with NPU (Evo x2)<br>';
                         hwHtml += '<span style="color: var(--warning);">Note: NPU not yet supported, using optimized CPU</span><br>';
                     }
                     
                     if (data.hardware.notes && data.hardware.notes.length > 0) {
                         hwHtml += '<br><strong>Optimizations:</strong><br>';
                         data.hardware.notes.forEach(note => {
-                            hwHtml += `• ${note}<br>`;
+                            hwHtml += `- ${note}<br>`;
                         });
                     }
                     
@@ -660,7 +637,7 @@
                 }
             } else {
                 statusEl.className = 'test-status status-error';
-                statusEl.textContent = '✗ Error';
+                statusEl.textContent = 'Error';
                 resultEl.innerHTML = `
                     <strong style="color: var(--error);">Whisper error</strong><br><br>
                     ${data.error}<br><br>
@@ -670,7 +647,7 @@
             }
         } catch (err) {
             statusEl.className = 'test-status status-error';
-            statusEl.textContent = '✗ Error';
+            statusEl.textContent = 'Error';
             resultEl.textContent = 'Could not check model status: ' + err.message;
             hwEl.style.display = 'none';
         }

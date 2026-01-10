@@ -4,31 +4,10 @@
 
 {% block styles %}
 <style>
-    .plan-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 24px;
-    }
-    
-    .plan-icon {
-        font-size: 2em;
-        background: linear-gradient(135deg, var(--purple), var(--primary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    
     .empty-state {
         text-align: center;
         padding: 48px 24px;
         color: var(--text-muted);
-    }
-    
-    .empty-state-icon {
-        font-size: 3em;
-        margin-bottom: 16px;
-        opacity: 0.5;
     }
     
     .example-command {
@@ -47,10 +26,7 @@
 
 {% block content %}
 <div class="card">
-    <div class="plan-header">
-        <span class="plan-icon">📅</span>
-        <h2>Today's Plan</h2>
-    </div>
+    <h2>Today's Plan</h2>
     
     {% if tasks %}
     <ul class="task-list">
@@ -80,8 +56,7 @@
     </ul>
     {% else %}
     <div class="empty-state">
-        <div class="empty-state-icon">📝</div>
-        <p>No plan for today yet. Go to <a href="/" style="color: var(--primary);">Dashboard</a> and say:</p>
+        <p style="margin-bottom: 16px;">No plan for today yet. Go to <a href="/" style="color: var(--primary);">Dashboard</a> and say:</p>
         <div class="example-command">
             "Today I need to finish Smith disclosure, draft Brown skeleton, and call with counsel at 3"
         </div>
@@ -95,25 +70,26 @@
     }
     
     .task-item {
-        padding: 10px;
-        border-left: 3px solid #3498db;
-        margin-bottom: 10px;
-        background: #f8f9fa;
+        padding: 14px 16px;
+        border-left: 3px solid var(--primary);
+        margin-bottom: 12px;
+        background: var(--bg-hover);
+        border-radius: var(--radius-sm);
     }
     
     .task-item.done {
         opacity: 0.6;
-        border-left-color: #27ae60;
+        border-left-color: var(--success);
     }
     
     .task-item .matter {
-        font-weight: bold;
-        color: #2c3e50;
+        font-weight: 600;
+        color: var(--text-main);
     }
     
     .task-item .title {
         margin-top: 5px;
-        color: #555;
+        color: var(--text-muted);
     }
 </style>
 {% endblock %}
