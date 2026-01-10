@@ -52,7 +52,7 @@ That's it! The launcher will:
 ## 🛠️ Technology Stack
 
 - **Python 3.11+** - Core application
-- **Ollama (Qwen2.5-7B)** - Local LLM for parsing & narratives
+- **Ollama (Qwen2.5-1.5B)** - Local LLM for parsing & narratives (~1GB)
 - **faster-whisper** - Speech-to-text
 - **Flask + HTMX** - Web interface
 - **SQLite** - Local database
@@ -143,7 +143,7 @@ cd voice_time
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
-ollama pull qwen2.5:7b-instruct
+ollama pull qwen2.5:1.5b-instruct
 
 # 3. Initialize database
 python run.py --init

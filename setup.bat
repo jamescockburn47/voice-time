@@ -58,12 +58,12 @@ if %errorlevel% neq 0 (
     ollama --version
     echo.
     echo Checking if model is installed...
-    ollama list | findstr "qwen2.5:7b-instruct" >nul 2>&1
+    ollama list | findstr "qwen2.5:1.5b-instruct" >nul 2>&1
     if %errorlevel% neq 0 (
         echo.
-        echo Model not found. Downloading qwen2.5:7b-instruct...
-        echo This may take a few minutes (~4GB download)...
-        ollama pull qwen2.5:7b-instruct
+        echo Model not found. Downloading qwen2.5:1.5b-instruct...
+        echo This may take 2-3 minutes (~1GB download - SMALL MODEL)...
+        ollama pull qwen2.5:1.5b-instruct
     ) else (
         echo Model already installed!
     )

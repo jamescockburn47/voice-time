@@ -41,7 +41,7 @@ goto check_loop
 :check_model
 REM Check if model is installed
 echo Checking if model is installed...
-ollama list | findstr "qwen2.5:7b-instruct" >nul 2>&1
+ollama list | findstr "qwen2.5:1.5b-instruct" >nul 2>&1
 if %errorlevel% equ 0 (
     echo Model is already installed
     exit /b 0
@@ -49,10 +49,10 @@ if %errorlevel% equ 0 (
 
 REM Pull the model
 echo.
-echo Model not found. Downloading qwen2.5:7b-instruct...
-echo This may take 5-10 minutes (~4GB download)
+echo Model not found. Downloading qwen2.5:1.5b-instruct...
+echo This may take 2-3 minutes (~1GB download - SMALL MODEL)
 echo.
-ollama pull qwen2.5:7b-instruct
+ollama pull qwen2.5:1.5b-instruct
 
 if %errorlevel% equ 0 (
     echo.

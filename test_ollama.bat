@@ -43,7 +43,7 @@ echo.
 
 REM Test 3: Check if model is installed
 echo [Test 3/4] Checking if model is installed...
-ollama list | findstr "qwen2.5:7b-instruct" >nul 2>&1
+ollama list | findstr "qwen2.5:1.5b-instruct" >nul 2>&1
 if %errorlevel% neq 0 (
     echo FAIL: Model not found
     echo.
@@ -51,8 +51,8 @@ if %errorlevel% neq 0 (
     set /p download="Download model? (Y/N): "
     if /i "%download%"=="Y" (
         echo.
-        echo Downloading model (this may take 5-10 minutes)...
-        ollama pull qwen2.5:7b-instruct
+        echo Downloading model (this may take 2-3 minutes - 1GB)...
+        ollama pull qwen2.5:1.5b-instruct
         if %errorlevel% equ 0 (
             echo PASS: Model downloaded successfully
         ) else (
@@ -70,7 +70,7 @@ echo.
 REM Test 4: Test model
 echo [Test 4/4] Testing model...
 echo Testing with simple prompt...
-curl -s http://localhost:11434/api/generate -d "{\"model\":\"qwen2.5:7b-instruct\",\"prompt\":\"Say hello\",\"stream\":false}" >nul 2>&1
+curl -s http://localhost:11434/api/generate -d "{\"model\":\"qwen2.5:1.5b-instruct\",\"prompt\":\"Say hello\",\"stream\":false}" >nul 2>&1
 if %errorlevel% equ 0 (
     echo PASS: Model is working!
 ) else (

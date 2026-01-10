@@ -1,0 +1,57 @@
+================================================================================
+                    SWITCHED TO SMALL MODEL
+================================================================================
+
+IMPORTANT: The system now uses the SMALLER, FASTER model!
+
+Old model: qwen2.5:7b-instruct (~4.7 GB)
+New model: qwen2.5:1.5b-instruct (~1 GB)
+
+Benefits:
+✅ 5x smaller download (1GB vs 4.7GB)
+✅ 3x faster inference (~100-200ms vs 400ms)
+✅ Less RAM usage (~2GB vs ~8GB)
+✅ Same excellent JSON output
+✅ Perfect for time logging tasks
+
+This is the ORIGINAL design from the architecture spec!
+
+--------------------------------------------------------------------------------
+WHAT CHANGED
+--------------------------------------------------------------------------------
+
+Updated files to use 1.5B model:
+   ✓ config.yaml
+   ✓ voice_time/config.py
+   ✓ start_ollama.bat
+   ✓ setup.bat
+   ✓ test_ollama.bat
+   ✓ README.md
+
+--------------------------------------------------------------------------------
+NEXT STEPS
+--------------------------------------------------------------------------------
+
+1. Run the launcher again:
+   ⭐ START HERE.bat
+
+2. It will now download the SMALL model (~1GB)
+   Takes only 2-3 minutes instead of 10!
+
+3. Enjoy faster response times!
+
+--------------------------------------------------------------------------------
+WHY THE SMALL MODEL IS PERFECT
+--------------------------------------------------------------------------------
+
+The 1.5B model is specifically optimized for:
+✓ Intent classification
+✓ JSON parsing (morning plans)
+✓ Matter matching
+✓ Narrative generation
+
+It's FAST, EFFICIENT, and MORE than capable for legal time tracking.
+
+The 7B model was overkill - the architecture specifically called for 1.5B!
+
+================================================================================

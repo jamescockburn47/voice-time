@@ -9,7 +9,7 @@ import yaml
 @dataclass
 class OllamaConfig:
     host: str = "http://localhost:11434"
-    model: str = "qwen2.5:7b-instruct"
+    model: str = "qwen2.5:1.5b-instruct"
     timeout: int = 30
 
 
