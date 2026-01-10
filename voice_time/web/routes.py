@@ -27,11 +27,25 @@ def register_routes(app):
     @app.route('/planning')
     def planning():
         """Day planning page - separate from time recording."""
+        from datetime import timedelta
         session = app.session
         
-        # Get today's plan
+        # Get selected date from query param, default to today
         today = date.today()
-        plan = session.query(DayPlan).filter(DayPlan.date == today).first()
+        date_str = request.args.get('date')
+        
+        if date_str:
+            try:
+                selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                selected_date = today
+        else:
+            selected_date = today
+        
+        is_today = selected_date == today
+        
+        # Get plan for selected date
+        plan = session.query(DayPlan).filter(DayPlan.date == selected_date).first()
         
         tasks = []
         if plan:
@@ -39,12 +53,83 @@ def register_routes(app):
                 PlannedTask.day_plan_id == plan.id
             ).order_by(PlannedTask.sort_order).all()
         
-        return render_template('planning.html', tasks=tasks)
+        # Pre-calculate dates for navigation
+        prev_date = selected_date - timedelta(days=1)
+        next_date = selected_date + timedelta(days=1)
+        
+        return render_template(
+            'planning.html', 
+            tasks=tasks,
+            selected_date=selected_date,
+            is_today=is_today,
+            today=today,
+            prev_date=prev_date,
+            next_date=next_date
+        )
     
     @app.route('/why')
     def why():
         """Why Voice Time? - Comparison page."""
         return render_template('why.html')
+    
+    @app.route('/review')
+    def review():
+        """Review and edit time entries for a specific day."""
+        from datetime import timedelta
+        session = app.session
+        
+        # Get selected date from query param, default to today
+        today = date.today()
+        date_str = request.args.get('date')
+        
+        if date_str:
+            try:
+                selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                selected_date = today
+        else:
+            selected_date = today
+        
+        is_today = selected_date == today
+        
+        # Get work logs for selected date
+        next_day = selected_date + timedelta(days=1)
+        logs = session.query(WorkLog).filter(
+            WorkLog.created_at >= selected_date,
+            WorkLog.created_at < next_day
+        ).order_by(WorkLog.created_at.desc()).all()
+        
+        # Calculate totals by matter
+        totals = {}
+        total_hours = 0.0
+        for log in logs:
+            matter_name = log.matter.display_name if log.matter else "General"
+            if matter_name not in totals:
+                totals[matter_name] = 0.0
+            totals[matter_name] += log.duration_hours
+            total_hours += log.duration_hours
+        
+        # Pre-calculate dates for navigation
+        prev_date = selected_date - timedelta(days=1)
+        next_date = selected_date + timedelta(days=1)
+        
+        # Get matters and activities for editing
+        matters = session.query(Matter).filter(Matter.is_active == True).order_by(Matter.display_name).all()
+        activities = session.query(ActivityType).order_by(ActivityType.display_order).all()
+        
+        return render_template(
+            'review.html',
+            logs=logs,
+            totals=totals,
+            total_hours=total_hours,
+            selected_date=selected_date,
+            is_today=is_today,
+            today=today,
+            prev_date=prev_date,
+            next_date=next_date,
+            matters=matters,
+            activities=activities
+        )
     
     @app.route('/check-ollama')
     def check_ollama():
@@ -427,6 +512,91 @@ def register_routes(app):
                 'message': 'LLM test failed'
             })
     
+    @app.route('/api/calendar')
+    def get_calendar_data():
+        """Get calendar data for a month - which days have entries."""
+        from datetime import timedelta
+        from sqlalchemy import func, extract
+        
+        session = app.session
+        
+        # Get year and month from params, default to current
+        year = request.args.get('year', type=int, default=date.today().year)
+        month = request.args.get('month', type=int, default=date.today().month)
+        
+        # Get all days in month that have work logs
+        days_with_logs = session.query(
+            func.date(WorkLog.created_at).label('day'),
+            func.sum(WorkLog.duration_hours).label('hours')
+        ).filter(
+            extract('year', WorkLog.created_at) == year,
+            extract('month', WorkLog.created_at) == month
+        ).group_by(
+            func.date(WorkLog.created_at)
+        ).all()
+        
+        # Get all days with plans
+        days_with_plans = session.query(DayPlan.date).filter(
+            extract('year', DayPlan.date) == year,
+            extract('month', DayPlan.date) == month
+        ).all()
+        
+        # Build response
+        log_days = {str(row.day): round(row.hours, 1) for row in days_with_logs}
+        plan_days = [str(row.date) for row in days_with_plans]
+        
+        return jsonify({
+            'year': year,
+            'month': month,
+            'days_with_logs': log_days,  # {date: hours}
+            'days_with_plans': plan_days,
+            'today': str(date.today())
+        })
+    
+    @app.route('/api/week-summary')
+    def get_week_summary():
+        """Get summary of hours for the current week."""
+        from datetime import timedelta
+        
+        session = app.session
+        
+        # Get date from param or today
+        date_str = request.args.get('date')
+        if date_str:
+            try:
+                selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                selected_date = date.today()
+        else:
+            selected_date = date.today()
+        
+        # Calculate week boundaries (Monday to Sunday)
+        week_start = selected_date - timedelta(days=selected_date.weekday())
+        week_end = week_start + timedelta(days=7)
+        
+        # Get logs for the week
+        logs = session.query(WorkLog).filter(
+            WorkLog.created_at >= week_start,
+            WorkLog.created_at < week_end
+        ).all()
+        
+        # Group by day
+        daily_hours = {}
+        for log in logs:
+            day = log.created_at.date() if log.created_at else log.started_at.date() if log.started_at else None
+            if day:
+                day_str = str(day)
+                if day_str not in daily_hours:
+                    daily_hours[day_str] = 0.0
+                daily_hours[day_str] += log.duration_hours
+        
+        return jsonify({
+            'week_start': str(week_start),
+            'week_end': str(week_end - timedelta(days=1)),
+            'daily_hours': daily_hours,
+            'total_hours': round(sum(daily_hours.values()), 1)
+        })
+    
     @app.route('/whisper-status')
     def whisper_status():
         """Check if Whisper model is working and show hardware info."""
@@ -479,12 +649,26 @@ def register_routes(app):
     
     @app.route('/')
     def index():
-        """Main dashboard."""
+        """Main dashboard with optional date parameter."""
+        from datetime import timedelta
         session = app.session
         
-        # Get today's plan
+        # Get selected date from query param, default to today
         today = date.today()
-        plan = session.query(DayPlan).filter(DayPlan.date == today).first()
+        date_str = request.args.get('date')
+        
+        if date_str:
+            try:
+                selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                selected_date = today
+        else:
+            selected_date = today
+        
+        is_today = selected_date == today
+        
+        # Get plan for selected date
+        plan = session.query(DayPlan).filter(DayPlan.date == selected_date).first()
         
         tasks = []
         if plan:
@@ -492,13 +676,17 @@ def register_routes(app):
                 PlannedTask.day_plan_id == plan.id
             ).all()
         
-        # Get today's work logs (ordered by time, most recent first)
+        # Get work logs for selected date
+        next_day = selected_date + timedelta(days=1)
         logs = session.query(WorkLog).filter(
-            WorkLog.created_at >= today
+            WorkLog.created_at >= selected_date,
+            WorkLog.created_at < next_day
         ).order_by(WorkLog.created_at.desc()).all()
         
-        # Get active timer (only one allowed)
-        active_timer = session.query(ActiveTimer).first()
+        # Get active timer only for today
+        active_timer = None
+        if is_today:
+            active_timer = session.query(ActiveTimer).first()
         
         # Calculate totals by matter
         totals = {}
@@ -516,6 +704,14 @@ def register_routes(app):
         # Get activity types
         activities = session.query(ActivityType).order_by(ActivityType.display_order).all()
         
+        # Calculate week dates for navigation
+        week_start = selected_date - timedelta(days=selected_date.weekday())  # Monday
+        week_dates = [week_start + timedelta(days=i) for i in range(7)]
+        
+        # Pre-calculate prev/next dates for template
+        prev_date = selected_date - timedelta(days=1)
+        next_date = selected_date + timedelta(days=1)
+        
         return render_template(
             'index.html',
             tasks=tasks,
@@ -524,7 +720,13 @@ def register_routes(app):
             total_hours=total_hours,
             active_timer=active_timer,
             matters=matters,
-            activities=activities
+            activities=activities,
+            selected_date=selected_date,
+            is_today=is_today,
+            week_dates=week_dates,
+            today=today,
+            prev_date=prev_date,
+            next_date=next_date
         )
     
     @app.route('/process', methods=['POST'])

@@ -559,10 +559,206 @@
     .main-content {
         min-width: 0;
     }
+    
+    /* Date Navigation */
+    .date-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding: 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+    }
+    
+    .date-nav-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.5em;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: var(--radius-sm);
+        transition: all 0.2s;
+    }
+    
+    .date-nav-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text-main);
+    }
+    
+    .date-display {
+        text-align: center;
+        min-width: 200px;
+    }
+    
+    .date-display-main {
+        font-family: var(--font-serif);
+        font-size: 1.3em;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+    
+    .date-display-sub {
+        font-size: 0.85em;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+    
+    .date-today-badge {
+        display: inline-block;
+        background: var(--primary);
+        color: var(--bg-app);
+        font-size: 0.7em;
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-left: 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .date-past-badge {
+        display: inline-block;
+        background: var(--bg-hover);
+        color: var(--text-muted);
+        font-size: 0.7em;
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-left: 8px;
+        font-weight: 500;
+    }
+    
+    /* Week View */
+    .week-view {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 12px;
+    }
+    
+    .week-day {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 50px;
+        text-decoration: none;
+    }
+    
+    .week-day:hover {
+        background: var(--bg-hover);
+    }
+    
+    .week-day.selected {
+        background: var(--primary-dim);
+        border: 1px solid var(--primary);
+    }
+    
+    .week-day.today {
+        border: 1px solid var(--purple);
+    }
+    
+    .week-day.has-entries::after {
+        content: '';
+        width: 6px;
+        height: 6px;
+        background: var(--primary);
+        border-radius: 50%;
+        margin-top: 4px;
+    }
+    
+    .week-day-name {
+        font-size: 0.7em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .week-day-num {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-top: 2px;
+    }
+    
+    .week-day.selected .week-day-num {
+        color: var(--primary);
+    }
+    
+    /* Past day indicator */
+    .past-day-notice {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: var(--warning);
+        padding: 12px 16px;
+        border-radius: var(--radius-md);
+        margin-bottom: 20px;
+        font-size: 0.9em;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .past-day-notice a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+
+<!-- Date Navigation -->
+<div class="date-nav">
+    <a href="?date={{ prev_date.strftime('%Y-%m-%d') }}" class="date-nav-btn" title="Previous day">&larr;</a>
+    
+    <div class="date-display">
+        <div class="date-display-main">
+            {{ selected_date.strftime('%A, %B %d') }}
+            {% if is_today %}
+            <span class="date-today-badge">Today</span>
+            {% elif selected_date < today %}
+            <span class="date-past-badge">Past</span>
+            {% else %}
+            <span class="date-past-badge">Future</span>
+            {% endif %}
+        </div>
+        <div class="date-display-sub">{{ selected_date.strftime('%Y') }}</div>
+    </div>
+    
+    {% if not is_today %}
+    <a href="/" class="date-nav-btn" title="Go to today" style="font-size: 0.9em; padding: 6px 12px; background: var(--primary-dim); border-radius: var(--radius-md);">Today</a>
+    {% endif %}
+    
+    <a href="?date={{ next_date.strftime('%Y-%m-%d') }}" class="date-nav-btn" title="Next day">&rarr;</a>
+</div>
+
+<!-- Week View -->
+<div class="week-view" id="week-view">
+    {% for day in week_dates %}
+    <a href="?date={{ day.strftime('%Y-%m-%d') }}" 
+       class="week-day {{ 'selected' if day == selected_date else '' }} {{ 'today' if day == today else '' }}"
+       data-date="{{ day.strftime('%Y-%m-%d') }}">
+        <span class="week-day-name">{{ day.strftime('%a') }}</span>
+        <span class="week-day-num">{{ day.day }}</span>
+    </a>
+    {% endfor %}
+</div>
+
+{% if not is_today %}
+<!-- Past Day Notice -->
+<div class="past-day-notice">
+    <span>You're viewing {{ selected_date.strftime('%A, %B %d') }}. Timer is disabled for past/future days.</span>
+    <a href="/">Return to Today</a>
+</div>
+{% endif %}
 
 <!-- Status Bar -->
 <div class="status-bar">
@@ -578,12 +774,12 @@
 
 <div class="page-layout">
 
-<!-- Sidebar: Today's Plan -->
+<!-- Sidebar: Plan -->
 <aside class="sidebar">
     <div class="sidebar-card">
         <h3 class="sidebar-title">
-            Today's Plan
-            <a href="/planning">Edit</a>
+            {% if is_today %}Today's Plan{% else %}{{ selected_date.strftime('%b %d') }} Plan{% endif %}
+            <a href="/planning{% if not is_today %}?date={{ selected_date.strftime('%Y-%m-%d') }}{% endif %}">Edit</a>
         </h3>
         {% if tasks %}
         <div class="plan-list">
@@ -610,7 +806,7 @@
     <!-- Quick Summary -->
     {% if totals %}
     <div class="sidebar-card">
-        <h3 class="sidebar-title">Today</h3>
+        <h3 class="sidebar-title">{% if is_today %}Today{% else %}{{ selected_date.strftime('%b %d') }}{% endif %}</h3>
         {% for matter, hours in totals.items() %}
         <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85em;">
             <span style="color: var(--text-muted);">{{ matter|truncate(15) }}</span>
