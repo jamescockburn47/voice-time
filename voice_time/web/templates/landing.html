@@ -247,17 +247,38 @@
     <!-- Hero -->
     <section class="hero">
         <div class="container">
-            <h1 class="brand">Voice Time</h1>
-            <p class="tagline">
-                AI-powered time recording for legal professionals.<br>
-                Private. Intelligent. Effortless.
-            </p>
-            
-            <div class="privacy-badge">
-                🔒 100% Local - Your data never leaves your machine
+            <div style="display: inline-block; padding: 10px 24px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 24px; margin-bottom: 24px; font-size: 0.85em; color: var(--primary); font-weight: 600; letter-spacing: 0.05em;">
+                VOICE-CONTROLLED TIME RECORDING
             </div>
             
-            <a href="/app" class="cta-button">Get Started →</a>
+            <h1 class="brand">Voice Time</h1>
+            
+            <p class="tagline">
+                Press <span style="display: inline-block; background: var(--bg-card); padding: 8px 20px; border-radius: 4px; font-family: monospace; color: var(--primary); font-weight: 700; border: 1px solid var(--border);">Ctrl+Space</span>. 
+                Speak. Done.<br>
+                No clicking. No typing. No timers to manage.
+            </p>
+            
+            <div style="margin: 48px 0; padding: 32px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(245, 158, 11, 0.1)); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <div style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.1em;">
+                    Example Voice Commands
+                </div>
+                <div style="text-align: left; color: var(--text-main); line-height: 2.2; font-size: 1.05em;">
+                    🎙️ <em style="color: var(--primary);">"Working on Thompson disclosure"</em><br>
+                    🎙️ <em style="color: var(--purple);">"Done with that"</em><br>
+                    🎙️ <em style="color: var(--primary);">"Quick call about Brown"</em><br>
+                    🎙️ <em style="color: var(--purple);">"Back to what I was doing"</em>
+                </div>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.9em;">
+                    → System logs time, generates narratives, tracks context automatically
+                </div>
+            </div>
+            
+            <div class="privacy-badge">
+                🔒 100% Local - Your voice never leaves your machine
+            </div>
+            
+            <a href="/app" class="cta-button">Start Speaking, Start Saving Time →</a>
         </div>
     </section>
     
@@ -274,38 +295,47 @@
                 </p>
             </div>
             
+            <div style="text-align: center; max-width: 600px; margin: 0 auto 64px;">
+                <p style="font-size: 1.3em; color: var(--text-muted); line-height: 1.7;">
+                    This isn't voice dictation with parsing. It's a <strong style="color: var(--text-main);">stateful day controller</strong> 
+                    that understands legal work, infers duration from context, and generates professional narratives from casual speech.
+                </p>
+            </div>
+            
             <div class="innovation-grid">
                 <div class="innovation-card">
-                    <h3>🧠 Context Awareness</h3>
+                    <h3>🎙️ Voice-Native</h3>
                     <p>
-                        Describe your day in the morning. Throughout the day, just say "done with that" 
-                        and the system knows exactly what you mean. No clicking through dropdowns, 
-                        no re-entering matter names.
+                        Designed for voice from the ground up. Speak casually - "Done with Thompson" - system understands. 
+                        Natural language processing that actually works. Press Ctrl+Space anywhere, anytime. 
+                        Voice is primary, typing is backup.
                     </p>
                 </div>
                 
                 <div class="innovation-card" style="border-left-color: var(--purple);">
-                    <h3>⏱️ Temporal Intelligence</h3>
+                    <h3>🧠 Context Memory</h3>
                     <p>
-                        "Couple of hours", "all morning", "since lunch" - the system understands natural language. 
-                        Infers duration from context. No manual timer management required.
+                        Plan your morning once. System remembers all day. "Done with that" knows what "that" is. 
+                        Active matter stays active. Interruptions are handled. Return to previous task seamlessly. 
+                        No context switching overhead.
                     </p>
                 </div>
                 
                 <div class="innovation-card">
-                    <h3>🔄 Interruption Handling</h3>
+                    <h3>⏱️ Natural Duration</h3>
                     <p>
-                        "Quick call about Brown" then "back to what I was doing" - task stack remembers 
-                        your context. Handle interruptions naturally without losing track.
+                        Speak how you think. "Couple of hours", "all morning", "since lunch", "quick call" - 
+                        system infers exact durations. No manual timers. No forgetting to start/stop. 
+                        Just speak naturally.
                     </p>
                 </div>
                 
                 <div class="innovation-card" style="border-left-color: var(--purple);">
-                    <h3>📝 Narrative Generation</h3>
+                    <h3>📝 AI Narratives</h3>
                     <p>
-                        "Went through the witness statements" becomes "Review and analysis of witness 
-                        evidence with particular focus on chronological timeline." AI generates professional 
-                        billing narratives from casual speech.
+                        Say: "Went through the docs looking for timeline issues"<br>
+                        Get: "Review and analysis of disclosure documentation with particular focus on chronological timeline and sequencing"<br>
+                        Professional narratives from casual voice input.
                     </p>
                 </div>
             </div>
@@ -387,61 +417,76 @@
                 
                 <div class="feature">
                     <div class="feature-icon">🎙️</div>
-                    <h3 class="feature-title">Hotkey Activation</h3>
+                    <h3 class="feature-title">Voice-First Design</h3>
                     <p class="feature-desc">
-                        Press Ctrl+Space to talk. No wake words, no constant listening, no privacy concerns. 
-                        Professional, reliable, and respects your privacy. Works in browser or globally.
+                        Press Ctrl+Space, speak naturally, release. That's it. No wake words, no constant listening. 
+                        "Working on Thompson" → logs time. "Done with that" → generates narrative. 
+                        Voice is the primary interface, typing is backup.
                     </p>
                 </div>
             </div>
         </div>
     </section>
     
-    <!-- How It Works -->
+    <!-- Voice vs Traditional -->
     <section class="section" style="background: var(--bg-card);">
         <div class="container">
-            <h2 class="section-title">How It Works</h2>
+            <h2 class="section-title">Voice Changes Everything</h2>
             
-            <div style="max-width: 700px; margin: 0 auto;">
-                <div style="margin-bottom: 48px;">
-                    <div style="color: var(--primary); font-weight: 600; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">
-                        Morning (9:00 AM)
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 900px; margin: 0 auto;">
+                <div style="text-align: center;">
+                    <div style="color: var(--text-muted); font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px;">
+                        Traditional Systems
                     </div>
-                    <div style="background: var(--bg-hover); padding: 24px; border-radius: 4px; border-left: 3px solid var(--primary);">
-                        <p style="color: var(--text-main); font-size: 1.1em; margin-bottom: 8px; font-style: italic;">
-                            "Today I need to finish the Thompson disclosure, draft the Greenfield skeleton, and I've got a call with counsel at 3"
-                        </p>
-                        <p style="color: var(--text-muted); font-size: 0.95em;">
-                            → System parses into 3 structured tasks across 2 matters
-                        </p>
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 48px;">
-                    <div style="color: var(--purple); font-weight: 600; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">
-                        During Day (10:30 AM)
-                    </div>
-                    <div style="background: var(--bg-hover); padding: 24px; border-radius: 4px; border-left: 3px solid var(--purple);">
-                        <p style="color: var(--text-main); font-size: 1.1em; margin-bottom: 8px; font-style: italic;">
-                            "Done with the disclosure"
-                        </p>
-                        <p style="color: var(--text-muted); font-size: 0.95em;">
-                            → Infers 1.5 hours, generates "Review and analysis of disclosure bundle", logs to Thompson
-                        </p>
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 32px; border-radius: 8px; min-height: 300px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="font-size: 2.5em; margin-bottom: 16px;">🖱️</div>
+                        <div style="color: var(--text-muted); line-height: 2;">
+                            Click dropdown<br>
+                            Select matter<br>
+                            Select activity<br>
+                            Start timer<br>
+                            <em style="opacity: 0.6;">...work for 2 hours...</em><br>
+                            Stop timer<br>
+                            Type description<br>
+                            Click save
+                        </div>
+                        <div style="margin-top: 24px; color: #ef4444; font-weight: 600;">
+                            ~2 minutes overhead
+                        </div>
                     </div>
                 </div>
                 
-                <div>
-                    <div style="color: var(--primary); font-weight: 600; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">
-                        End of Day (5:00 PM)
+                <div style="text-align: center;">
+                    <div style="color: var(--primary); font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px;">
+                        Voice Time
                     </div>
-                    <div style="background: var(--bg-hover); padding: 24px; border-radius: 4px; border-left: 3px solid var(--primary);">
-                        <p style="color: var(--text-muted); font-size: 0.95em;">
-                            Review entries with voice commands. "Change entry 2 to 3 hours." Export to CSV. 
-                            Done in 60 seconds instead of 30 minutes.
-                        </p>
+                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(245, 158, 11, 0.15)); border: 1px solid var(--primary); padding: 32px; border-radius: 8px; min-height: 300px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="font-size: 2.5em; margin-bottom: 16px;">🎙️</div>
+                        <div style="color: var(--text-main); line-height: 2.5; font-size: 1.1em;">
+                            <div style="background: var(--bg-card); padding: 8px 16px; border-radius: 4px; margin-bottom: 8px;">
+                                <span style="font-family: monospace; color: var(--primary); font-weight: 700;">Ctrl+Space</span>
+                            </div>
+                            <em style="color: var(--primary);">"Working on Thompson"</em><br>
+                            <em style="opacity: 0.6;">...work for 2 hours...</em><br>
+                            <div style="background: var(--bg-card); padding: 8px 16px; border-radius: 4px; margin: 8px 0;">
+                                <span style="font-family: monospace; color: var(--primary); font-weight: 700;">Ctrl+Space</span>
+                            </div>
+                            <em style="color: var(--purple);">"Done with that"</em>
+                        </div>
+                        <div style="margin-top: 24px; color: var(--success); font-weight: 600;">
+                            ~5 seconds total
+                        </div>
                     </div>
                 </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 48px;">
+                <div style="font-size: 3em; font-family: var(--font-serif); color: var(--primary); font-weight: 700; margin-bottom: 16px;">
+                    24× faster
+                </div>
+                <p style="color: var(--text-muted); font-size: 1.1em;">
+                    Voice input is 24 times faster than traditional clicking and typing
+                </p>
             </div>
         </div>
     </section>
@@ -518,19 +563,38 @@
     <!-- Final CTA -->
     <section class="section">
         <div class="container" style="text-align: center;">
-            <h2 class="section-title">Ready to Reclaim Your Time?</h2>
+            <h2 class="section-title">Stop Clicking. Start Speaking.</h2>
             
-            <p style="font-size: 1.2em; color: var(--text-muted); max-width: 600px; margin: 0 auto 48px;">
-                Join legal professionals who've transformed their time recording from 
-                tedious admin into effortless logging.
-            </p>
+            <div style="max-width: 700px; margin: 0 auto 48px;">
+                <p style="font-size: 1.3em; color: var(--text-muted); margin-bottom: 32px; line-height: 1.6;">
+                    Your voice is faster than your mouse. Your words are clearer than dropdown menus. 
+                    Your natural language is better than forms.
+                </p>
+                
+                <div style="background: var(--bg-card); padding: 32px; border-radius: 8px; border: 1px solid var(--border);">
+                    <div style="font-size: 1.1em; color: var(--text-muted); margin-bottom: 20px;">
+                        The only time recording system where this just works:
+                    </div>
+                    <div style="font-size: 1.4em; font-family: var(--font-serif); color: var(--text-main); font-style: italic; line-height: 1.8;">
+                        <div style="margin-bottom: 12px;">
+                            Press <span style="display: inline-block; background: var(--bg-hover); padding: 6px 16px; border-radius: 4px; font-family: monospace; color: var(--primary); font-weight: 700; font-style: normal;">Ctrl+Space</span>
+                        </div>
+                        <div style="margin-bottom: 12px; color: var(--purple);">
+                            "Done with that"
+                        </div>
+                        <div style="font-size: 0.9em; color: var(--text-muted); font-style: normal; font-family: var(--font-sans);">
+                            → Knows what "that" is. Logs 2.5 hours. Generates professional narrative. All automatic.
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <a href="/app" class="cta-button" style="font-size: 1.2em; padding: 20px 56px;">
-                Start Using Voice Time →
+                Try Voice Commands Now →
             </a>
             
             <p style="color: var(--text-muted); margin-top: 32px; font-size: 0.95em;">
-                Free and open source. Runs entirely on your machine.
+                Free and open source. Everything runs locally on your machine.
             </p>
         </div>
     </section>
