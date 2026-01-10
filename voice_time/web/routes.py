@@ -57,28 +57,20 @@ def register_routes(app):
             if file_size < 1000:
                 result['warning'] = 'Audio file very small - may be too short'
             
-            # Stage 2: Load Whisper model
+            # Stage 2: Create Transcriber (doesn't load model yet)
             from ..voice.transcribe import Transcriber
             
-            result['stage'] = 'loading_model'
+            result['stage'] = 'creating_transcriber'
             result['model'] = app.config_obj.whisper.model
             result['device'] = app.config_obj.whisper.device
             
-            try:
-                transcriber = Transcriber(
-                    model_size=app.config_obj.whisper.model,
-                    device=app.config_obj.whisper.device
-                )
-                result['stage'] = 'model_loaded'
-            except Exception as e:
-                return jsonify({
-                    'success': False,
-                    'stage': 'model_load_failed',
-                    'error': str(e),
-                    'fix': 'Whisper model may not be downloaded. This happens automatically on first use.'
-                })
+            transcriber = Transcriber(
+                model_size=app.config_obj.whisper.model,
+                device=app.config_obj.whisper.device
+            )
+            result['stage'] = 'transcriber_created'
             
-            # Stage 3: Transcribe
+            # Stage 3: Transcribe (model loads HERE on first use)
             result['stage'] = 'transcribing'
             
             try:
@@ -93,13 +85,25 @@ def register_routes(app):
                 return jsonify(result)
                 
             except Exception as e:
-                return jsonify({
-                    'success': False,
-                    'stage': 'transcription_failed',
-                    'error': str(e),
-                    'file_size': file_size,
-                    'fix': 'Try speaking louder and clearer, or check audio format'
-                })
+                error_str = str(e).lower()
+                
+                # BUG FIX: Detect model loading errors vs transcription errors
+                if 'model' in error_str or 'download' in error_str or 'not found' in error_str:
+                    return jsonify({
+                        'success': False,
+                        'stage': 'model_load_failed',
+                        'error': str(e),
+                        'file_size': file_size,
+                        'fix': 'Whisper model downloading now (first use only). Wait 1-2 minutes and try again.'
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'stage': 'transcription_failed',
+                        'error': str(e),
+                        'file_size': file_size,
+                        'fix': 'Try speaking louder and clearer, or check audio format'
+                    })
             
         except Exception as e:
             return jsonify({
@@ -116,30 +120,52 @@ def register_routes(app):
     
     @app.route('/whisper-status')
     def whisper_status():
-        """Check if Whisper model is working."""
+        """Check if Whisper model is working and show hardware info."""
         try:
             from ..voice.transcribe import Transcriber
+            from ..voice.hardware import detect_hardware, get_optimal_whisper_config
             
-            # Try to create transcriber
+            # Detect hardware
+            hw = detect_hardware()
+            optimal = get_optimal_whisper_config(hw)
+            
+            # Try to create transcriber with optimal settings
             transcriber = Transcriber(
                 model_size=app.config_obj.whisper.model,
-                device=app.config_obj.whisper.device
+                device=optimal['device'],
+                compute_type=optimal['compute_type']
             )
             
-            # Check if model loaded
-            # Note: Model lazy-loads on first use
+            # Force model load to verify it works
+            try:
+                transcriber._ensure_loaded()
+                model_status = 'loaded'
+                model_message = 'Model is loaded and ready'
+            except Exception as e:
+                model_status = 'not_loaded'
+                model_message = f'Model will download on first use (error: {str(e)})'
+            
             return jsonify({
                 'status': 'ready',
                 'model': app.config_obj.whisper.model,
-                'device': app.config_obj.whisper.device,
-                'message': 'Whisper is ready (model will download on first use)'
+                'device': optimal['device'],
+                'compute_type': optimal['compute_type'],
+                'model_status': model_status,
+                'message': model_message,
+                'hardware': {
+                    'cpu': hw['cpu_name'],
+                    'has_cuda': hw['has_cuda'],
+                    'has_amd': hw['has_amd'],
+                    'has_npu': hw['has_npu'],
+                    'notes': hw['notes']
+                }
             })
             
         except Exception as e:
             return jsonify({
                 'status': 'error',
                 'error': str(e),
-                'message': 'Whisper model failed to load'
+                'message': 'Whisper initialization failed'
             })
     
     @app.route('/')

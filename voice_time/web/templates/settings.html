@@ -214,7 +214,7 @@
 
 <!-- Whisper Model Status -->
 <div class="card">
-    <h2>🤖 AI Model Status</h2>
+    <h2>🤖 AI Model & Hardware Status</h2>
     
     <div class="test-card">
         <div class="test-header">
@@ -222,10 +222,12 @@
             <span id="whisper-status" class="test-status status-pending">Checking...</span>
         </div>
         <div id="whisper-result" class="test-result">
-            Checking Whisper model status...
+            Checking Whisper model and hardware...
+        </div>
+        <div id="hardware-info" class="test-result" style="display: none; margin-top: 16px;">
         </div>
         <button id="reload-whisper-btn" class="test-btn" style="margin-top: 16px;" onclick="checkWhisperStatus()">
-            🔄 Recheck Model
+            🔄 Recheck Model & Hardware
         </button>
     </div>
 </div>
@@ -604,10 +606,11 @@
     async function checkWhisperStatus() {
         const statusEl = document.getElementById('whisper-status');
         const resultEl = document.getElementById('whisper-result');
+        const hwEl = document.getElementById('hardware-info');
         
         statusEl.className = 'test-status status-testing';
         statusEl.textContent = 'Checking...';
-        resultEl.textContent = 'Checking Whisper model status...';
+        resultEl.textContent = 'Checking Whisper model and hardware...';
         
         try {
             const response = await fetch('/whisper-status');
@@ -616,25 +619,60 @@
             if (data.status === 'ready') {
                 statusEl.className = 'test-status status-success';
                 statusEl.textContent = '✓ Ready';
+                
+                const modelStatusColor = data.model_status === 'loaded' ? 'var(--success)' : 'var(--warning)';
+                
                 resultEl.innerHTML = `
-                    <strong style="color: var(--success);">✓ Whisper model is ready</strong><br><br>
+                    <strong style="color: ${modelStatusColor};">
+                        ${data.model_status === 'loaded' ? '✓' : '⚠️'} ${data.message}
+                    </strong><br><br>
+                    <strong>Configuration:</strong><br>
                     Model: ${data.model}<br>
                     Device: ${data.device}<br>
-                    Status: ${data.message}
+                    Compute Type: ${data.compute_type}
                 `;
+                
+                // Show hardware info
+                if (data.hardware) {
+                    hwEl.style.display = 'block';
+                    let hwHtml = '<strong style="color: var(--text-main);">Hardware Detected:</strong><br><br>';
+                    hwHtml += `CPU: ${data.hardware.cpu}<br>`;
+                    
+                    if (data.hardware.has_cuda) {
+                        hwHtml += '✓ NVIDIA GPU (CUDA) - Using GPU acceleration<br>';
+                    }
+                    if (data.hardware.has_amd) {
+                        hwHtml += '✓ AMD GPU detected<br>';
+                    }
+                    if (data.hardware.has_npu) {
+                        hwHtml += '✓ AMD Ryzen AI with NPU (Evo x2)<br>';
+                        hwHtml += '<span style="color: var(--warning);">Note: NPU not yet supported, using optimized CPU</span><br>';
+                    }
+                    
+                    if (data.hardware.notes && data.hardware.notes.length > 0) {
+                        hwHtml += '<br><strong>Optimizations:</strong><br>';
+                        data.hardware.notes.forEach(note => {
+                            hwHtml += `• ${note}<br>`;
+                        });
+                    }
+                    
+                    hwEl.innerHTML = hwHtml;
+                }
             } else {
                 statusEl.className = 'test-status status-error';
                 statusEl.textContent = '✗ Error';
                 resultEl.innerHTML = `
-                    <strong style="color: var(--error);">Whisper model error</strong><br><br>
+                    <strong style="color: var(--error);">Whisper error</strong><br><br>
                     ${data.error}<br><br>
                     ${data.message}
                 `;
+                hwEl.style.display = 'none';
             }
         } catch (err) {
             statusEl.className = 'test-status status-error';
             statusEl.textContent = '✗ Error';
             resultEl.textContent = 'Could not check model status: ' + err.message;
+            hwEl.style.display = 'none';
         }
     }
 </script>

@@ -9,31 +9,52 @@ class Transcriber:
     Whisper-based transcription for voice input.
     
     Uses faster-whisper (Python bindings for whisper.cpp)
-    for efficient CPU inference.
+    for efficient CPU inference with hardware optimization.
     """
     
-    def __init__(self, model_size: str = "base.en", device: str = "cpu"):
+    def __init__(self, model_size: str = "base.en", device: str = "cpu", compute_type: str = None):
         """
         Initialize transcriber.
         
         Args:
             model_size: Whisper model size (tiny.en, base.en, small.en, medium.en)
             device: "cpu" or "cuda"
+            compute_type: "int8", "float16", "float32" (auto-detected if None)
         """
         self.model_size = model_size
         self.device = device
+        
+        # Auto-detect optimal compute type based on hardware
+        if compute_type is None:
+            from .hardware import get_optimal_whisper_config
+            config = get_optimal_whisper_config()
+            self.device = config['device']
+            self.compute_type = config['compute_type']
+        else:
+            self.compute_type = compute_type
+        
         self.model: Optional[WhisperModel] = None
     
     def _ensure_loaded(self):
         """Lazy-load the model on first use."""
         if self.model is None:
-            print(f"Loading Whisper model: {self.model_size}...")
+            print(f"Loading Whisper model: {self.model_size} on {self.device} ({self.compute_type})...")
+            
+            # Import hardware detection for info
+            try:
+                from .hardware import detect_hardware
+                hw = detect_hardware()
+                if hw['notes']:
+                    print(f"Hardware: {', '.join(hw['notes'][:2])}")
+            except:
+                pass
+            
             self.model = WhisperModel(
                 self.model_size,
                 device=self.device,
-                compute_type="int8" if self.device == "cpu" else "float16"
+                compute_type=self.compute_type
             )
-            print("Model loaded!")
+            print(f"Model loaded! Device: {self.device}, Compute: {self.compute_type}")
     
     def transcribe(
         self,
