@@ -147,57 +147,177 @@ class DayState:
             return None
         
         clarification_type = self.pending_clarification.get('type')
-        original_utterance = self.pending_clarification.get('original_utterance', '')
         
         if clarification_type == 'matter':
-            # User is specifying which matter
-            matter_match = self.matter_matcher.find_matter(utterance)
-            
-            if matter_match.match:
-                # Got a valid matter - now START A TIMER
-                self.pending_clarification = None
-                
-                # Stop any existing timer first
-                existing_timer = self.session.query(ActiveTimer).first()
-                if existing_timer:
-                    self._save_timer_to_log(existing_timer)
-                    self.session.delete(existing_timer)
-                
-                # Create new timer
-                new_timer = ActiveTimer(
-                    matter_id=matter_match.match.id,
-                    activity_type_id=None,
-                    started_at=datetime.now(),
-                    is_active=True
-                )
-                self.session.add(new_timer)
-                
-                # Update internal state
-                self.active_matter_id = matter_match.match.id
-                self.active_activity_type_id = None
-                self.current_work_started_at = datetime.now()
-                matter_match.match.touch()
-                self.session.commit()
-                
-                event.intent = 'start'
-                event.processed = True
-                
-                return ProcessingResult(
-                    success=True,
-                    message=f"Timer started: {matter_match.match.display_name}"
-                )
-            else:
-                # Still can't find matter - give up and clear state
-                self.pending_clarification = None
-                available = self._get_available_matters()
-                return ProcessingResult(
-                    success=False,
-                    message=f"Could not find that matter. Available: {available}"
-                )
+            return self._handle_matter_clarification(utterance, event)
+        
+        elif clarification_type == 'activity':
+            return self._handle_activity_clarification(utterance, event)
+        
+        elif clarification_type == 'description':
+            return self._handle_description_clarification(utterance, event)
         
         # Unknown clarification type - clear and process normally
         self.pending_clarification = None
         return None
+    
+    def _handle_matter_clarification(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
+        """Handle response when user is specifying which matter."""
+        matter_match = self.matter_matcher.find_matter(utterance)
+        
+        if matter_match.match:
+            # Got a valid matter - now START A TIMER
+            self.pending_clarification = None
+            
+            # Stop any existing timer first
+            existing_timer = self.session.query(ActiveTimer).first()
+            if existing_timer:
+                self._save_timer_to_log(existing_timer)
+                self.session.delete(existing_timer)
+            
+            # Create new timer
+            new_timer = ActiveTimer(
+                matter_id=matter_match.match.id,
+                activity_type_id=None,
+                started_at=datetime.now(),
+                is_active=True
+            )
+            self.session.add(new_timer)
+            
+            # Update internal state
+            self.active_matter_id = matter_match.match.id
+            self.active_activity_type_id = None
+            self.current_work_started_at = datetime.now()
+            matter_match.match.touch()
+            self.session.commit()
+            
+            event.intent = 'start'
+            event.processed = True
+            
+            matter_name = matter_match.match.display_name
+            
+            # Now ask for activity type
+            self.pending_clarification = {
+                'type': 'activity',
+                'timer_id': new_timer.id,
+                'matter_name': matter_name,
+                'timestamp': datetime.now()
+            }
+            
+            activities = self.session.query(ActivityType).order_by(ActivityType.display_order).all()
+            activity_labels = [a.label for a in activities]
+            
+            return ProcessingResult(
+                success=True,
+                message=f"Timer started: {matter_name}. What type of work?",
+                needs_clarification=True,
+                clarification_question="activity",
+                data={
+                    'timer_started': True,
+                    'matter': matter_name,
+                    'suggestions': activity_labels[:6]
+                }
+            )
+        else:
+            # Still can't find matter - give up and clear state
+            self.pending_clarification = None
+            available = self._get_available_matters()
+            return ProcessingResult(
+                success=False,
+                message=f"Could not find that matter. Available: {available}"
+            )
+    
+    def _handle_activity_clarification(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
+        """Handle response when user is specifying activity type."""
+        timer_id = self.pending_clarification.get('timer_id')
+        matter_name = self.pending_clarification.get('matter_name', 'Unknown')
+        
+        # Try to match the activity type
+        activity_match = self.activity_matcher.find_activity_type(utterance)
+        
+        # Get the active timer
+        timer = self.session.query(ActiveTimer).get(timer_id) if timer_id else self.session.query(ActiveTimer).first()
+        
+        if not timer:
+            self.pending_clarification = None
+            return ProcessingResult(
+                success=False,
+                message="Timer not found. Please start again."
+            )
+        
+        if activity_match.match:
+            # Update timer with activity type
+            timer.activity_type_id = activity_match.match.id
+            self.active_activity_type_id = activity_match.match.id
+            self.session.commit()
+            
+            activity_name = activity_match.match.label
+            
+            # Now ask for description
+            self.pending_clarification = {
+                'type': 'description',
+                'timer_id': timer.id,
+                'matter_name': matter_name,
+                'activity_name': activity_name,
+                'timestamp': datetime.now()
+            }
+            
+            return ProcessingResult(
+                success=True,
+                message=f"Recording {activity_name}. What specifically are you working on?",
+                needs_clarification=True,
+                clarification_question="description",
+                data={
+                    'matter': matter_name,
+                    'activity': activity_name
+                }
+            )
+        else:
+            # Couldn't match - ask again with options
+            activities = self.session.query(ActivityType).order_by(ActivityType.display_order).all()
+            activity_labels = [a.label for a in activities]
+            
+            return ProcessingResult(
+                success=True,
+                message=f"Please choose: {', '.join(activity_labels[:6])}",
+                needs_clarification=True,
+                clarification_question="activity",
+                data={'suggestions': activity_labels[:6]}
+            )
+    
+    def _handle_description_clarification(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
+        """Handle response when user is describing what they're working on."""
+        timer_id = self.pending_clarification.get('timer_id')
+        matter_name = self.pending_clarification.get('matter_name', 'Unknown')
+        activity_name = self.pending_clarification.get('activity_name', 'work')
+        
+        # Get the active timer
+        timer = self.session.query(ActiveTimer).get(timer_id) if timer_id else self.session.query(ActiveTimer).first()
+        
+        if not timer:
+            self.pending_clarification = None
+            return ProcessingResult(
+                success=False,
+                message="Timer not found. Please start again."
+            )
+        
+        # Save the description as the narrative draft
+        timer.narrative_draft = utterance
+        self.session.commit()
+        
+        # Clear clarification state - time entry is now complete
+        self.pending_clarification = None
+        
+        return ProcessingResult(
+            success=True,
+            message=f"Recording: {matter_name} - {activity_name}\n{utterance}",
+            data={
+                'timer_complete': True,
+                'matter': matter_name,
+                'activity': activity_name,
+                'description': utterance
+            }
+        )
     
     def _get_available_matters(self) -> str:
         """Get a list of available matter names for suggestions."""
@@ -478,7 +598,7 @@ class DayState:
         )
     
     def _handle_start(self, utterance: str, event: VoiceEvent) -> ProcessingResult:
-        """Handle starting work on a task - CREATES AN ACTUAL TIMER."""
+        """Handle starting work on a task - CREATES AN ACTUAL TIMER with follow-up questions."""
         # Extract matter and activity
         matter_match = self.matter_matcher.find_matter(utterance)
         activity_match = self.activity_matcher.find_activity_type(utterance)
@@ -539,11 +659,53 @@ class DayState:
         self.session.commit()
         
         matter_name = matter_match.match.display_name
-        activity_name = activity_match.match.label if activity_match.match else "work"
+        
+        # Check if we need follow-up questions to complete the time entry
+        # Question 1: Activity type (if not detected)
+        if not activity_match.match:
+            self.pending_clarification = {
+                'type': 'activity',
+                'timer_id': new_timer.id,
+                'matter_name': matter_name,
+                'timestamp': datetime.now()
+            }
+            
+            # Get activity type options
+            activities = self.session.query(ActivityType).order_by(ActivityType.display_order).all()
+            activity_labels = [a.label for a in activities]
+            
+            return ProcessingResult(
+                success=True,
+                message=f"Timer started: {matter_name}. What type of work?",
+                needs_clarification=True,
+                clarification_question="activity",
+                data={
+                    'timer_started': True,
+                    'matter': matter_name,
+                    'suggestions': activity_labels[:6]
+                }
+            )
+        
+        # Activity was detected - now ask for description
+        activity_name = activity_match.match.label
+        self.pending_clarification = {
+            'type': 'description',
+            'timer_id': new_timer.id,
+            'matter_name': matter_name,
+            'activity_name': activity_name,
+            'timestamp': datetime.now()
+        }
         
         return ProcessingResult(
             success=True,
-            message=f"Timer started: {matter_name} - {activity_name}"
+            message=f"Timer started: {matter_name} - {activity_name}. What specifically?",
+            needs_clarification=True,
+            clarification_question="description",
+            data={
+                'timer_started': True,
+                'matter': matter_name,
+                'activity': activity_name
+            }
         )
     
     def _save_timer_to_log(self, timer: ActiveTimer, narrative: str = None):

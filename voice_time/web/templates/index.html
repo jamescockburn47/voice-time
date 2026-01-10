@@ -879,10 +879,32 @@
             
             processingDiv.style.display = 'none';
             
-            if (data.success) {
+            if (data.success && !data.needs_clarification) {
+                // Fully complete - reload
                 responseDiv.innerHTML = '<div class="message message-success">' + data.message + '</div>';
                 setTimeout(() => window.location.reload(), 1500);
+            } else if (data.success && data.needs_clarification) {
+                // Timer started but needs more info (activity type or description)
+                let html = '<div class="message message-success" style="border-left-color: var(--primary);">';
+                html += '<strong>' + data.message + '</strong>';
+                
+                if (data.suggestions && data.suggestions.length > 0) {
+                    html += '<div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">';
+                    data.suggestions.forEach(s => {
+                        html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 10px 16px; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-weight: 500;">' + s + '</button>';
+                    });
+                    html += '</div>';
+                }
+                html += '<p style="margin-top: 12px; font-size: 0.9em; color: var(--text-muted);">Or speak/type your answer</p>';
+                html += '</div>';
+                responseDiv.innerHTML = html;
+                
+                // If timer started, reload after delay to show the running timer
+                if (data.timer_started) {
+                    setTimeout(() => window.location.reload(), 3000);
+                }
             } else if (data.needs_clarification && data.suggestions) {
+                // Error but with suggestions
                 let html = '<div class="message message-info" style="border-left-color: var(--warning);"><strong>' + data.message + '</strong><div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">';
                 data.suggestions.forEach(s => {
                     html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 8px 16px; background: var(--primary); color: var(--bg-app); border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">' + s + '</button>';
@@ -923,9 +945,30 @@
         .then(data => {
             processingDiv.style.display = 'none';
             
-            if (data.success) {
+            if (data.success && !data.needs_clarification) {
+                // Fully complete - reload
                 responseDiv.innerHTML = '<div class="message message-success">' + data.message + '</div>';
                 setTimeout(() => window.location.reload(), 1500);
+            } else if (data.success && data.needs_clarification) {
+                // Timer started but needs more info
+                let html = '<div class="message message-success" style="border-left-color: var(--primary);">';
+                html += '<strong>' + data.message + '</strong>';
+                
+                if (data.suggestions && data.suggestions.length > 0) {
+                    html += '<div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">';
+                    data.suggestions.forEach(s => {
+                        html += '<button onclick="quickSelect(\'' + s + '\')" style="padding: 10px 16px; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-weight: 500;">' + s + '</button>';
+                    });
+                    html += '</div>';
+                }
+                html += '<p style="margin-top: 12px; font-size: 0.9em; color: var(--text-muted);">Or type your answer</p>';
+                html += '</div>';
+                responseDiv.innerHTML = html;
+                
+                // If timer started, reload after delay
+                if (data.timer_started) {
+                    setTimeout(() => window.location.reload(), 3000);
+                }
             } else if (data.needs_clarification && data.suggestions) {
                 let html = '<div class="message message-info" style="border-left-color: var(--warning);"><strong>' + data.message + '</strong><div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">';
                 data.suggestions.forEach(s => {
