@@ -180,21 +180,53 @@
 
 <!-- Voice Recognition Test -->
 <div class="card">
-    <h2>🗣️ Voice Recognition Test</h2>
+    <h2>🗣️ Voice Recognition Test (Detailed)</h2>
     
     <div class="test-card">
         <div class="test-header">
-            <span class="test-title">Speech-to-Text Test</span>
+            <span class="test-title">Speech-to-Text Diagnostic</span>
             <span id="transcribe-status" class="test-status status-pending">Not Started</span>
         </div>
         <p style="color: var(--text-muted); margin-bottom: 16px;">
-            Test the AI speech recognition. Say a test phrase and see if it's transcribed correctly.
+            Test AI speech recognition with detailed diagnostics at each stage.
         </p>
         <button id="transcribe-test-btn" class="test-btn" onclick="testTranscription()">
-            🎙️ Test Voice Recognition
+            🎙️ Start Detailed Test
         </button>
-        <div id="transcribe-result" class="test-result" style="display: none; margin-top: 16px;">
+        
+        <!-- Detailed progress log -->
+        <div id="test-log" style="display: none; margin-top: 16px; padding: 16px; background: var(--bg-sidebar); border-radius: var(--radius-md); font-family: monospace; font-size: 0.85em;">
+            <div style="color: var(--text-main); margin-bottom: 8px; font-weight: 600;">Diagnostic Log:</div>
+            <div id="log-content" style="color: var(--text-muted);"></div>
         </div>
+        
+        <div id="transcribe-result" class="test-result" style="display: none; margin-top: 16px;"></div>
+        
+        <!-- Audio playback for debugging -->
+        <div id="audio-debug" style="display: none; margin-top: 16px;">
+            <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 8px;">
+                Recorded audio (play to verify quality):
+            </p>
+            <audio id="debug-audio" controls style="width: 100%;"></audio>
+        </div>
+    </div>
+</div>
+
+<!-- Whisper Model Status -->
+<div class="card">
+    <h2>🤖 AI Model Status</h2>
+    
+    <div class="test-card">
+        <div class="test-header">
+            <span class="test-title">Whisper Speech Recognition</span>
+            <span id="whisper-status" class="test-status status-pending">Checking...</span>
+        </div>
+        <div id="whisper-result" class="test-result">
+            Checking Whisper model status...
+        </div>
+        <button id="reload-whisper-btn" class="test-btn" style="margin-top: 16px;" onclick="checkWhisperStatus()">
+            🔄 Recheck Model
+        </button>
     </div>
 </div>
 
@@ -389,71 +421,168 @@
     let transcribeRecorder = null;
     let transcribeChunks = [];
     
+    function addLog(message, isError = false) {
+        const logContent = document.getElementById('log-content');
+        const timestamp = new Date().toLocaleTimeString();
+        const color = isError ? 'var(--error)' : 'var(--text-muted)';
+        logContent.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+    }
+    
     async function testTranscription() {
         const btnEl = document.getElementById('transcribe-test-btn');
         const statusEl = document.getElementById('transcribe-status');
         const resultEl = document.getElementById('transcribe-result');
+        const logEl = document.getElementById('test-log');
+        const logContent = document.getElementById('log-content');
+        const audioDebug = document.getElementById('audio-debug');
+        const debugAudio = document.getElementById('debug-audio');
         
         if (!transcribeRecorder) {
             // Start recording for transcription
+            logEl.style.display = 'block';
+            logContent.innerHTML = '';
+            addLog('Starting detailed voice recognition test...');
+            
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                addLog('Requesting microphone access...');
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    }
+                });
+                addLog('✓ Microphone access granted');
+                
                 transcribeRecorder = new MediaRecorder(stream);
                 transcribeChunks = [];
                 
-                transcribeRecorder.ondataavailable = (e) => transcribeChunks.push(e.data);
+                transcribeRecorder.ondataavailable = (e) => {
+                    transcribeChunks.push(e.data);
+                    addLog(`Audio chunk received: ${e.data.size} bytes`);
+                };
+                
                 transcribeRecorder.onstop = async () => {
                     stream.getTracks().forEach(track => track.stop());
+                    addLog('Recording stopped');
+                    
+                    const blob = new Blob(transcribeChunks, { type: 'audio/webm' });
+                    addLog(`Total audio size: ${blob.size} bytes`);
+                    
+                    // Show playback for debugging
+                    debugAudio.src = URL.createObjectURL(blob);
+                    audioDebug.style.display = 'block';
+                    addLog('✓ Audio available for playback (check quality)');
                     
                     statusEl.className = 'test-status status-testing';
                     statusEl.textContent = 'Transcribing...';
                     resultEl.style.display = 'block';
-                    resultEl.textContent = '⚙️ Processing speech with AI...';
+                    resultEl.textContent = '⚙️ Sending to AI for transcription...';
                     
-                    // Send to server for transcription
-                    const blob = new Blob(transcribeChunks, { type: 'audio/webm' });
+                    addLog('Sending audio to server...');
+                    
+                    // Send to detailed test endpoint
                     const formData = new FormData();
                     formData.append('audio', blob, 'test.webm');
                     
                     try {
-                        const response = await fetch('/process-voice', {
+                        const response = await fetch('/test-whisper', {
                             method: 'POST',
                             body: formData
                         });
                         
                         const data = await response.json();
+                        addLog(`Server response stage: ${data.stage}`);
                         
-                        if (data.transcript) {
+                        if (data.success && data.transcript) {
+                            addLog(`✓ Transcription successful: "${data.transcript}"`);
+                            
                             statusEl.className = 'test-status status-success';
-                            statusEl.textContent = '✓ Success';
+                            statusEl.textContent = '✓ Working!';
                             resultEl.innerHTML = `
-                                <strong style="color: var(--success);">✓ Voice recognition working!</strong><br><br>
+                                <strong style="color: var(--success);">✓ Voice recognition is working perfectly!</strong><br><br>
                                 <strong>You said:</strong><br>
-                                <div style="background: var(--bg-card); padding: 12px; border-radius: var(--radius-sm); margin-top: 8px; color: var(--text-main); font-size: 1.1em;">
-                                    "${data.transcript}"
+                                <div style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); margin-top: 12px; border-left: 3px solid var(--success);">
+                                    <span style="color: var(--text-main); font-size: 1.2em; font-weight: 600;">"${data.transcript}"</span>
+                                </div>
+                                <div style="margin-top: 16px; color: var(--text-muted); font-size: 0.9em;">
+                                    Transcript length: ${data.transcript_length} characters<br>
+                                    Audio file: ${data.file_size} bytes<br>
+                                    Model: ${data.model} on ${data.device}
                                 </div>
                             `;
-                        } else {
+                        } else if (data.transcript === '') {
+                            addLog('⚠️ No speech detected in audio', true);
+                            
                             statusEl.className = 'test-status status-error';
                             statusEl.textContent = 'No Speech';
-                            resultEl.textContent = '⚠️ No speech detected. Try speaking louder or closer to the microphone.';
+                            resultEl.innerHTML = `
+                                <strong style="color: var(--error);">No speech detected</strong><br><br>
+                                Possible causes:<br>
+                                • Speaking too quietly<br>
+                                • Microphone too far away<br>
+                                • Background noise masking speech<br>
+                                • Audio too short<br><br>
+                                <strong>Try:</strong><br>
+                                • Speak louder and clearer<br>
+                                • Move microphone closer<br>
+                                • Reduce background noise<br>
+                                • Record for at least 2-3 seconds
+                            `;
+                        } else {
+                            addLog(`Error at stage: ${data.stage}`, true);
+                            addLog(`Error: ${data.error}`, true);
+                            
+                            statusEl.className = 'test-status status-error';
+                            statusEl.textContent = 'Failed';
+                            resultEl.innerHTML = `
+                                <strong style="color: var(--error);">Transcription failed</strong><br><br>
+                                <strong>Stage:</strong> ${data.stage}<br>
+                                <strong>Error:</strong> ${data.error}<br>
+                                ${data.fix ? '<br><strong>Fix:</strong> ' + data.fix : ''}
+                                <br><br>
+                                <div style="background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: var(--radius-sm); margin-top: 12px;">
+                                    <strong>Debug Info:</strong><br>
+                                    Audio size: ${data.file_size || 'unknown'} bytes<br>
+                                    Model: ${data.model || 'not loaded'}<br>
+                                    Device: ${data.device || 'unknown'}
+                                </div>
+                            `;
                         }
                     } catch (err) {
+                        addLog('Network/server error: ' + err.message, true);
+                        
                         statusEl.className = 'test-status status-error';
                         statusEl.textContent = 'Error';
-                        resultEl.textContent = '✗ Transcription error: ' + err.message;
+                        resultEl.innerHTML = `
+                            <strong style="color: var(--error);">Server error</strong><br><br>
+                            ${err.message}<br><br>
+                            Make sure the Flask server is running and Whisper model is installed.
+                        `;
                     }
                 };
                 
                 transcribeRecorder.start();
+                addLog('Recording started - speak now!');
+                
                 btnEl.textContent = '⏹️ Stop & Transcribe';
                 btnEl.style.background = '#ef4444';
                 statusEl.className = 'test-status status-testing';
                 statusEl.textContent = 'Recording...';
                 resultEl.style.display = 'block';
-                resultEl.innerHTML = '🎤 <strong>Recording now...</strong><br><br>Say a test phrase clearly:<br>"Today I need to work on the Thompson case"';
+                resultEl.innerHTML = `
+                    🎤 <strong style="color: var(--error);">Recording now - SPEAK CLEARLY!</strong><br><br>
+                    <div style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); margin: 12px 0;">
+                        Say this test phrase:<br>
+                        <strong style="color: var(--primary); font-size: 1.1em;">"Today I need to work on the Thompson case"</strong>
+                    </div>
+                    Speak for at least 3-4 seconds, then click Stop.
+                `;
                 
             } catch (err) {
+                addLog('Microphone access error: ' + err.message, true);
+                
                 statusEl.className = 'test-status status-error';
                 statusEl.textContent = 'Error';
                 resultEl.style.display = 'block';
@@ -461,10 +590,51 @@
             }
         } else {
             // Stop and transcribe
+            addLog('Stopping recording...');
             transcribeRecorder.stop();
             transcribeRecorder = null;
-            btnEl.textContent = '🎙️ Test Voice Recognition';
+            btnEl.textContent = '🎙️ Start Detailed Test';
             btnEl.style.background = 'var(--primary)';
+        }
+    }
+    
+    // Check Whisper status on page load
+    window.addEventListener('DOMContentLoaded', checkWhisperStatus);
+    
+    async function checkWhisperStatus() {
+        const statusEl = document.getElementById('whisper-status');
+        const resultEl = document.getElementById('whisper-result');
+        
+        statusEl.className = 'test-status status-testing';
+        statusEl.textContent = 'Checking...';
+        resultEl.textContent = 'Checking Whisper model status...';
+        
+        try {
+            const response = await fetch('/whisper-status');
+            const data = await response.json();
+            
+            if (data.status === 'ready') {
+                statusEl.className = 'test-status status-success';
+                statusEl.textContent = '✓ Ready';
+                resultEl.innerHTML = `
+                    <strong style="color: var(--success);">✓ Whisper model is ready</strong><br><br>
+                    Model: ${data.model}<br>
+                    Device: ${data.device}<br>
+                    Status: ${data.message}
+                `;
+            } else {
+                statusEl.className = 'test-status status-error';
+                statusEl.textContent = '✗ Error';
+                resultEl.innerHTML = `
+                    <strong style="color: var(--error);">Whisper model error</strong><br><br>
+                    ${data.error}<br><br>
+                    ${data.message}
+                `;
+            }
+        } catch (err) {
+            statusEl.className = 'test-status status-error';
+            statusEl.textContent = '✗ Error';
+            resultEl.textContent = 'Could not check model status: ' + err.message;
         }
     }
 </script>

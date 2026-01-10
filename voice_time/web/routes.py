@@ -23,6 +23,125 @@ def register_routes(app):
         """Settings and voice diagnostics page."""
         return render_template('settings.html')
     
+    @app.route('/test-whisper', methods=['POST'])
+    def test_whisper():
+        """Detailed Whisper model testing with diagnostics."""
+        import tempfile
+        import os
+        
+        if 'audio' not in request.files:
+            return jsonify({
+                'success': False,
+                'stage': 'upload',
+                'error': 'No audio file provided'
+            })
+        
+        audio_file = request.files['audio']
+        tmp_path = None
+        
+        try:
+            # Stage 1: Save audio
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as tmp:
+                tmp_path = tmp.name
+            
+            audio_file.save(tmp_path)
+            file_size = os.path.getsize(tmp_path)
+            
+            result = {
+                'success': True,
+                'stage': 'saved',
+                'file_size': file_size,
+                'file_path': tmp_path
+            }
+            
+            if file_size < 1000:
+                result['warning'] = 'Audio file very small - may be too short'
+            
+            # Stage 2: Load Whisper model
+            from ..voice.transcribe import Transcriber
+            
+            result['stage'] = 'loading_model'
+            result['model'] = app.config_obj.whisper.model
+            result['device'] = app.config_obj.whisper.device
+            
+            try:
+                transcriber = Transcriber(
+                    model_size=app.config_obj.whisper.model,
+                    device=app.config_obj.whisper.device
+                )
+                result['stage'] = 'model_loaded'
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'stage': 'model_load_failed',
+                    'error': str(e),
+                    'fix': 'Whisper model may not be downloaded. This happens automatically on first use.'
+                })
+            
+            # Stage 3: Transcribe
+            result['stage'] = 'transcribing'
+            
+            try:
+                transcript = transcriber.transcribe_file(tmp_path)
+                result['stage'] = 'complete'
+                result['transcript'] = transcript
+                result['transcript_length'] = len(transcript)
+                
+                if not transcript or len(transcript) < 3:
+                    result['warning'] = 'Transcript very short or empty - speak louder/clearer'
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'stage': 'transcription_failed',
+                    'error': str(e),
+                    'file_size': file_size,
+                    'fix': 'Try speaking louder and clearer, or check audio format'
+                })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'stage': 'error',
+                'error': str(e)
+            })
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
+    
+    @app.route('/whisper-status')
+    def whisper_status():
+        """Check if Whisper model is working."""
+        try:
+            from ..voice.transcribe import Transcriber
+            
+            # Try to create transcriber
+            transcriber = Transcriber(
+                model_size=app.config_obj.whisper.model,
+                device=app.config_obj.whisper.device
+            )
+            
+            # Check if model loaded
+            # Note: Model lazy-loads on first use
+            return jsonify({
+                'status': 'ready',
+                'model': app.config_obj.whisper.model,
+                'device': app.config_obj.whisper.device,
+                'message': 'Whisper is ready (model will download on first use)'
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'error': str(e),
+                'message': 'Whisper model failed to load'
+            })
+    
     @app.route('/')
     def index():
         """Main dashboard."""
