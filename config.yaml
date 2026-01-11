@@ -13,7 +13,7 @@ matching:
   confidence_threshold: 0.7
 ollama:
   host: http://localhost:11434
-  model: qwen2.5:3b-instruct
+  model: qwen2.5:0.5b-instruct
   timeout: 30
 temporal:
   lunch_end: '13:30'
@@ -22,4 +22,4 @@ temporal:
   working_day_start: 09:00
 whisper:
   device: cpu
-  model: medium.en
+  model: base.en

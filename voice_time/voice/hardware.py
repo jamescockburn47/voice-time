@@ -1,4 +1,17 @@
-"""Hardware detection and optimization for voice processing."""
+"""Hardware detection for voice processing.
+
+DESIGN PHILOSOPHY (SOTA 2025):
+- Ollama auto-detects GPU/CPU and configures itself optimally
+- faster-whisper auto-detects CUDA availability and falls back to CPU
+- We detect hardware for INFORMATIONAL purposes only (showing users what we found)
+- We do NOT try to manually configure devices - let the libraries handle it
+
+This approach is more reliable and works on any hardware including:
+- No GPU (integrated graphics only) - like Lenovo IdeaPad
+- NVIDIA GPU (CUDA)
+- AMD GPU (CPU fallback, as DirectML not widely supported)
+- Intel integrated graphics (CPU mode)
+"""
 import platform
 import subprocess
 from typing import Dict, Any
@@ -6,132 +19,169 @@ from typing import Dict, Any
 
 def detect_hardware() -> Dict[str, Any]:
     """
-    Detect available hardware for AI acceleration.
+    Detect hardware for informational display purposes.
+    
+    NOTE: We do NOT use this to configure Ollama or faster-whisper.
+    Those libraries auto-detect and configure themselves optimally.
     
     Returns:
-        Dictionary with hardware capabilities:
-        - cpu_name: Processor name
-        - has_cuda: NVIDIA GPU available
-        - has_amd: AMD GPU available  
-        - has_intel: Intel GPU available
-        - recommended_device: Best device to use
-        - compute_type: Best compute type for faster-whisper
+        Dictionary with detected hardware info for UI display
     """
     info = {
-        'cpu_name': platform.processor(),
+        'cpu': _get_cpu_info(),
+        'gpu': _get_gpu_info(),
+        'memory_gb': _get_memory_gb(),
         'platform': platform.system(),
-        'has_cuda': False,
-        'has_amd': False,
-        'has_intel': False,
-        'has_npu': False,
-        'recommended_device': 'cpu',
-        'compute_type': 'int8',  # CPU default
-        'notes': []
+        'summary': '',  # Human-readable summary
     }
     
-    # Check for NVIDIA CUDA
-    try:
-        import torch
-        if torch.cuda.is_available():
-            info['has_cuda'] = True
-            info['recommended_device'] = 'cuda'
-            info['compute_type'] = 'float16'
-            info['gpu_name'] = torch.cuda.get_device_name(0)
-            info['notes'].append('NVIDIA GPU detected - using CUDA acceleration')
-    except:
-        pass
+    # Build summary message
+    summaries = []
+    if info['gpu']['name'] and info['gpu']['name'] != 'Unknown':
+        if info['gpu']['has_dedicated']:
+            summaries.append(f"GPU: {info['gpu']['name']}")
+        else:
+            summaries.append(f"Integrated: {info['gpu']['name']}")
     
-    # Check for AMD (Windows)
-    if platform.system() == 'Windows':
-        try:
-            # Check for AMD GPU via wmic
-            result = subprocess.run(
-                ['wmic', 'path', 'win32_VideoController', 'get', 'name'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            gpu_info = result.stdout.lower()
-            
-            if 'amd' in gpu_info or 'radeon' in gpu_info:
-                info['has_amd'] = True
-                info['notes'].append('AMD GPU detected')
-                
-                # Check for Ryzen AI (NPU)
-                if 'ryzen' in info['cpu_name'].lower() and ('ai' in info['cpu_name'].lower() or '300' in info['cpu_name']):
-                    info['has_npu'] = True
-                    info['notes'].append('AMD Ryzen AI with NPU detected (Evo x2)')
-                    info['notes'].append('Note: NPU not yet supported by Whisper, using optimized CPU')
-                
-                # BUG FIX #1: Only set CPU mode if CUDA is NOT available
-                # Don't override CUDA if NVIDIA GPU is also present
-                if not info['has_cuda']:
-                    # For AMD-only systems on Windows, CPU with int8 is best
-                    # DirectML support would require different setup
-                    info['recommended_device'] = 'cpu'
-                    info['compute_type'] = 'int8'
-                    info['notes'].append('Using CPU with int8 quantization (optimized for AMD Ryzen)')
-                else:
-                    # Hybrid system (AMD CPU + NVIDIA GPU) - keep CUDA
-                    info['notes'].append('Hybrid GPU config: Using NVIDIA CUDA (faster than AMD CPU)')
-                
-        except:
-            pass
+    summaries.append(f"CPU: {info['cpu']['name']}")
     
-    # Check for Intel
-    cpu_lower = info['cpu_name'].lower()
-    if 'intel' in cpu_lower:
-        info['has_intel'] = True
-        info['notes'].append('Intel CPU detected - using optimized CPU mode')
+    if info['memory_gb']:
+        summaries.append(f"{info['memory_gb']}GB RAM")
     
-    # Optimize compute type based on CPU
-    if not info['has_cuda']:  # CPU mode
-        if 'amd' in cpu_lower or 'ryzen' in cpu_lower:
-            # AMD Ryzen - int8 is fast
-            info['compute_type'] = 'int8'
-            info['notes'].append('Using int8 quantization for AMD Ryzen (2-3x faster)')
-        elif 'intel' in cpu_lower:
-            # Intel - int8 with AVX2
-            info['compute_type'] = 'int8'
-            if 'avx2' in cpu_lower or int(platform.python_version_tuple()[1]) >= 8:
-                info['notes'].append('Using int8 with AVX2 acceleration')
+    info['summary'] = ' | '.join(summaries)
     
     return info
 
 
-def get_optimal_whisper_config(hardware_info: Dict[str, Any] = None) -> Dict[str, str]:
-    """
-    Get optimal Whisper configuration for detected hardware.
+def _get_cpu_info() -> Dict[str, Any]:
+    """Get CPU information."""
+    cpu_name = platform.processor() or 'Unknown CPU'
     
-    Returns:
-        Dictionary with 'device' and 'compute_type' for faster-whisper
-    """
-    if hardware_info is None:
-        hardware_info = detect_hardware()
+    # Clean up the name
+    if not cpu_name or cpu_name == 'Unknown CPU':
+        # Try Windows-specific method
+        if platform.system() == 'Windows':
+            try:
+                result = subprocess.run(
+                    ['powershell', '-NoProfile', '-Command',
+                     '(Get-CimInstance Win32_Processor).Name'],
+                    capture_output=True, text=True, timeout=5,
+                    creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    cpu_name = result.stdout.strip()
+            except:
+                pass
     
     return {
-        'device': hardware_info['recommended_device'],
-        'compute_type': hardware_info['compute_type']
+        'name': cpu_name,
+        'is_intel': 'intel' in cpu_name.lower(),
+        'is_amd': 'amd' in cpu_name.lower() or 'ryzen' in cpu_name.lower(),
     }
 
 
-# For AMD Ryzen AI (Evo x2) specific notes:
-"""
-AMD Ryzen AI 300 series (Strix Point) with XDNA NPU:
+def _get_gpu_info() -> Dict[str, Any]:
+    """
+    Get GPU information using Windows WMI.
+    
+    This is for display purposes only - Ollama handles its own GPU detection.
+    """
+    info = {
+        'name': None,
+        'has_dedicated': False,
+        'has_nvidia': False,
+        'has_amd': False,
+    }
+    
+    if platform.system() != 'Windows':
+        return info
+    
+    try:
+        # Use PowerShell + WMI for reliable GPU detection
+        result = subprocess.run(
+            ['powershell', '-NoProfile', '-Command',
+             'Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name'],
+            capture_output=True, text=True, timeout=5,
+            creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+        )
+        
+        if result.returncode == 0 and result.stdout.strip():
+            gpus = [g.strip() for g in result.stdout.strip().split('\n') if g.strip()]
+            
+            # Find the best GPU (prefer dedicated over integrated)
+            dedicated = None
+            integrated = None
+            
+            for gpu in gpus:
+                gpu_lower = gpu.lower()
+                
+                # Check for dedicated GPUs
+                if 'nvidia' in gpu_lower or 'geforce' in gpu_lower or 'rtx' in gpu_lower or 'gtx' in gpu_lower:
+                    dedicated = gpu
+                    info['has_nvidia'] = True
+                    info['has_dedicated'] = True
+                elif 'radeon' in gpu_lower and 'graphics' not in gpu_lower:
+                    # Dedicated AMD (not integrated Radeon Graphics)
+                    dedicated = gpu
+                    info['has_amd'] = True
+                    info['has_dedicated'] = True
+                else:
+                    # Integrated graphics (Intel UHD, AMD Radeon Graphics, etc.)
+                    integrated = gpu
+            
+            # Use dedicated if available, otherwise integrated
+            info['name'] = dedicated or integrated
+            
+    except Exception:
+        pass
+    
+    return info
 
-The NPU is designed for AI workloads but faster-whisper doesn't support it yet.
-However, the CPU part is very powerful (Zen 5 cores) and handles Whisper well.
 
-Optimization for Ryzen AI:
-1. Use CPU mode (NPU not supported)
-2. Use int8 compute type (2-3x faster on Ryzen)
-3. Ensure model is "base.en" or "tiny.en" for speed
-4. Future: DirectML support could use integrated GPU
+def _get_memory_gb() -> int:
+    """Get system RAM in GB."""
+    if platform.system() != 'Windows':
+        return 0
+    
+    try:
+        result = subprocess.run(
+            ['powershell', '-NoProfile', '-Command',
+             '[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)'],
+            capture_output=True, text=True, timeout=5,
+            creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+        )
+        if result.returncode == 0:
+            return int(result.stdout.strip())
+    except:
+        pass
+    
+    return 0
 
-Current performance on Ryzen AI 9 365 with base.en:
-- int8 CPU: ~1-2 seconds for 5-second audio
-- This is excellent for real-time use
 
-The integrated Radeon GPU could potentially be used via DirectML
-in the future, but CPU mode is already very fast on Ryzen AI.
-"""
+def get_optimal_whisper_config() -> Dict[str, str]:
+    """
+    Get Whisper configuration.
+    
+    NOTE: faster-whisper auto-detects CUDA. We just provide sensible defaults.
+    The library will use GPU if available, CPU otherwise.
+    """
+    return {
+        'device': 'auto',  # Let faster-whisper decide
+        'compute_type': 'auto',  # Let it pick best for the device
+    }
+
+
+def get_hardware_summary() -> str:
+    """
+    Get a one-line summary of detected hardware for display.
+    
+    Example outputs:
+    - "GPU: NVIDIA GeForce RTX 3080 | CPU: AMD Ryzen 9 | 32GB RAM"
+    - "Integrated: Intel UHD Graphics | CPU: Intel Core i5 | 16GB RAM"
+    - "CPU: Intel Core i3 | 8GB RAM" (when GPU detection fails)
+    """
+    try:
+        info = detect_hardware()
+        return info.get('summary', 'Hardware detection unavailable')
+    except Exception as e:
+        return f'Hardware detection error: {e}'

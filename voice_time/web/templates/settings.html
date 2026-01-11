@@ -234,15 +234,22 @@ async function loadHardware() {
         const res = await fetch('/api/hardware');
         hwInfo = await res.json();
         
-        document.getElementById('hw-gpu').textContent = hwInfo.gpu || 'No GPU detected';
+        // Show GPU or "CPU-only" with a friendly message
+        if (hwInfo.gpu) {
+            document.getElementById('hw-gpu').textContent = hwInfo.gpu;
+        } else {
+            // No dedicated GPU - show friendly message
+            document.getElementById('hw-gpu').textContent = 'CPU mode (works great!)';
+        }
+        
         document.getElementById('hw-vram').textContent = hwInfo.vram_gb ? hwInfo.vram_gb + ' GB' : '-';
         document.getElementById('hw-ram').textContent = hwInfo.ram_gb ? hwInfo.ram_gb + ' GB' : '-';
         
         const tier = document.getElementById('hw-tier');
-        tier.textContent = hwInfo.tier || 'unknown';
-        tier.className = 'hw-badge ' + (hwInfo.tier || 'basic');
+        tier.textContent = hwInfo.tier || 'standard';
+        tier.className = 'hw-badge ' + (hwInfo.tier || 'standard');
     } catch(e) {
-        document.getElementById('hw-gpu').textContent = 'Detection failed';
+        document.getElementById('hw-gpu').textContent = 'Using defaults';
     }
 }
 

@@ -13,6 +13,7 @@ struct ServerState {
     process: Option<std::process::Child>,
 }
 
+// Small model that works great on CPU-only systems
 const DEFAULT_MODEL: &str = "qwen2.5:0.5b-instruct";
 
 /// Run PowerShell silently and get output
@@ -24,6 +25,55 @@ fn ps(script: &str) -> Option<String> {
     cmd.creation_flags(CREATE_NO_WINDOW);
     
     cmd.output().ok().map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+}
+
+/// Detect hardware for informational display (not for configuration)
+/// Ollama auto-detects GPU/CPU - this is just for showing the user what we found
+fn detect_hardware() -> String {
+    let mut parts = Vec::new();
+    
+    // Get GPU info
+    if let Some(gpu) = ps("(Get-CimInstance Win32_VideoController | Select-Object -First 1).Name") {
+        if !gpu.is_empty() {
+            let gpu_lower = gpu.to_lowercase();
+            if gpu_lower.contains("nvidia") || gpu_lower.contains("geforce") || gpu_lower.contains("rtx") {
+                parts.push(format!("GPU: {}", gpu));
+            } else if gpu_lower.contains("radeon") && !gpu_lower.contains("graphics") {
+                parts.push(format!("GPU: {}", gpu));
+            } else {
+                // Integrated graphics - still mention it but differently
+                parts.push(format!("Graphics: {}", gpu));
+            }
+        }
+    }
+    
+    // Get CPU info
+    if let Some(cpu) = ps("(Get-CimInstance Win32_Processor).Name") {
+        if !cpu.is_empty() {
+            // Shorten CPU name for display
+            let short_cpu = cpu
+                .replace("(R)", "")
+                .replace("(TM)", "")
+                .replace("CPU", "")
+                .replace("  ", " ")
+                .trim()
+                .to_string();
+            parts.push(format!("CPU: {}", short_cpu));
+        }
+    }
+    
+    // Get RAM
+    if let Some(ram) = ps("[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)") {
+        if let Ok(gb) = ram.parse::<i32>() {
+            parts.push(format!("{}GB RAM", gb));
+        }
+    }
+    
+    if parts.is_empty() {
+        "Hardware detection unavailable".to_string()
+    } else {
+        parts.join(" | ")
+    }
 }
 
 /// Find Ollama executable
@@ -206,46 +256,51 @@ pub fn run() {
                     let _ = handle.emit("setup-status", msg);
                 };
                 
+                // 0. Show detected hardware (informational only)
+                let hw = detect_hardware();
+                emit(&format!("Detected: {}", hw));
+                std::thread::sleep(std::time::Duration::from_millis(800));
+                
                 // 1. Find or install Ollama
-                emit("Checking for Ollama...");
+                emit("Setting up AI engine...");
                 let ollama = match find_ollama() {
                     Some(path) => {
-                        emit("Ollama found");
+                        emit("AI engine found ✓");
                         path
                     }
                     None => {
-                        emit("Installing Ollama (this takes a minute)...");
+                        emit("Installing AI engine (one-time setup)...");
                         if install_ollama() {
-                            emit("Ollama installed");
+                            emit("AI engine installed ✓");
                             find_ollama().unwrap_or_default()
                         } else {
-                            emit("Ollama installation failed - please install from ollama.com");
+                            emit("Setup incomplete - please visit ollama.com");
                             String::new()
                         }
                     }
                 };
                 
                 if !ollama.is_empty() {
-                    // 2. Start Ollama
-                    emit("Starting Ollama service...");
+                    // 2. Start Ollama (it auto-detects GPU/CPU)
+                    emit("Starting AI service...");
                     if start_ollama(&ollama) {
-                        emit("Ollama running");
+                        emit("AI service running ✓");
                         
                         // 3. Check/download model
                         if !model_exists(&ollama, DEFAULT_MODEL) {
-                            emit("Downloading AI model (~400MB)...");
-                            emit("This only happens once - please wait...");
+                            emit("Downloading AI model (one-time, ~400MB)...");
+                            emit("This takes a few minutes on first run...");
                             
                             if pull_model(&ollama, DEFAULT_MODEL) {
-                                emit("AI model ready");
+                                emit("AI model ready ✓");
                             } else {
-                                emit("Model download failed - will retry later");
+                                emit("Download incomplete - will retry on next start");
                             }
                         } else {
-                            emit("AI model ready");
+                            emit("AI model ready ✓");
                         }
                     } else {
-                        emit("Ollama failed to start");
+                        emit("AI service starting slowly - please wait...");
                     }
                 }
                 

@@ -701,41 +701,45 @@ def register_routes(app):
     
     @app.route('/api/hardware')
     def get_hardware():
-        """Detect hardware for model recommendations."""
-        import platform
-        import os
+        """Detect hardware for display and model recommendations.
         
+        NOTE: Ollama and faster-whisper auto-detect GPU/CPU themselves.
+        This is just for informational display and recommending models.
+        """
+        from ..voice.hardware import detect_hardware
+        
+        # Get hardware info using improved detection
+        hw_info = detect_hardware()
+        
+        # Build response
         hw = {
-            'cpu': platform.processor() or 'Unknown',
-            'ram_gb': 0,
-            'gpu': None,
-            'vram_gb': 0,
-            'recommended_llm': 'qwen2.5:1.5b-instruct',
-            'recommended_whisper': 'base.en'
+            'cpu': hw_info['cpu']['name'],
+            'ram_gb': hw_info['memory_gb'],
+            'gpu': hw_info['gpu']['name'],  # Will be None if only integrated graphics
+            'vram_gb': 0,  # We don't detect VRAM anymore - Ollama handles GPU memory
+            'has_dedicated_gpu': hw_info['gpu']['has_dedicated'],
+            'summary': hw_info['summary'],
+            'recommended_llm': 'qwen2.5:0.5b-instruct',  # Default small model
+            'recommended_whisper': 'base.en',
+            'tier': 'standard'  # Default tier
         }
         
-        # Get RAM
-        try:
-            import psutil
-            hw['ram_gb'] = round(psutil.virtual_memory().total / (1024**3))
-        except:
-            pass
+        # Get VRAM if NVIDIA GPU detected (for display only)
+        if hw_info['gpu']['has_nvidia']:
+            try:
+                import subprocess
+                result = subprocess.run(
+                    ['nvidia-smi', '--query-gpu=memory.total', '--format=csv,noheader,nounits'],
+                    capture_output=True, text=True, timeout=5,
+                    creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+                )
+                if result.returncode == 0:
+                    hw['vram_gb'] = round(int(result.stdout.strip()) / 1024)
+            except:
+                pass
         
-        # Check for NVIDIA GPU
-        try:
-            import subprocess
-            result = subprocess.run(
-                ['nvidia-smi', '--query-gpu=name,memory.total', '--format=csv,noheader,nounits'],
-                capture_output=True, text=True, timeout=5
-            )
-            if result.returncode == 0:
-                parts = result.stdout.strip().split(',')
-                hw['gpu'] = parts[0].strip()
-                hw['vram_gb'] = round(int(parts[1].strip()) / 1024) if len(parts) > 1 else 0
-        except:
-            pass
-        
-        # Recommendations based on hardware
+        # Model recommendations based on hardware
+        # Note: We keep recommendations conservative - the small model works everywhere
         vram = hw['vram_gb']
         ram = hw['ram_gb']
         
@@ -743,18 +747,22 @@ def register_routes(app):
             hw['recommended_llm'] = 'qwen2.5:7b-instruct'
             hw['recommended_whisper'] = 'medium.en'
             hw['tier'] = 'high'
-        elif vram >= 4 or ram >= 32:
+        elif vram >= 4:
             hw['recommended_llm'] = 'qwen2.5:3b-instruct'
             hw['recommended_whisper'] = 'small.en'
             hw['tier'] = 'medium'
         elif ram >= 16:
             hw['recommended_llm'] = 'qwen2.5:1.5b-instruct'
-            hw['recommended_whisper'] = 'base.en'
+            hw['recommended_whisper'] = 'small.en'
             hw['tier'] = 'standard'
+        elif ram >= 8:
+            hw['recommended_llm'] = 'qwen2.5:0.5b-instruct'
+            hw['recommended_whisper'] = 'base.en'
+            hw['tier'] = 'basic'
         else:
             hw['recommended_llm'] = 'qwen2.5:0.5b-instruct'
             hw['recommended_whisper'] = 'tiny.en'
-            hw['tier'] = 'basic'
+            hw['tier'] = 'minimal'
         
         return jsonify(hw)
     
