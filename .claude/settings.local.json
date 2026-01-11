@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(python -c:*)",
+      "Bash(venv\\\\Scripts\\\\python.exe:*)",
+      "Bash(.\\\\venv\\\\Scripts\\\\python.exe:*)",
+      "Bash(cmd.exe /c \"call venv\\\\Scripts\\\\activate.bat && python run.py --dev\")",
+      "Bash(./venv/Scripts/python.exe:*)",
+      "Bash(C:/Users/James/voice_time/venv/Scripts/python.exe:*)",
+      "Bash(cmd.exe /c \"timebrief.bat --dev\")",
+      "Bash(cmd.exe /c \"call venv\\\\Scripts\\\\activate.bat && echo ACTIVATED && where ollama && echo OLLAMA OK\")",
+      "Bash(powershell.exe -Command \"cd C:/Users/James/voice_time; ./timebrief.bat --dev\")",
+      "Bash(powershell.exe -Command \"cd C:/Users/James/voice_time; cmd /c ''timebrief.bat --dev''\")",
+      "Bash(cmd.exe //c \".\\\\timebrief.bat --dev\")",
+      "Bash(cmd.exe //c \"cd C:\\\\Users\\\\James\\\\voice_time\\\\src-tauri && cargo tauri dev\")",
+      "Bash(cmd.exe //c \"set CARGO_PATH=%USERPROFILE%\\\\.cargo\\\\bin\\\\cargo.exe && if exist \"\"%CARGO_PATH%\"\" \\(echo Cargo found at %CARGO_PATH%\\) else \\(echo Not found\\)\")",
+      "Bash(cmd.exe //c \"if exist C:\\\\Users\\\\James\\\\.cargo\\\\bin\\\\cargo.exe \\(echo Found\\) else \\(echo Not found\\)\")",
+      "Bash(cmd.exe //c \"if exist \"\"%USERPROFILE%\\\\.cargo\\\\bin\\\\cargo.exe\"\" \\(echo Found && \"\"%USERPROFILE%\\\\.cargo\\\\bin\\\\cargo.exe\"\" --version\\) else \\(echo Not found\\)\")",
+      "Bash(cmd.exe //c \"echo %USERPROFILE%\")",
+      "Bash(cmd.exe //c \"if exist %USERPROFILE%\\\\.cargo\\\\bin\\\\cargo.exe \\(echo Found\\) else \\(echo Not found\\)\")",
+      "Bash(C:UsersJames.cargobincargo.exe tauri --version)",
+      "Bash(cmd /c \"C:\\\\Users\\\\James\\\\.cargo\\\\bin\\\\cargo.exe tauri --version\")",
+      "Bash(cmd /c \"cd C:\\\\Users\\\\James\\\\voice_time\\\\src-tauri && C:\\\\Users\\\\James\\\\.cargo\\\\bin\\\\cargo.exe tauri --version\")",
+      "Bash(cmd /c \"C:\\\\Users\\\\James\\\\.cargo\\\\bin\\\\cargo.exe install tauri-cli\")",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\James\\\\.cargo\\\\bin'' | Where-Object { $_Name -like ''*tauri*'' }\")",
+      "Bash(powershell:*)",
+      "Bash(cmd /c \"taskkill /FI \"\"WINDOWTITLE eq TimeBrief Backend\"\" /F\")",
+      "Bash(cmd /c \"cd /d C:\\\\Users\\\\James\\\\voice_time && timebrief.bat\")",
+      "Bash(cmd /c \"tasklist | findstr /i timebrief\")"
+    ]
+  }
+}

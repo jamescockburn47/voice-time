@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TimeBrief{% endblock %}
+
+{% block styles %}
+<style>
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .dashboard-title {
+        font-family: var(--font-serif);
+        font-size: 1.5em;
+        font-weight: 600;
+    }
+
+    .date-range {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .date-range select {
+        padding: 8px 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        color: var(--text-main);
+        font-size: 0.9em;
+    }
+
+    /* Dashboard Grid */
+    .dash-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .dash-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+    }
+
+    .dash-card.wide {
+        grid-column: span 2;
+    }
+
+    @media (max-width: 768px) {
+        .dash-card.wide {
+            grid-column: span 1;
+        }
+    }
+
+    .dash-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .dash-card-title {
+        font-size: 0.9em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .dash-card-value {
+        font-family: var(--font-serif);
+        font-size: 2.5em;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .dash-card-subtitle {
+        font-size: 0.85em;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+
+    .dash-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 600;
+    }
+
+    .dash-change.positive {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--success);
+    }
+
+    .dash-change.negative {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--error);
+    }
+
+    /* Heatmap */
+    .heatmap-container {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .heatmap-week {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .heatmap-cell {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: transform 0.1s;
+    }
+
+    .heatmap-cell:hover {
+        transform: scale(1.2);
+    }
+
+    .heatmap-cell.level-0 { background: var(--bg-hover); }
+    .heatmap-cell.level-1 { background: rgba(245, 158, 11, 0.2); }
+    .heatmap-cell.level-2 { background: rgba(245, 158, 11, 0.4); }
+    .heatmap-cell.level-3 { background: rgba(245, 158, 11, 0.6); }
+    .heatmap-cell.level-4 { background: rgba(245, 158, 11, 0.8); }
+    .heatmap-cell.level-5 { background: var(--primary); }
+
+    .heatmap-legend {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 12px;
+        font-size: 0.75em;
+        color: var(--text-muted);
+    }
+
+    .heatmap-legend .heatmap-cell {
+        width: 12px;
+        height: 12px;
+    }
+
+    /* Matter Health */
+    .health-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .health-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+        background: var(--bg-hover);
+        border-radius: var(--radius-md);
+    }
+
+    .health-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .health-dot.on_track { background: var(--success); }
+    .health-dot.needs_attention { background: var(--warning); }
+    .health-dot.stale { background: var(--error); }
+
+    .health-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .health-name {
+        font-weight: 600;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .health-meta {
+        font-size: 0.8em;
+        color: var(--text-muted);
+    }
+
+    .health-hours {
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    /* Calendar View */
+    .calendar-container {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .calendar-nav {
+        display: flex;
+        gap: 8px;
+    }
+
+    .calendar-nav button {
+        padding: 6px 12px;
+        background: var(--bg-hover);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        color: var(--text-main);
+        cursor: pointer;
+        font-size: 0.9em;
+    }
+
+    .calendar-nav button:hover {
+        background: var(--primary);
+        color: var(--bg-app);
+        border-color: var(--primary);
+    }
+
+    .calendar-month-name {
+        font-family: var(--font-serif);
+        font-size: 1.2em;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1 class="dashboard-title">Dashboard</h1>
+    <div class="date-range">
+        <select id="date-range" onchange="Dashboard.setRange(this.value)">
+            <option value="today">Today</option>
+            <option value="week" selected>This Week</option>
+            <option value="month">This Month</option>
+        </select>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div id="dashboard-container" class="dash-grid">
+    <!-- Dashboard content will be loaded here by JavaScript -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <span class="dash-card-title">Loading...</span>
+        </div>
+        <div class="dash-card-value">--</div>
+    </div>
+</div>
+
+<!-- Calendar View -->
+<div class="calendar-container">
+    <div class="calendar-header">
+        <h2 style="font-family: var(--font-serif); font-size: 1.1em;">Calendar View</h2>
+    </div>
+    <div id="calendar-container">
+        <!-- Calendar will be loaded here by JavaScript -->
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Dashboard auto-initializes from app.js via DOMContentLoaded
+    // The Dashboard.init('dashboard-container') and CalendarView.init('calendar-container')
+    // are already set up in app.js
+</script>
+{% endblock %}

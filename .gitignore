@@ -66,6 +66,11 @@ htmlcov/
 # User-specific files
 config.local.yaml
 
+# AI Agent documentation (local only, not bundled in releases)
+CLAUDE.md
+AGENTS.md
+ARCHITECTURE.md
+
 # Tauri
 src-tauri/target/
 src-tauri/gen/schemas/
